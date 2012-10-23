@@ -1,16 +1,19 @@
 Version
 -------
 
-This version ($Name: PRE_ALPHA_0_18 $) is functionally identical with the
-previous pre-alpha-0.17, but it has a bug fixed concerning exponential
-functions with low precision after the decimal point, but a high
-exponent resulting in many digits before the decimal point.
+This version ($Name: PRE_ALPHA_0_19 $) is functionally identical with the
+previous pre-alpha-0.18.  Improvements are for speed, because certain
+logarithms that are used frequently internally are cached now, so they
+need to be calculated only when needed for a higher precision than has
+been used before.  The gem-file is now created using Ruby 1.8.4
+instead of 1.8.3.  This fixes a bug in the metadata-file of the gem.
 
 It could be observed that gem-installation, as described below, fails
 on Windows 2000 with ruby 1.8.2, but works on Linux with ruby 1.8.4
 Any help from someone who knows more about Ruby on Windows would be
 apreciated.  For the time being long-decimal has to be considered
-platform specific for Linux/Unix.
+platform specific for Linux/Unix.  We will see if the corrected
+metadata-file allows installation on Windows now.
 
 Beyond this restriction there are no known bugs and this version can
 be considered complete in terms of functionality.  This version is
@@ -24,6 +27,21 @@ http://rubyforge.org/ ) under the project name "long-decimal", to be
 found directly with http://rubyforge.org/projects/long-decimal/ .  So
 you should feel encouraged to look if there is a newer version, when
 you install long-decimal.
+
+Test
+----
+
+I have included some runit tests, which give some indication of the
+correctness of this library.  Tests can never be exhaustive, but they
+give a good indication that methods are working correctly.  About 90%
+of the tests that will be eventually needed are already present.  As a
+policy I do not create a release unless all tests succeed.
+Running the tests can take a few minutes, depending on your machine.
+It is about 10 minutes on my machine (1300 MHz).  This is the result:
+
+Finished in 567.162417 seconds.
+97 tests, 44182 assertions, 0 failures, 0 errors
+
 
 Install
 -------

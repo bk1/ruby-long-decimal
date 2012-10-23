@@ -1,8 +1,8 @@
 #
 # Rakefile for long-decimal project
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/Rakefile,v 1.2 2006/03/18 08:32:02 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_18 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/Rakefile,v 1.3 2006/04/01 08:52:06 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_19 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -55,7 +55,7 @@ spec = Gem::Specification.new do |s|
   #### Load-time details: library and application (you will need one or both).
 
   s.require_path = 'lib' # 'lib'                         # Use these for libraries.
-  s.autorequire = 'long-decimal'
+  s.autorequire  = 'long-decimal'
 
   #s.bindir = "bin"                              # Use these for applications.
   #s.executables = ["bla.rb"]
@@ -73,8 +73,8 @@ spec = Gem::Specification.new do |s|
 
   #### Author and project details.
 
-  s.author = "Karl Brodowsky"
-  s.email = "http://www.velofahren.de/mail.html"
+  s.author   = "Karl Brodowsky"
+  s.email    = "http://www.velofahren.de/mail.html"
   s.homepage = "http://long-decimal.rubyforge.org/"
   s.rubyforge_project = "long-decimal"
 end

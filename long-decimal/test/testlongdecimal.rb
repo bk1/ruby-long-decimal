@@ -2,8 +2,8 @@
 #
 # testlongdecimal.rb -- runit test for long-decimal.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.22 2006/03/30 21:06:43 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_18 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.23 2006/04/01 08:52:06 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_19 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -18,7 +18,7 @@ load "lib/long-decimal.rb"
 #
 class TestLongDecimal_class < RUNIT::TestCase
 
-  @RCS_ID='-$Id: testlongdecimal.rb,v 1.22 2006/03/30 21:06:43 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdecimal.rb,v 1.23 2006/04/01 08:52:06 bk1 Exp $-'
 
   #
   # helper method for test_split_merge_words
@@ -473,6 +473,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test the calculation of the logarithm function
   #
   def test_log
+
     check_log_floated(10**2000, 10)
     check_log_floated(100, 10)
     check_log_floated(1, 10)
