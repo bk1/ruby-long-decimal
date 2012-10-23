@@ -1,15 +1,19 @@
 #!/usr/bin/env ruby
 #
-# testrandom.rb -- runit test for long-decimal.rb
+# testrandom.rb -- random tests for long-decimal.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testrandom.rb,v 1.13 2007/08/19 19:25:59 bk1 Exp $
-# CVS-Label: $Name: ALPHA_01_03 $
+# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
+#
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testrandom.rb,v 1.15 2009/04/15 19:29:38 bk1 Exp $
+# CVS-Label: $Name: BETA_02_01 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
 require "runit/testcase"
 require "runit/cui/testrunner"
 require "runit/testsuite"
+
+#require "rubygems"
 require "crypt/ISAAC"
 
 load "lib/long-decimal.rb"
@@ -23,7 +27,7 @@ class TestRandom_class < RUNIT::TestCase
   include TestLongDecHelper
   include TestRandomHelper
 
-  @RCS_ID='-$Id: testrandom.rb,v 1.13 2007/08/19 19:25:59 bk1 Exp $-'
+  @RCS_ID='-$Id: testrandom.rb,v 1.15 2009/04/15 19:29:38 bk1 Exp $-'
 
   # for how many seconds should this test run? change to different
   # value on demand

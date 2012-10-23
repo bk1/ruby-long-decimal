@@ -1,21 +1,33 @@
 #!/usr/bin/env ruby
 #
-# library for testlongdecimal.rb
+# library for tests for long-decimal.rb and long-decimal-extra.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdeclib.rb,v 1.19 2007/08/19 19:25:59 bk1 Exp $
-# CVS-Label: $Name: ALPHA_01_03 $
+# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
+#
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdeclib.rb,v 1.29 2009/04/21 16:56:49 bk1 Exp $
+# CVS-Label: $Name: BETA_02_01 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
 # load "lib/long-decimal.rb"
+
+class Integer
+  def cube
+    self*self*self
+  end
+
+  def square
+    self*self
+  end
+end
+
 
 #
 # test class for LongDecimal and LongDecimalQuot
 #
 module TestLongDecHelper
 
-  @RCS_ID='-$Id: testlongdeclib.rb,v 1.19 2007/08/19 19:25:59 bk1 Exp $-'
-
+  @RCS_ID='-$Id: testlongdeclib.rb,v 1.29 2009/04/21 16:56:49 bk1 Exp $-'
 
   #
   # convenience method for comparing two numbers. true if and only if
@@ -405,7 +417,6 @@ module TestLongDecHelper
       v = y.unit
       # delta = (u + u.move_point_left(1)) * df
       delta = [ v * z, u * df ].max
-      # puts("x=#{x.to_s} and z=#{z.to_s} should be almost equal (#{(x-z).abs} < d=#{delta} y=#{y.to_s} eprec=#{eprec} prec=#{prec} u=#{u.inspect} v=#{v.inspect} df=#{df})")
       assert((x - z).abs <= delta, "x=#{x.to_s} and z=#{z.to_s} should be almost equal (#{(x-z).abs} < d=#{delta} y=#{y.to_s} eprec=#{eprec} prec=#{prec})")
     end
 
@@ -428,7 +439,6 @@ module TestLongDecHelper
 
     print "."
     t0 = Time.new
-    # print("\nstart: check_power_floated: x=#{x} y=#{y} prec=#{prec} t0=#{t0} ")
     $stdout.flush
 
     # make sure x and y are LongDecimal
@@ -438,24 +448,31 @@ module TestLongDecHelper
     y = y.to_ld
     # calculate z = x**y
     z = LongMath.power(x, y, prec)
-    # puts("z=#{z}")
 
-    if (z.abs < LongMath::MAX_FLOATABLE && (x - 1).abs*1000000000 > 1)
+    corr2 = (x - 1).abs*1000000000
+    if (z.abs < LongMath::MAX_FLOATABLE && corr2 > 1)
       # compare y against w = x**y calculated using regular floating point arithmetic
       xf = x.to_f
       yf = y.to_f
       wf = (xf) ** (yf)
       zf = z.to_f
-      # puts("zf=#{zf} w=#{w}")
-      # assert((zf - w).abs / [zf.abs, w.abs, Float::MIN].max < 1e-9, "z=#{zf.to_s} and w=#{w.to_s} should be almost equal x=#{x} y=#{y} prec=#{prec}")
       qf = 1e9
-      delta = [ z.unit, zf.abs / qf ].max
-      if (yf.abs > 1) 
-	l = Math.log(yf.abs)
-	if (l > 1)
-	  delta *= l
+      delta = [ z.unit.to_f, zf.abs / qf ].max
+      # puts "delta=#{delta} z=#{z} zu=#{z.unit} zuf=#{z.unit.to_f} zf=#{zf} |zf/qf|=#{zf.abs/qf}"
+      if (yf.abs > 1)
+        l = Math.log(yf.abs)
+        if (l > 1)
+          delta *= l
         end
+        # puts "delta=#{delta} l=#{l}"
       end
+      corr = corr2 * 0.5
+      if corr > 1
+        corr_f = [ corr.to_f, 2 ].min.to_f
+        delta *= corr_f
+      end
+      # puts "delta=#{delta} corr_f=#{corr_f} corr=#{corr}"
+
       diff  = (zf - wf).abs
       assert(diff <= delta, "zf=#{zf.to_s} and wf=#{wf.to_s} should be almost equal x=#{x} y=#{y} delta=#{delta} l=#{l} diff=#{diff} prec=#{prec}")
     end
@@ -504,7 +521,6 @@ module TestLongDecHelper
     # calculate y = log10(x)
     y  = LongMath.log10(x, prec)
     yy = LongMath.log10(x, prec+10)
-    # assert_equal(yy.round_to_scale(y.scale, LongDecimal::ROUND_HALF_DOWN), y, "x=#{x} y=#{y} yy=#{yy}")
     assert_equal_rounded(yy, y, "x=#{x} y=#{y} yy=#{yy}")
 
     # compare y against z = log10(x) calculated using regular floating
@@ -519,7 +535,6 @@ module TestLongDecHelper
         df = [ 1e-13, z.abs / 1e10 ].max
         dl = y.unit
         delta = [ df, dl ].max
-        # assert((yf - z).abs / [yf.abs, z.abs, Float::MIN].max < 1e-9, "y=#{yf.to_s} and z=#{z.to_s} should be almost equal x=#{x}")
         assert((yf - z).abs < delta, "y=#{yf.to_s} and z=#{z.to_s} should be almost equal (x=#{x} delta=#{delta}")
       end
     end
@@ -548,7 +563,6 @@ module TestLongDecHelper
       assert((zz - z).abs <= u, "zz=#{zz.to_s} and z=#{z.to_s} should be almost equal (y=#{y.to_s} eprec=#{eprec} prec=#{prec})")
       delta = [ v*z*LongMath::LOG10*1.2, u * 1.1 ].max
       assert((x - z).abs <= delta, "x=#{x.to_s} and z=#{z.to_s} should be almost equal (y=#{y.to_s} eprec=#{eprec} prec=#{prec} delta=#{delta})")
-      # assert((x - z).abs <= z.unit, "x=#{x.to_s} and z=#{z.to_s} should be almost equal (y=#{y.to_s} eprec=#{eprec} prec=#{prec})")
     end
 
     return y
@@ -600,7 +614,6 @@ module TestLongDecHelper
         df = [ 1e-13, z.abs / 1e10 ].max
         dl = y.unit.abs
         delta = [ df, dl ].max
-        # assert((yf - z).abs / [yf.abs, z.abs, Float::MIN].max < 1e-9, "y=#{yf.to_s} and z=#{z.to_s} should be almost equal x=#{x}")
         assert((yf - z).abs < delta.to_f, "y=#{yf.to_s} and z=#{z.to_s} should be almost equal (x=#{x} delta=#{delta}")
       end
     end
@@ -654,8 +667,8 @@ module TestLongDecHelper
   #
   def check_sqrtb(x, s)
     y = LongMath.sqrtb(x)
-    z = y * y
-    zz = (y+1)*(y+1)
+    z = y.square
+    zz = (y+1).square
     assert(0 <= y, "sqrt must be >= 0" + s)
     assert(z <= x && x < zz, "y=#{y}=sqrt(#{x}) and x in [#{z}, #{zz})" + s)
     y
@@ -727,6 +740,62 @@ module TestLongDecHelper
     assert(0 <= y.sign, "sqrt must be >= 0" + str)
     assert(z0 <= x && x < z1, "y=#{y}=sqrt(#{x}) and x in [#{z0}, #{z1}) " + str)
     assert((x - z0 - r).zero?, "x=y*y+r x=#{x} z0=#{z0} z1=#{z1} y=#{y} r=#{r} total=#{x - z0 - r} " + str)
+    r
+  end
+
+  #
+  # helper method for test_int_cbrtb
+  #
+  def check_cbrtb(x, s)
+    y = LongMath.cbrtb(x)
+    z = y.cube
+    zz = (y+1).cube
+    assert(0 <= y, "cbrt must be >= 0" + s)
+    assert(z <= x && x < zz, "y=#{y}=cbrt(#{x}) and x in [#{z}, #{zz})" + s)
+    y
+  end
+
+  #
+  # helper method for test_int_cbrtb_with_remainder
+  #
+  def check_cbrtb_with_remainder(x, s)
+    y, r = LongMath.cbrtb_with_remainder(x)
+    z0 = y.cube
+    # puts "x=#{x} y=#{y} z0=#{z0} r=#{r}"
+    z1 = z0 + r
+    z2 = (y+1).cube
+    assert(0 <= y, "cbrt _with_remainder must be >= 0" + s)
+    assert_equal(z1, x, "x=#{x} y=#{y} r=#{r} z0=#{z0} z1=#{z1} z2=#{z2}" + s)
+    assert(z0 <= x && x < z2, "y=#{y}=cbrt(_with_remainder#{x}) and x in [#{z0}, #{z2}) r=#{r} z0=#{z0} z1=#{z1} z2=#{z2}" + s)
+    y
+  end
+
+  #
+  # helper method of test_cbrt
+  #
+  def check_cbrt(x, scale, mode, su0, su1, str)
+    y  = x.cbrt(scale, mode)
+    if (mode == LongMath::ROUND_HALF_UP || mode == LongMath::ROUND_HALF_DOWN || mode == LongMath::ROUND_HALF_EVEN)
+      yy = x.cbrt(scale+10, mode)
+      assert_equal(yy.round_to_scale(y.scale, mode), y, "x=#{x} y=#{y} yy=#{yy}")
+    end
+    z0 = (y+su0*y.unit).cube
+    z1 = (y+su1*y.unit).cube
+    assert(0 <= y.sign, "cbrt must be >= 0" + str)
+    assert(z0 <= x && x <= z1, "y=#{y}=cbrt(#{x}) and x in [#{z0}, #{z1}) su0=#{su0} su1=#{su1}" + str)
+    y
+  end
+
+  #
+  # helper method of test_cbrt_with_remainder
+  #
+  def check_cbrt_with_remainder(x, scale, str)
+    y, r = x.cbrt_with_remainder(scale)
+    z0 = y.cube
+    z1 = y.succ.cube
+    assert(0 <= y.sign, "cbrt must be >= 0" + str)
+    assert(z0 <= x && x < z1, "y=#{y}=cbrt(#{x}) and x in [#{z0}, #{z1}) " + str)
+    assert((x - z0 - r).zero?, "x=y**3+r x=#{x} z0=#{z0} z1=#{z1} y=#{y} r=#{r} total=#{x - z0 - r} " + str)
     r
   end
 

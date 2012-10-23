@@ -1,32 +1,25 @@
 Version
 -------
 
-This version ($Name: ALPHA_01_03 $) is functionally mostly identical with the
-previous alpha-0.01.02.  Support for rounding to any given set of last
-digits, for example allowing only 0 and 5 as last digit, has been
-added and tests for this kind of functionality are considered to be
-complete.  This functionality is useful for rounding patterns within
-currencies where the smallest unit is 0.05, not 0.01, like CHF.  In
-this case, remainders 0 and 5 modulo 10 are required.  For currencies
-where the smallest unit is 0.02, it would be 0, 2, 4, 8 modulo 10.
-But this has been implemented in a more general way, so it would also
-be possible to restrict the rounding results to any set modulo any
-integral number >= 2.
+This version ($Name: BETA_02_01 $) is similar to the previous alpha-0.01.03.
 
-Extensive testing has shown that apart from this new functionality
-there seems to be an issue when calculating powers of LongDecimal
-where the base is slightly less than 1 and the exponent is a big
-positive number.  In some cases where this should result in 0, the
-calculations seem to take time forever.  This issue should not stop
-long-decimal from becoming beta, so its solution will be postponed and
-it will be resolved temporarily by moving it to a different library.
-Ideas how to solve these issues are there, so eventually this
-power-functionality will be working even for these cases.
+Improvements over the previous version:
 
-All other functionality did not show any bugs during intensive
+- full support for JRuby
+- workaround for a bug in JRuby's Fixnum-multiplication, which has
+  been fixed for the next JRuby-version, but not for the existing installed base.
+- calculation of powers with exponents having huge magnitude and with
+  bases close to 1 works better now.
+- new method initialize_copy needed for clone()
+- new method cbrt (cubic root)
+- improved to_f which works better near Float::MAX
+- new Method LongMath.log_f to obtain a Float-Approximation of the log
+  of a LongDecimal
+- more and improved runit-Tests
+
+All this functionality did not show any bugs during intensive
 testing, so it could be assumed that the whole library is good for
-beta and maybe even production/stable, apart from the issues
-mentioned above, which are being separated into another library.
+beta and possibly even quite soon for production/stable.
 
 This software development effort is hosted on RubyForge (
 http://rubyforge.org/ ) under the project name "long-decimal", to be
@@ -34,15 +27,15 @@ found directly with http://rubyforge.org/projects/long-decimal/ .  So
 you should feel encouraged to look if there is a newer version, when
 you install long-decimal.
 
-This version is an alpha-version, which might also be called
-"pre-beta".  Operations +, -, *, / and sqrt should be working properly
-and would justify calling this release at least beta.  Even log and exp
-should be fine.  log, log2, log10 and exp have been tested
-for more than a million random values and the current version should
-cover all of these correctly.  But it is still possible, that in some
-cases the result deviates in the last digit by 1 or 2 from the real
-result.  A deviation of slightly more than half of the unit of the
-last digit is already present.  Improving on this would require an
+This version is an beta-version.
+Operations +, -, *, / and sqrt should be working properly
+and could probably justify calling this release production/stable.
+Even log and exp should be fine.  log, log2, log10 and exp have been
+tested for several million random values and the current version
+should cover all of these correctly.  But it is still possible, that
+in some cases the result deviates in the last digit by 1 or 2 from the
+required result.  A deviation of slightly more than half of the unit of
+the last digit is already present.  Improving on this would require an
 extensive extension of internal functionality to provide rounding
 information in case of last digits being 50000..., where additional
 digits would reveal if this really needs to be rounded up or down.
@@ -52,8 +45,28 @@ Speed could be improved as well.
 
 It would be a good idea to do some more mathematical analysis on how
 many digits are needed internally to guarantee the correctness of the
-digits that are provided.  But this will not be considered as a
-requirement for the beta-version.
+digits that are provided.  But this will not be considered a
+requirement for the next versions to come.
+
+A unique feature of long-decimal is the method
+round_to_allowed_remainders().  This can be used for financial
+calculations, where the last digit is required to be 0 or 5, which can
+be achieved by calling
+l.round_to_allowed_remainders([0, 5], 10, LongDecimalRoundingMode::ROUND_HALF_UP)
+But this has been defined and developed in a more generic way, so the
+modulus (here 10) and the set of allowed digits can be chosen
+abritrarily, in which case the integral number, that is obtained by
+disregarding the decimal point, is rounded in such a way that its
+remainder modulo the modulus is in the list of allowed remainders,
+after which the decimal point is inserted again.
+
+Usage
+-----
+
+require 'rubygems'
+require 'long-decimal'
+
+(then use it.)
 
 Test
 ----
@@ -67,30 +80,72 @@ correctly.  The set of tests that is available now is considered to be
 complete.  As a policy a release is not created unless all tests
 succeed.  Running all tests can take a few minutes or even hours,
 depending on your machine.  Whatever is gained by making the software
-run faster is used up again by adding more tests.  This is the result
-of the test:
+run faster is used up again by adding more tests.  The regular tests are run by
 
-Finished in 1160.808707 seconds.
+ruby test/testlongdecimal.rb
 
-131 tests, 45612 assertions, 0 failures, 0 errors
+This is the result of the test:
+
+Finished in 5174.187655 seconds.
+134 tests, 9461909 assertions, 0 failures, 0 errors
 
 In addition random tests for exp, exp2, exp10, sqrt, log, log2 and
-log10 can be run for a long time, using the script test/testrandom.rb.
-Likewise tests for powers x to the yth with random x and y can be
-tested for a long time using test/testrandpower.rb
+log10 can be run for a long time, using
 
-These two require installation of the ruby-library crypt-isaac for its
-random numbers, which works well with Linux or Windows and Cygwin.  If
-you actually want to run this and find an error with it, please report
-it with the lines of output revealing the bug on
+ruby test/testrandom.rb.
+
+The functionality in lib/long-decimal-extra.rb, which contains some
+more advanced and less tested methods, has its tests in
+
+ruby test/testlongdecimal-extra.rb
+
+and its random tests in
+
+ruby test/testrandom-extra.rb
+
+This is the result of the test:
+
+Finished in 4115.851979 seconds.
+12 tests, 976 assertions, 0 failures, 0 errors
+
+Likewise tests for powers x to the yth with random x and y (which also
+resided in long-decimal-extra.rb) can be tested for a long time using
+
+ruby test/testrandpower.rb
+
+These random tests require installation of the ruby-library
+crypt-isaac for its random numbers, which works well with Linux or
+Windows in combination with Cygwin.  Installation of crypt-isaac is
+slightly special.  You have to download the gem, then install it using
+gem install:
+
+$ cd /tmp
+$ wget http://rubyforge.org/frs/download.php/6461/crypt-isaac_0.9.1.gem
+$ su -l
+# cd /tmp
+# gem install ruby-isaac
+(you may need to adjust the URL for downloading the gem)
+
+ .... and then go into the directory, where the gem is
+ (/usr/local/lib/ruby/gems/1.8/gems/Crypt::ISAAC-0.9.1/ or
+ /usr/lib/ruby/gems/1.8/gems/Crypt::ISAAC-0.9.1/ or ...)
+
+# cd /usr/local/lib/ruby/gems/1.8/gems/Crypt::ISAAC-0.9.1/
+# ruby setup.rb install
+# exit
+$
+
+If you actually want to run tests for long-decimal or
+long-decimal-extra and find an error with it, please report it with
+the lines of output revealing the bug on
 http://rubyforge.org/projects/long-decimal/ -> tracker
 
 Install
 -------
 
 (REMARK: installation has only been successfully tested on Linux with
-ruby 1.8.4 and on Windows XP with Cygwin and ruby 1.8.4 and on Windows
-2000 with ruby 1.8.2)
+ruby 1.8.7 and on Windows 2000 with Cygwin and on Windows 2000 with
+native ruby)
 
 1. Using ruby-gems (preferred)
 - open a shell window
@@ -121,7 +176,7 @@ ruby 1.8.4 and on Windows XP with Cygwin and ruby 1.8.4 and on Windows
         $LONG_DECIMAL_VERSION is the version of long-decimal that you
                               have installed, like 0.00.20
   on my machine that would be
-  /usr/local/lib/ruby/gems/1.8/doc/long-decimal-0.00.20/rdoc/index.html
+  /usr/local/lib/ruby/gems/1.8/doc/long-decimal-0.02.01/rdoc/index.html
 
 2. Installing from the sources (it is preferred to use the
    gem-installation, but since long-decimal is open-source-software you
@@ -135,7 +190,7 @@ ruby 1.8.4 and on Windows XP with Cygwin and ruby 1.8.4 and on Windows
 - open a shell window
   cd to the directory where you have downloaded the .tar.gz-file
   unpack the file using tar
-  tar xfzvv long-decimal-alpha-1_00.tar.gz
+  tar xfzvv long-decimal-beta-1_00.tar.gz
   cd long-decimal
 - now you can use rake for several operations
   - rake test
@@ -154,61 +209,62 @@ in the gem-file.  It is not provided as a separate file any more.
 Bugs
 ----
 
-Calculations of the kind
-0.99999999999 ** 12423153125316415423512345234
-that are performed using LongMath.power tend to take forever, if the
-exponent is really big.
-
-Method round_to_allowed_remainders() of LongDecimal has not been
-tested enough.
-
 It is considered somewhat arbitrary to disallow calculation
 exponential functions if the result could not be expressed as Float.
 This limitation should be removed, even though it has to be added,
-that results of exponentiation that go beyond Float can only be handled
-at a great cost of performance, because they really need more than 300
-digits.
+that results of exponentiation that go beyond Float can only be
+handled with quite significant calculation effort, because they really
+need more than 300 digits.
 
 Certain calculations are too slow.  Algorithms need to be optimized
 for speed.  The goal is to keep the algorithms in Ruby-code as long as
 possible to make it easier to optimize the algorithm.  If optimization
 beyond this level will be needed, C-code might be used, preferably
-based on an existing library.
+based on an existing library.  Since long-decimal is intending to
+provide full support for JRuby as well, equivalent implementations in
+Ruby or Java must be included for libraries written in C.
 
 Even though some mathematical background has already been invested,
-more effort from the theoretical side is needed in order to choose
-internal precision parameters in such a way that correctness of the
-result to all given digits can be guaranteed with a minimum of
+more effort from the theoretical side could be useful in order to
+choose internal precision parameters in such a way that correctness of
+the result to all given digits can be guaranteed with a minimum of
 overhead.  Currently parameters are probably slightly too careful,
 which slows calculations down.  But it is also possible that they are
-insufficient for certain calculations, yielding wrong results.
+insufficient for certain calculations, yielding slightly wrong results
+in some very rare situations, "wrong" meaning a deviation of a low
+multiple of the unit.
 
 rdoc-documentation and in-code comments are somewhat complete, but for
 a sophisticated library like this additional external documentation
-should be provided.  Currently this does not exist at all.
+should be provided in the long term.  Currently this does not exist at
+all.
 
 Please report any bugs you come across on
 http://rubyforge.org/projects/long-decimal -> Tracker.
 
-The status of long-decimal is considered to be alpha.
+The status of long-decimal is considered to be beta.
 
 License
 -------
 
 Ruby's license or LGPL
 Find copies of these licenses on http://www.gnu.org/ or http://www.ruby-lang.org/
+© Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
 
 Warranty
 --------
 
-This is a alpha-version.  Do not expect too much!  This is work in
-progress!  I do not take any responsibility.  Please use it as it is,
-change it according to the terms of the license or wait for a more
-stable version (for which I can't take any warranty either...)
+This is a beta-version.  Tests indicate that most functions work
+relyably in all situations and all functions work relyably in most
+situations.  But do not expect too much!  This is work in progress!  I
+do not take any responsibility.  Please use it as it is, change it
+according to the terms of the license or wait for a more stable
+version (for which I can't take any warranty either...)
 
 Author
 ------
 
 Karl Brodowsky
+IT Sky Consulting GmbH
 http://www.velofahren.de/cgi-bin/mailform.cgi
 (no direct mail address because I do not like spam)

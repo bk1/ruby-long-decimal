@@ -2,8 +2,10 @@
 #
 # testlongdecimal.rb -- runit test for long-decimal.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.63 2007/08/19 19:25:59 bk1 Exp $
-# CVS-Label: $Name: ALPHA_01_03 $
+# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
+#
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.68 2009/04/21 04:27:39 bk1 Exp $
+# CVS-Label: $Name: BETA_02_01 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -20,7 +22,7 @@ load "test/testlongdeclib.rb"
 class TestLongDecimal_class < RUNIT::TestCase
   include TestLongDecHelper
 
-  @RCS_ID='-$Id: testlongdecimal.rb,v 1.63 2007/08/19 19:25:59 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdecimal.rb,v 1.68 2009/04/21 04:27:39 bk1 Exp $-'
 
   #
   # test split_to_words and merge_from_words
@@ -482,6 +484,86 @@ class TestLongDecimal_class < RUNIT::TestCase
       check_sqrtw_with_remainder(x1, " 3*2**i i=#{i}")
       check_sqrtw_with_remainder(x1-1, " 3*2**i-1 i=#{i}")
       check_sqrtw_with_remainder(x1+1, " 3*2**i+1 i=#{i}")
+    end
+  end
+
+  #
+  # test method cbrtb for calculating cbrt of short integers
+  #
+  def test_int_cbrtb
+    assert_equal(-1, LongMath.cbrtb(-1), "cbrt(-1)=i")
+    4096.times do |x|
+      check_cbrtb(x, " loop x=#{x}")
+    end
+    512.times do |i|
+      x1 = i*i*i
+      y = check_cbrtb(x1, " i*i i=#{i}")
+      assert_equal(i, y, "i=#{i} y=#{y}")
+      if (i > 0) then
+        x2 = x1 + 1
+        y = check_cbrtb(x2, " i*i+1 i=#{i}")
+        assert_equal(i, y, "i=#{i} y=#{y}")
+        x0 = x1 - 1
+        y = check_cbrtb(x0, " i*i-1 i=#{i}")
+        assert_equal(i-1, y, "i=#{i} y=#{y}")
+      end
+
+      x1 = 1 << i
+      y = check_cbrtb(x1, " 2**i i=#{i}")
+      if (i % 3 == 0)
+        assert_equal(1 << (i / 3), y, "2^(i/3) i=#{i} y=#{y}")
+      end
+      if (i > 0) then
+        check_cbrtb(x1-1, " 2**i-1 i=#{i}")
+        check_cbrtb(x1+1, " 2**i+1 i=#{i}")
+      end
+
+      x1 = 3 << i
+      check_cbrtb(x1, " 3*2**i i=#{i}")
+      check_cbrtb(x1-1, " 3*2**i-1 i=#{i}")
+      check_cbrtb(x1+1, " 3*2**i+1 i=#{i}")
+    end
+  end
+
+  #
+  # test method cbrtb_with_remainder for calculating cbrt _with_remainderof short integers
+  #
+  def test_int_cbrtb_with_remainder
+    10.times do |x|
+      check_cbrtb_with_remainder(x, " loop x=#{x}")
+    end
+    100.times do |i|
+      x = 10 * i + 10
+      check_cbrtb_with_remainder(x, " loop x=#{x}")
+    end
+    50.times do |j|
+      i = 10 * j
+      x1 = i * i * i
+      y = check_cbrtb_with_remainder(x1, " i**3 i=#{i}")
+      assert_equal(i, y, "i=#{i} y=#{y}")
+      if (i > 0) then
+        x2 = x1 + 1
+        y = check_cbrtb_with_remainder(x2, " i**3+1 i=#{i}")
+        assert_equal(i, y, "i=#{i} y=#{y}")
+        x0 = x1 - 1
+        y = check_cbrtb_with_remainder(x0, " i**3-1 i=#{i}")
+        assert_equal(i-1, y, "i=#{i} y=#{y}")
+      end
+
+      x1 = 1 << i
+      y = check_cbrtb_with_remainder(x1, " 2**i i=#{i}")
+      if (i % 3 == 0)
+        assert_equal(1 << (i/3), y, "2^(i/3) i=#{i} y=#{y}")
+      end
+      if (i > 0) then
+        check_cbrtb_with_remainder(x1-1, " 2**i-1 i=#{i}")
+        check_cbrtb_with_remainder(x1+1, " 2**i+1 i=#{i}")
+      end
+
+      x1 = 3 << i
+      check_cbrtb_with_remainder(x1, " 3*2**i i=#{i}")
+      check_cbrtb_with_remainder(x1-1, " 3*2**i-1 i=#{i}")
+      check_cbrtb_with_remainder(x1+1, " 3*2**i+1 i=#{i}")
     end
   end
 
@@ -1346,7 +1428,6 @@ class TestLongDecimal_class < RUNIT::TestCase
 
   def check_round_to_one_remainder(i, r, modulus, rounding_mode, zero_rounding_mode)
 
-    # puts("i=#{i} r=#{r} m=#{modulus}")
     zero_modes = [ LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS,\
       LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS,\
       LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS,\
@@ -1786,7 +1867,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert(((-l).to_f + 1e-281).abs < 1e-282, "l=#{l.inspect}=#{l.to_s}=#{l.to_f}=#{l.to_s.to_f}")
 
     l = LongDecimal("0.00000000000000000000000000000000000000000000000000002090000000000000000000000000332000042999999999999999934478499999999999999999999979183597303900000000000002280678889571719972270000000870125632696979999999999928587104894304210318436999963636067429710015568287618182130517226303011944557351440293760289098908449297658922618709026683663019359834144789263320")
-    assert((l.to_f - 0.0000000000000000000000000000000000000000000000000000209).abs < 1e-60, "l=#{l.inspect}")
+    delta1 = (l - LongDecimal("0.0000000000000000000000000000000000000000000000000000209"))
+    delta2 = delta1.to_f.abs
+    assert(delta2 < 1e-60, "l=#{l.inspect}=#{l.to_s} delta1=#{delta1} delta2=#{delta2}")
     assert(((-l).to_f + 0.0000000000000000000000000000000000000000000000000000209).abs < 1e-60, "l=#{l.inspect}")
   end
 
@@ -2022,6 +2105,71 @@ class TestLongDecimal_class < RUNIT::TestCase
     zz = Complex(2.76, 3)
     assert_kind_of(Complex, z, "z=#{z.inspect}")
     assert_equal(zz, z, "z=#{z.inspect}")
+  end
+
+  #
+  # test multiplication of fixnum, which is buggy in JRuby and has been fixed here.
+  #
+  def test_int_mul
+    65.times do |i|
+      x0 = (1<<i)-1
+      3.times do |k|
+        x = x0+k
+        65.times do |j|
+          y0 = (1<<j)-1
+          3.times do |l|
+            y = y0+l
+            z = x*y
+            if (x == 0 || y == 0)
+              assert_equal(0, z)
+              next
+            end
+            assert_equal(0, z%x)
+            assert_equal(0, z%y)
+            assert_equal(y, z/x)
+            assert_equal(x, z/y)
+          end
+        end
+      end
+    end
+  end
+
+  #
+  # test multiplication of fixnum, which is buggy in JRuby and has been fixed here.
+  #
+  def test_mul2
+    map = {}
+    65.times do |i|
+      x0 = (1<<i)-1
+      3.times do |k|
+        x1 = x0+k
+        4.times do |s|
+          x = LongDecimal(x1, s)
+          map[x] = x1
+        end
+      end
+    end
+    map.each do |x, x1|
+      # puts "x=#{x} x1=#{x1}"
+      print ":"
+      $stdout.flush
+      map.each do |y, y1|
+        z = x*y
+        z1 = x1*y1
+        zz = LongDecimal(z1, x.scale + y.scale)
+        assert_equal(zz, z)
+        if (x.zero? || y.zero?)
+          assert(z.zero?)
+          next
+        end
+        rx = z%x
+        ry = z%y
+        assert "x=#{x} y=#{y} z=#{z} rx=#{rx}", (z%x).zero?
+        assert "x=#{x} y=#{y} z=#{z} rx=#{ry}", (z%y).zero?
+        assert_equal(y, (z/x).round_to_scale(y.scale))
+        assert_equal(x, (z/y).round_to_scale(x.scale))
+      end
+    end
   end
 
   #
@@ -2865,6 +3013,19 @@ class TestLongDecimal_class < RUNIT::TestCase
   end
 
   #
+  # test cube of LongDecimal
+  #
+  def test_cube
+    10.times do |i|
+      n = (i*i+i)/2
+      x = LongDecimal(n, i)
+      y = x.cube
+      z = LongDecimal(n*n*n, 3*i)
+      assert_equal(y, z, "cube i=#{i}")
+    end
+  end
+
+  #
   # test reciprocal of LongDecimal
   #
   def test_reciprocal
@@ -3416,7 +3577,7 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert(y0.succ.square > x, "(y0.succ).square")
     y1 = check_sqrt(x, 120, LongDecimal::ROUND_HALF_EVEN, -1, 1, "two")
     y2 = check_sqrt(x, 120, LongDecimal::ROUND_UP, -1, 0, "two")
-    assert(y2.pred.square < x, "y2.pred.squre")
+    assert(y2.pred.square < x, "y2.pred.square")
     assert(y2.square > x, "y2*y2")
     assert(y0 <= y1, "y0 y1")
     assert(y1 <= y2, "y1 y2")
@@ -3426,7 +3587,7 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert(y0.succ.square > x, "(y0.succ).square")
     y1 = check_sqrt(x, 140, LongDecimal::ROUND_HALF_EVEN, -1, 1, "two")
     y2 = check_sqrt(x, 140, LongDecimal::ROUND_UP, -1, 0, "two")
-    assert(y2.pred.square < x, "y2.pred.squre")
+    assert(y2.pred.square < x, "y2.pred.square")
     assert(y2.square > x, "y2*y2")
     assert(y0 <= y1, "y0 y1")
     assert(y1 <= y2, "y1 y2")
@@ -3436,7 +3597,7 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert(y0.succ.square > x, "(y0.succ).square")
     y1 = check_sqrt(x, 160, LongDecimal::ROUND_HALF_EVEN, -1, 1, "two")
     y2 = check_sqrt(x, 160, LongDecimal::ROUND_UP, -1, 0, "two")
-    assert(y2.pred.square < x, "y2.pred.squre")
+    assert(y2.pred.square < x, "y2.pred.square")
     assert(y2.square > x, "y2*y2")
     assert(y0 <= y1, "y0 y1")
     assert(y1 <= y2, "y1 y2")
@@ -3446,7 +3607,7 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert(y0.succ.square > x, "(y0.succ).square")
     y1 = check_sqrt(x, 120, LongDecimal::ROUND_HALF_EVEN, -1, 1, "two")
     y2 = check_sqrt(x, 120, LongDecimal::ROUND_UP, -1, 0, "two")
-    assert(y2.pred.square < x, "y2.pred.squre")
+    assert(y2.pred.square < x, "y2.pred.square")
     assert(y2.square > x, "y2*y2")
     assert(y0 <= y1, "y0 y1")
     assert(y1 <= y2, "y1 y2")
@@ -3456,7 +3617,7 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert(y0.succ.square > x, "(y0.succ).square")
     y1 = check_sqrt(x, 100, LongDecimal::ROUND_HALF_EVEN, -1, 1, "two")
     y2 = check_sqrt(x, 100, LongDecimal::ROUND_UP, -1, 0, "two")
-    assert(y2.pred.square < x, "y2.pred.squre")
+    assert(y2.pred.square < x, "y2.pred.square")
     assert(y2.square > x, "y2*y2")
     assert(y0 <= y1, "y0 y1")
     assert(y1 <= y2, "y1 y2")
@@ -3467,7 +3628,7 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert(y0.succ.square > x, "(y0.succ).square")
     y1 = check_sqrt(x, 120, LongDecimal::ROUND_HALF_EVEN, -1, 1, "three")
     y2 = check_sqrt(x, 120, LongDecimal::ROUND_UP, -1, 0, "three")
-    assert(y2.pred.square < x, "y2.pred.squre")
+    assert(y2.pred.square < x, "y2.pred.square")
     assert(y2.square > x, "y2*y2")
     assert(y0 <= y1, "y0 y1")
     assert(y1 <= y2, "y1 y2")
@@ -3532,6 +3693,143 @@ class TestLongDecimal_class < RUNIT::TestCase
     xr = Rational(224, 227)
     yr = LongMath.sqrt(xr, 31, LongMath::ROUND_HALF_EVEN)
     zr = yr.square.round_to_scale(30, LongMath::ROUND_HALF_EVEN)
+    assert((zr-xr).abs <= zr.unit, "zr-xr")
+  end
+
+  #
+  # test cbrt of LongDecimal
+  #
+  def test_cbrt
+    x = LongDecimal.zero!(101)
+    y = check_cbrt(x, 120, LongDecimal::ROUND_UNNECESSARY, 0, 0, "zero")
+    assert(y.zero?, "cbrt(0)")
+
+    x = LongDecimal.one!(101)
+    y = check_cbrt(x, 120, LongDecimal::ROUND_UNNECESSARY, 0, 0, "one")
+    assert(y.one?, "cbrt(1)")
+
+    x = LongDecimal.two!(101)
+    y0 = check_cbrt(x, 120, LongDecimal::ROUND_DOWN, 0, 1, "two")
+    assert(y0.cube < x, "y0**3")
+    assert(y0.succ.cube > x, "(y0.succ).cube")
+    y1 = check_cbrt(x, 120, LongDecimal::ROUND_HALF_EVEN, -1, 1, "two")
+    y2 = check_cbrt(x, 120, LongDecimal::ROUND_UP, -1, 0, "two")
+    assert(y2.pred.cube < x, "y2.pred.cube")
+    assert(y2.cube > x, "y2**3")
+    assert(y0 <= y1, "y0 y1")
+    assert(y1 <= y2, "y1 y2")
+
+    y0 = check_cbrt(x, 140, LongDecimal::ROUND_DOWN, 0, 1, "two")
+    assert(y0.cube < x, "y0**3")
+    assert(y0.succ.cube > x, "(y0.succ).cube")
+    y1 = check_cbrt(x, 140, LongDecimal::ROUND_HALF_EVEN, -1, 1, "two")
+    y2 = check_cbrt(x, 140, LongDecimal::ROUND_UP, -1, 0, "two")
+    assert(y2.pred.cube < x, "y2.pred.cube")
+    assert(y2.cube > x, "y2**3")
+    assert(y0 <= y1, "y0 y1")
+    assert(y1 <= y2, "y1 y2")
+
+    y0 = check_cbrt(x, 160, LongDecimal::ROUND_DOWN, 0, 1, "two")
+    assert(y0.cube < x, "y0**3")
+    assert(y0.succ.cube > x, "(y0.succ).cube")
+    y1 = check_cbrt(x, 160, LongDecimal::ROUND_HALF_EVEN, -1, 1, "two")
+    y2 = check_cbrt(x, 160, LongDecimal::ROUND_UP, -1, 0, "two")
+    assert(y2.pred.cube < x, "y2.pred.cube")
+    assert(y2.cube > x, "y2**3")
+    assert(y0 <= y1, "y0 y1")
+    assert(y1 <= y2, "y1 y2")
+
+    y0 = check_cbrt(x, 120, LongDecimal::ROUND_DOWN, 0, 1, "two")
+    assert(y0.cube < x, "y0**3")
+    assert(y0.succ.cube > x, "(y0.succ).cube")
+    y1 = check_cbrt(x, 120, LongDecimal::ROUND_HALF_EVEN, -1, 1, "two")
+    y2 = check_cbrt(x, 120, LongDecimal::ROUND_UP, -1, 0, "two")
+    assert(y2.pred.cube < x, "y2.pred.cube")
+    assert(y2.cube > x, "y2**3")
+    assert(y0 <= y1, "y0 y1")
+    assert(y1 <= y2, "y1 y2")
+
+    y0 = check_cbrt(x, 100, LongDecimal::ROUND_DOWN, 0, 1, "two")
+    assert(y0.cube < x, "y0**3")
+    assert(y0.succ.cube > x, "(y0.succ).cube")
+    y1 = check_cbrt(x, 100, LongDecimal::ROUND_HALF_EVEN, -1, 1, "two")
+    y2 = check_cbrt(x, 100, LongDecimal::ROUND_UP, -1, 0, "two")
+    assert(y2.pred.cube < x, "y2.pred.cube")
+    assert(y2.cube > x, "y2**3")
+    assert(y0 <= y1, "y0 y1")
+    assert(y1 <= y2, "y1 y2")
+
+    x = 3.to_ld
+    y0 = check_cbrt(x, 120, LongDecimal::ROUND_DOWN, 0, 1, "three")
+    assert(y0.cube < x, "y0**3")
+    assert(y0.succ.cube > x, "(y0.succ).cube")
+    y1 = check_cbrt(x, 120, LongDecimal::ROUND_HALF_EVEN, -1, 1, "three")
+    y2 = check_cbrt(x, 120, LongDecimal::ROUND_UP, -1, 0, "three")
+    assert(y2.pred.cube < x, "y2.pred.cube")
+    assert(y2.cube > x, "y2**3")
+    assert(y0 <= y1, "y0 y1")
+    assert(y1 <= y2, "y1 y2")
+
+    x  = 8.to_ld(101)
+    y0 = check_cbrt(x, 120, LongDecimal::ROUND_DOWN, 0, 0, "eight")
+    y1 = check_cbrt(x, 120, LongDecimal::ROUND_HALF_EVEN, 0, 0, "eight")
+    y2 = check_cbrt(x, 120, LongDecimal::ROUND_UP, 0, 0, "eight")
+    assert_equal(y0, y1, "y0 y1")
+    assert_equal(y1, y2, "y1 y2")
+  end
+
+  #
+  # test cbrt_with_remainder of LongDecimal
+  #
+  def test_cbrt_with_remainder
+    x = LongDecimal.zero!(101)
+    r = check_cbrt_with_remainder(x, 120, "zero")
+    assert(r.zero?, "rcbrt(0)")
+
+    x = LongDecimal.one!(101)
+    r = check_cbrt_with_remainder(x, 120, "one")
+    assert(r.zero?, "rcbrt(1)")
+
+    x = LongDecimal.two!(101)
+    check_cbrt_with_remainder(x, 120, "two")
+    check_cbrt_with_remainder(x, 140, "two")
+    check_cbrt_with_remainder(x, 160, "two")
+    check_cbrt_with_remainder(x, 100, "two")
+
+    x = 3.to_ld
+    check_cbrt_with_remainder(x, 120, "three")
+    check_cbrt_with_remainder(x, 140, "three")
+    check_cbrt_with_remainder(x, 160, "three")
+    check_cbrt_with_remainder(x, 100, "three")
+
+    x  = 8.to_ld.round_to_scale(101)
+    r = check_cbrt_with_remainder(x, 120, "four")
+    assert(r.zero?, "rcbrt(8)")
+
+    x = 5.to_ld
+    check_cbrt_with_remainder(x, 120, "five")
+  end
+
+  #
+  # test LongMath.cbrt with non-LongDecimal arguments
+  #
+  def test_non_ld_cbrt
+    xi = 77
+    yi = LongMath.cbrt(xi, 32, LongMath::ROUND_HALF_EVEN)
+    zi = yi.cube.round_to_scale(30, LongMath::ROUND_HALF_EVEN)
+    assert(zi.is_int?, "zi=#{zi.to_s}")
+    assert_equal(xi, zi.to_i, "zi")
+
+    xf = 77.0
+    yf = LongMath.cbrt(xf, 32, LongMath::ROUND_HALF_EVEN)
+    zf = yf.cube.round_to_scale(30, LongMath::ROUND_HALF_EVEN)
+    assert(zf.is_int?, "zf")
+    assert_equal(xf, zf.to_f, "zf")
+    assert_equal(yi, yf, "i-f")
+
+    xr = Rational(224, 227)
+    yr = LongMath.cbrt(xr, 32, LongMath::ROUND_HALF_EVEN)
+    zr = yr.cube.round_to_scale(30, LongMath::ROUND_HALF_EVEN)
     assert((zr-xr).abs <= zr.unit, "zr-xr")
   end
 

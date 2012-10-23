@@ -1,9 +1,11 @@
 #!/usr/bin/env ruby
 #
-# testrandpower.rb -- runit test for long-decimal.rb
+# testrandpower.rb -- random tests for power-method from long-decimal-extra.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testrandpower.rb,v 1.10 2007/08/19 19:25:59 bk1 Exp $
-# CVS-Label: $Name: ALPHA_01_03 $
+# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
+#
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testrandpower.rb,v 1.12 2009/04/18 05:51:14 bk1 Exp $
+# CVS-Label: $Name: BETA_02_01 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -25,7 +27,7 @@ class TestRandomPower_class < RUNIT::TestCase
   include TestLongDecHelper
   include TestRandomHelper
 
-  @RCS_ID='-$Id: testrandpower.rb,v 1.10 2007/08/19 19:25:59 bk1 Exp $-'
+  @RCS_ID='-$Id: testrandpower.rb,v 1.12 2009/04/18 05:51:14 bk1 Exp $-'
 
   # for how many seconds should this test run? change to different
   # value on demand
@@ -49,13 +51,9 @@ class TestRandomPower_class < RUNIT::TestCase
       xarr.each do |x|
         puts(" t=#{Time.new-t1} x=#{x}: ")
         next if x <= 0
-        # next if (x < 1.1)
-        # next if (x < 1)
-        # next if (x < 0.99)
         next if x.abs > LongMath::MAX_FLOATABLE || (1/x).abs > LongMath::MAX_FLOATABLE
         yarr.each do |y|
           puts("\ncnt=#{cnt} scnt=#{scnt} x=#{x} y=#{y} scx=#{x.scale} scy=#{y.scale} prec=#{prec}")
-          # next if x < 0.001 && y < 0
           next if x > 1 && y > LongMath::MAX_EXP_ABLE * 2
           next if x < 1 && y < -LongMath::MAX_EXP_ABLE * 2
           next if Math.log(1+x.to_i) * y.to_i > LongMath::MAX_EXP_ABLE

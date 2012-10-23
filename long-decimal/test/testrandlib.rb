@@ -1,12 +1,15 @@
 #!/usr/bin/env ruby
 #
-# testrandlib.rb -- runit test for long-decimal.rb
+# testrandlib.rb -- library for random tests for long-decimal.rb and long-decimal-extra.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testrandlib.rb,v 1.7 2006/05/07 20:00:24 bk1 Exp $
-# CVS-Label: $Name: ALPHA_01_03 $
+# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
+#
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testrandlib.rb,v 1.9 2009/04/15 19:29:38 bk1 Exp $
+# CVS-Label: $Name: BETA_02_01 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
+#require "rubygems"
 require "crypt/ISAAC"
 
 #
@@ -14,7 +17,7 @@ require "crypt/ISAAC"
 #
 module TestRandomHelper
 
-  @RCS_ID='-$Id: testrandlib.rb,v 1.7 2006/05/07 20:00:24 bk1 Exp $-'
+  @RCS_ID='-$Id: testrandlib.rb,v 1.9 2009/04/15 19:29:38 bk1 Exp $-'
 
   @@r1 = Crypt::ISAAC.new
   @@r2 = Crypt::ISAAC.new
