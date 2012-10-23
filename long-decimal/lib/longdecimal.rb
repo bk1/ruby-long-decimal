@@ -1,8 +1,8 @@
 #
 # longdecimal.rb -- Arbitrary precision decimals with fixed decimal point
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/longdecimal.rb,v 1.6 2006/03/10 20:10:45 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_10 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/longdecimal.rb,v 1.8 2006/03/14 20:25:22 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_11 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 require "complex"
@@ -16,7 +16,13 @@ require "bigdecimal"
 # this serves the purpose of an "enum" in C/C++
 #
 module LongDecimalRoundingMode
+
   RoundingModeClass = Struct.new(:name, :num)
+
+  #
+  # enumeration class to express the possible rounding modes that are
+  # supported by LongDecimal
+  #
   class RoundingModeClass
     include Comparable
 
@@ -47,8 +53,11 @@ module LongDecimalRoundingMode
 end # LongDecimalRoundingMode
 
 #
-# helper functions to support LongDecimal and LongDecimalQuot
-# functions for LongDecimal that do not go as methods of LongDecimal
+# LongMath provides some helper functions to support LongDecimal and
+# LongDecimalQuot, mostly operating on integers.  They are used
+# internally here, but possibly they can be used elsewhere as well.
+# In addition LongMath provides methods like those in Math, but for
+# LongDecimal instead of Float.
 #
 module LongMath
 
@@ -58,8 +67,8 @@ module LongMath
   MAX_EXP_ABLE  = Math.log(MAX_FLOATABLE).to_i
 
   #
-  # helper method: checks if word_len is of reasonable for splitting a
-  # number into parts
+  # helper method for internal use: checks if word_len is a reasonable
+  # size for splitting a number into parts
   #
   def LongMath.check_word_len(word_len, name="word_len")
     raise TypeError, "#{name} must be a positive number <= 1024" unless (word_len.kind_of? Fixnum) && word_len > 0 && word_len <= 1024
@@ -67,21 +76,22 @@ module LongMath
   end
 
   #
-  # helper method: checks if parameter x is an Integer
+  # helper method for internal use: checks if parameter x is an Integer
   #
   def LongMath.check_is_int(x, name="x")
     raise TypeError, "#{name}=#{x.inspect} must be Integer" unless x.kind_of? Integer
   end
 
   #
-  # helper method: checks if parameter x is a LongDecimal
+  # helper method for internal use: checks if parameter x is a LongDecimal
   #
   def LongMath.check_is_ld(x, name="x")
     raise TypeError, "x=#{x.inspect} must be LongDecimal" unless x.kind_of? LongDecimal
   end
 
   #
-  # helper method: checks if parameter x is a LongDecimal
+  # helper method for internal use: checks if parameter x is a
+  # reasonable value for the precision (scale) of a LongDecimal
   #
   def LongMath.check_is_prec(prec, name="prec")
     check_is_int(prec, "prec")
@@ -89,19 +99,21 @@ module LongMath
   end
 
   #
-  # helper method: checks if parameter x is a LongDecimal
+  # helper method for internal use: checks if parameter x is a
+  # rounding mode (instance of RoundingModeClass)
   #
   def LongMath.check_is_mode(mode, name="mode")
     raise TypeError, "#{name}=#{mode.inspect} must be legal rounding mode" unless mode.kind_of? RoundingModeClass
   end
 
   #
-  # split number x into parts of word_len bits each
-  # such that the concatenation of these parts as bit patterns is x
+  # split number (Integer) x into parts of word_len bits each such
+  # that the concatenation of these parts as bit patterns is x
+  # (the opposite of merge_from_words)
   #
   def LongMath.split_to_words(x, word_len = 32)
     check_word_len(word_len)
-    check_is_int(x)
+    check_is_int(x, "x")
     m = x.abs
     s = (x <=> 0)
     bit_pattern = (1 << word_len) - 1
@@ -119,6 +131,7 @@ module LongMath
 
   #
   # concatenate numbers given in words as bit patterns
+  # (the opposite of split_to_words)
   #
   def LongMath.merge_from_words(words, word_len = 32)
     check_word_len(word_len)
@@ -139,7 +152,10 @@ module LongMath
   end
 
   #
-  # calculate the square root of an integer using bitwise algorithm
+
+  # calculate the square root of an integer x using bitwise algorithm
+  # the result is rounded to an integer y such that
+  # y**2 <= x < (y+1)**2
   #
   def LongMath.sqrtb(x)
     a = sqrtb_with_remainder(x)
@@ -147,13 +163,13 @@ module LongMath
   end
 
   #
-  # calculate the an integer s >= 0 and a remainder r >= 0 such that
-  # x = s**2 + r and x < (x.succ)**2
+  # calculate the an integer s >= 0 and a remainder r >= 0 such that
+  # x = s**2 + r and s**2 <= x < (s+1)**2
   # the bitwise algorithm is used, which works well for relatively
   # small values of x.
   #
   def LongMath.sqrtb_with_remainder(x)
-    check_is_int(x)
+    check_is_int(x, "x")
 
     s = (x <=> 0)
     if (s == 0) then
@@ -182,7 +198,14 @@ module LongMath
   end
 
   #
-  # calculate the square root of an integer using larger chunks of the number
+
+  # calculate the square root of an integer using larger chunks of the
+  # number.  The optional parameter n provides the size of these
+  # chunks.  It is by default chosen to be 16, which is optimized for
+  # 32 bit systems, because internally parts of the double size are
+  # used.
+  # the result is rounded to an integer y such that
+  # y**2 <= x < (y+1)**2
   #
   def LongMath.sqrtw(x, n = 16)
     a = sqrtw_with_remainder(x, n)
@@ -191,14 +214,14 @@ module LongMath
 
   #
   # calculate the an integer s >= 0 and a remainder r >= 0 such that
-  # x = s**2 + r and x < (x.succ)**2
+  # x = s**2 + r and s**2 <= x < (s+1)**2
   # the wordwise algorithm is used, which works well for relatively
   # large values of x.  n defines the word size to be used for the
   # algorithm.  It is good to use half of the machine word, but the
   # algorithm would also work for other values.
   #
   def LongMath.sqrtw_with_remainder(x, n = 16)
-    check_is_int(x)
+    check_is_int(x, "x")
     check_is_int(n, "n")
     n2 = n<<1
     n1 = n+1
@@ -257,9 +280,10 @@ module LongMath
   end
 
   #
-  # find the gcd of x with b^n0 where n0 is a sufficiently high
-  # exponent such that gcd(x, b^m) = gcd(x, b^n)
-  # for all m, n > n0
+
+  # find the gcd of an Integer x with b**n0 where n0 is a sufficiently
+  # high exponent
+  # such that gcd(x, b**m) = gcd(x, b**n) for all m, n >= n0
   #
   def LongMath.gcd_with_high_power(x, b)
     check_is_int(x, "x")
@@ -283,9 +307,12 @@ module LongMath
   end
 
   #
-  # find the exponent of the highest power of prime number p that divides
-  # self.  Only works for prime numbers
-  # works even for numbers that exceed the range of Float
+  # Find the exponent of the highest power of prime number p that divides
+  # the Integer x.  Only works for prime numbers p (parameter prime_number).
+  # The caller has to make sure that p (parameter prime_number) is
+  # actually a prime number, because checks for primality actually cost
+  # something and should not be duplicated more than necessary.
+  # This method works even for numbers x that exceed the range of Float
   #
   def LongMath.multiplicity_of_factor(x, prime_number)
 
@@ -325,12 +352,14 @@ module LongMath
 
   #
   # method for calculating pi to the given number of digits after the
-  # decimal point
-  # works fine for 1000 or 2000 digits or so.
-  # this method could be optimized more, but if you really want to go
+  # decimal point.
+  # It works fine for 1000 or 2000 digits or so.
+  # This method could be optimized more, but if you really want to go
   # for more digits, you will find a specialized and optimized program
-  # for this specific purpose.
-  # (this is the easter egg ;-) )
+  # for this specific purpose, probably written in C or C++.
+  # Since calculation of pi is not what should typically be done with
+  # LongDecimal, you may consider this method to be the easter egg of
+  # LongDecimal. ;-)
   #
   def LongMath.calc_pi(prec, final_mode = LongDecimal::ROUND_HALF_DOWN)
     mode  = LongDecimal::ROUND_HALF_DOWN
@@ -368,7 +397,10 @@ module LongMath
   #
   # calc the exponential function of x to the given precision as
   # LongDecimal.  Only supports values of x such that the result still
-  # fits into a float (x <= 709)
+  # fits into a float (x <= 709).  This limitation is somewhat
+  # arbitrary, but it is enforced in order to avoid producing numbers
+  # with the exponential function that exceed the memory.  It may be
+  # removed in future versions.
   #
   def LongMath.exp(x, prec, mode = LongDecimal::ROUND_HALF_DOWN)
     check_is_ld(x, "x")
@@ -495,7 +527,7 @@ module LongMath
   end
 
   #
-  # calc the natural logarithm function of x to the given precision as
+  # calculate the natural logarithm function of x to the given precision as
   # LongDecimal.
   #
   def LongMath.log(x, prec, mode = LongDecimal::ROUND_HALF_DOWN)
@@ -506,7 +538,7 @@ module LongMath
   end
 
   #
-  # calc the base 10 logarithm of x to the given precision as
+  # calculate the base 10 logarithm of x to the given precision as
   # LongDecimal.
   #
   def LongMath.log10(x, prec, mode = LongDecimal::ROUND_HALF_DOWN)
@@ -526,7 +558,7 @@ module LongMath
   end
 
   #
-  # calc the base 2 logarithm of x to the given precision as
+  # calculate the base 2 logarithm of x to the given precision as
   # LongDecimal.
   #
   def LongMath.log2(x, prec, mode = LongDecimal::ROUND_HALF_DOWN)
@@ -659,7 +691,7 @@ end # LongMath
 # digits and the other one the position of the decimal point.
 #
 class LongDecimal < Numeric
-  @RCS_ID='-$Id: longdecimal.rb,v 1.6 2006/03/10 20:10:45 bk1 Exp $-'
+  @RCS_ID='-$Id: longdecimal.rb,v 1.8 2006/03/14 20:25:22 bk1 Exp $-'
 
   include LongDecimalRoundingMode
 
@@ -676,6 +708,7 @@ class LongDecimal < Numeric
   #    the resulting LongDecimal holds the number x, possibly rounded
   # 2. LongDecimal.new!(x, s) where x is a string or a number and s is the scale
   #    the resulting LongDecimal holds the number x / 10**s
+  #
   def LongDecimal.new!(x, s = 0)
     new(x, s)
   end
@@ -731,7 +764,7 @@ class LongDecimal < Numeric
   # point (scale=s)
   #
   def LongDecimal.power_of_ten!(e, s = 0)
-    raise TypeError, "non integer 1st arg \"#{e.inspect}\"" if ! e.kind_of? Integer
+    LongMath.check_is_int(e, "e")
     raise TypeError, "negative 1st arg \"#{e.inspect}\""    if e < 0
     new(10**(s+e), s)
   end
@@ -838,26 +871,28 @@ class LongDecimal < Numeric
 
   end # initialize
 
-  #
-  # get the integer value of self, disregarding the decimal point.
-  # Mostly for internal use.
-  #
-  def int_val
-    @int_val
-  end
+  attr_reader :int_val, :scale
+
+#   #
+#   # get the integer value of self, disregarding the decimal point.
+#   # Mostly for internal use.
+#   #
+#   def int_val
+#     @int_val
+#   end
+
+#   #
+#   # get the scale, i.e. the position of the decimal point.
+#   # Mostly for internal use.
+#   #
+#   def scale
+#     @scale
+#   end
 
   #
-  # get the scale, i.e. the position of the decimal point.
-  # Mostly for internal use.
+  # alter scale (changes self)
   #
-  def scale
-    @scale
-  end
-
-  #
-  # alter scale
-  # only for internal use.
-  # changes self
+  # only for internal use:
   # use round_to_scale instead
   #
   def scale=(s)
@@ -885,7 +920,10 @@ class LongDecimal < Numeric
   #
   # create copy of self with different scale
   # param1: new_scale  new scale for result
-  # param2: mode       rounding mode to be applied when information is lost
+  # param2: mode       rounding mode to be applied when information is
+  #                    lost.   defaults  to  ROUND_UNNECESSARY,  which
+  #                    means that  an exception is  thrown if rounding
+  #                    would actually loose any information.
   #
   def round_to_scale(new_scale, mode = ROUND_UNNECESSARY)
 
@@ -917,6 +955,14 @@ class LongDecimal < Numeric
   #
   # convert self into String, which is the decimal representation.
   # Use trailing zeros, if int_val has them.
+
+  # optional parameter shown_scale is the number of digits after the
+  # decimal point.  Defaults to the scale of self.
+  # optional parameter mode ist the rounding mode to be applied.
+  # Defaults to ROUND_UNNECESSARY, in which case an exception is
+  # thrown if rounding is actually necessary.
+  # optional parameter base is the base to be used when expressing
+  # self as string.  defaults to 10.
   #
   def to_s(shown_scale = @scale, mode = ROUND_UNNECESSARY, base = 10)
     if (base == 10) then
@@ -939,10 +985,17 @@ class LongDecimal < Numeric
     end
   end
 
+  #
+  # internal helper method, converts self to string in decimal system
+  # with default settings.
+  #
   def to_s_10
     to_s_internal(10, scale)
   end
 
+  #
+  # internal helper method, converts self to string in any number system
+  #
   def to_s_internal(b, sc)
     sg = sgn
     i = int_val.abs
@@ -973,7 +1026,9 @@ class LongDecimal < Numeric
   #
   # convert self into Float
   # this works straitforward by dividing int_val by power of 10 in
-  # float-arithmetic.
+  # float-arithmetic, in all cases where numerator and denominator are
+  # within the ranges expressable as Floats.  Goes via string
+  # representation otherwise.
   #
   def to_f
     divisor = denominator
@@ -983,16 +1038,11 @@ class LongDecimal < Numeric
       if (divisor.abs > LongMath::MAX_FLOATABLE) then
         return 0.0
       else
-        # puts("int_val=#{int_val}")
-        # $defout.flush
         f = int_val.to_f
-        # puts(" f=#{f}\n")
-        # $defout.flush
-	return f / divisor
-        # int_val.to_f / 10**scale
+        return f / divisor
       end
     elsif numerator.abs < divisor
-      # number is between -1 and 1
+      # self is between -1 and 1
       # factor = numerator.abs.div(LongMath::MAX_FLOATABLE)
       # digits = factor.to_ld.int_digits10
       # return LongDecimal(numerator.div(10**digits), scale -digits).to_f
@@ -1011,7 +1061,7 @@ class LongDecimal < Numeric
   # to_i when the number represented by self is actually an integer.
   #
   def to_i
-    (numerator / denominator).to_i
+    numerator.div(denominator)
   end
 
   #
@@ -1033,7 +1083,10 @@ class LongDecimal < Numeric
   #
   # LongDecimals can be seen as a fraction with a power of 10 as
   # denominator for compatibility with other numeric classes this
-  # method is included, returning 10**scale
+  # method is included, returning 10**scale.
+  # Please observe that there may be common factors of numerator and
+  # denominator in case of LongDecimal, which does not occur in case
+  # of Rational
   #
   def denominator
     10**scale
@@ -1042,11 +1095,20 @@ class LongDecimal < Numeric
   #
   # LongDecimals can be seen as a fraction with its int_val as its
   # numerator
+  # Please observe that there may be common factors of numerator and
+  # denominator in case of LongDecimal, which does not occur in case
+  # of Rational
   #
   alias numerator int_val
 
   #
   # number of binary digits before the decimal point, not counting a single 0.
+  # 0.xxx -> 0
+  # 1.xxx -> 1
+  # 2.xxx -> 2
+  # 4.xxx -> 3
+  # 8.xxx -> 4
+  # ...
   #
   def int_digits2
     int_part = self.to_i.abs
@@ -1064,7 +1126,12 @@ class LongDecimal < Numeric
   end
 
   #
-  # number of decimal digits before the decimal point, not counting a single 0.
+  # number of decimal digits before the decimal point, not counting a
+  # single 0.
+  # 0.xxx -> 0
+  # 1.xxx -> 1
+  # 10.xxx -> 2
+  # ...
   #
   def int_digits10
     int_part = self.to_i.abs
@@ -1139,7 +1206,9 @@ class LongDecimal < Numeric
   end
 
   #
-  # successor for ranges
+  # successor as needed for using LongDecimal in ranges
+  # it needs to be observed that this is usually not an increment by
+  # 1, but by 1/10**scale.
   #
   def succ
     LongDecimal(int_val + 1, scale)
@@ -1148,7 +1217,9 @@ class LongDecimal < Numeric
   alias next succ
 
   #
-  # predecessor
+  # predecessor (opposite of successor)
+  # it needs to be observed that this is usually not an decrement by
+  # 1, but by 1/10**scale.
   #
   def pred
     LongDecimal(int_val - 1, scale)
@@ -1166,6 +1237,20 @@ class LongDecimal < Numeric
   #
   def dec
     self - 1
+  end
+
+  #
+  # self += 1
+  #
+  def inc!
+    @int_val += denominator
+  end
+
+  #
+  # self -= 1
+  #
+  def dec!
+    @int_val -= denominator
   end
 
   #
@@ -1286,6 +1371,16 @@ class LongDecimal < Numeric
     end
   end
 
+  #
+  # divide self by other and return result as LongDecimalQuot
+  # because division does not have an obvious rounding rule like
+  # addition, subtraction and multiplication, the result needs to be
+  # rounded afterwards to become a LongDecimal again.  This way
+  # calculations can still be done in the natural readable way using +,
+  # -, *, and /, but the rounding can be provided later.
+  # It is very important in complicated calculations put the rounding
+  # steps in the right places, usually after having performed a division.
+  #
   def /(other)
     o, s = coerce(other)
     if (s.kind_of? LongDecimal) then
@@ -1295,6 +1390,17 @@ class LongDecimal < Numeric
     end
   end
 
+  #
+  # power of self (LongDecimal) with other.
+  # if other is expressable as non-negative integer, the power is what
+  # would be obtained by successive multiplications.
+  # if other is expressable as negative integer, the power is a
+  # LongDecimalQuot as would result by successive division, but with
+  # the same scale as the positive power would get.  Explicit rounding
+  # is needed to convert into a LongDecimal again
+  # in all other cases, self is converted into a Rational prior to
+  # applying power, usually resulting in a Float as power.
+  #
   def **(other)
     if ((other.kind_of? LongDecimal) || (other.kind_of? LongDecimalQuot)) && other.is_int? then
       other = other.to_i
@@ -1315,6 +1421,9 @@ class LongDecimal < Numeric
     end
   end
 
+  #
+  # do integer division with remainder, returning two values
+  #
   def divmod(other)
     if (other.kind_of? Complex) then
       raise TypeError, "divmod not supported for Complex"
@@ -1323,13 +1432,16 @@ class LongDecimal < Numeric
     return q, self - other * q
   end
 
+  #
+  # remainder of integer division by other
+  #
   def %(other)
     q, r = divmod other
     r
   end
 
   #
-  # performs bitwise AND between self and Numeric
+  # performs bitwise AND between self and other
   #
   def &(other)
     s, o = equalize_scale(other)
@@ -1341,7 +1453,7 @@ class LongDecimal < Numeric
   end
 
   #
-  # performs bitwise OR between self and Numeric
+  # performs bitwise OR between self and other
   #
   def |(other)
     s, o = equalize_scale(other)
@@ -1353,7 +1465,7 @@ class LongDecimal < Numeric
   end
 
   #
-  # performs bitwise XOR between self and Numeric
+  # performs bitwise XOR between self and other
   #
   def ^(other)
     s, o = equalize_scale(other)
@@ -1372,7 +1484,7 @@ class LongDecimal < Numeric
   end
 
   #
-  # performs bitwise left shift of self by Numeric
+  # performs bitwise left shift of self by other
   #
   def <<(other)
     unless (other.kind_of? Integer) && other >= 0 then
@@ -1382,7 +1494,7 @@ class LongDecimal < Numeric
   end
 
   #
-  # performs bitwise right shift of self by Numeric
+  # performs bitwise right shift of self by other
   #
   def >>(other)
     unless (other.kind_of? Integer) && other >= 0 then
@@ -1392,7 +1504,7 @@ class LongDecimal < Numeric
   end
 
   #
-  # gets binary digit
+  # gets binary digit of self
   #
   def [](other)
     int_val[other]
@@ -1430,6 +1542,7 @@ class LongDecimal < Numeric
   end
 
   #
+  # internal method
   # divide by 10**n
   #
   def move_point_left_int(n)
@@ -1438,6 +1551,7 @@ class LongDecimal < Numeric
   end
 
   #
+  # internal method
   # multiply by 10**n
   #
   def move_point_right_int(n)
@@ -1482,6 +1596,8 @@ class LongDecimal < Numeric
     1 / self
   end
 
+  alias inverse reciprocal
+
   #
   # Absolute value
   #
@@ -1491,13 +1607,22 @@ class LongDecimal < Numeric
 
   #
   # square of absolute value
+  # happens to be the square
   #
-  def abs2
-    self.abs.square
-  end
+  alias abs2 square
 
   #
-  # Compares the absolute values of the two numbers.
+  # Compares the two numbers.
+  # returns -1 if self < other
+  #          0 if self-other = 0
+  #         +1 if self > other
+  # it needs to be observed, that
+  # x == y implies (x <=> y) == 0
+  # but not
+  # (x <=> y) == 0 implies x == y
+  # because == also takes the scale into account and considers two
+  # numbers only equal, if they have the same number of potentially
+  # zero digits after the decimal point.
   #
   def <=> (other)
     diff = (self - other)
@@ -1508,15 +1633,26 @@ class LongDecimal < Numeric
     end
   end
 
+  #
+  # <=>-comparison for the scales
+  #
   def scale_ufo(other)
     raise TypeError, "only works for LongDecimal and LongDecimalQuot" unless (other.kind_of? LongDecimal) || (other.kind_of? LongDecimalQuot)
     self.scale <=> other.scale
   end
 
+  #
+  # ==-comparison for the scales
+  #
   def scale_equal(other)
     scale_ufo(other).zero?
   end
 
+  #
+  # return a pair o, s resembling other, self, but potentially
+  # converted to compatible types and ready for
+  # arithmetic operations.
+  #
   def coerce(other)
     if other.kind_of? LongDecimal then
       return other, self
@@ -1550,25 +1686,48 @@ class LongDecimal < Numeric
     end
   end
 
+  #
   # is self expressable as an integer without loss of digits?
+  #
   def is_int?
     scale == 0 || int_val % 10**scale == 0
   end
 
+  #
+  # get the sign of self
+  # -1 if self < 0
+  #  0 if self is 0 (with any number of 0s after the decimal point)
+  # +1 if self > 0
+  #
   def sgn
     int_val <=> 0
   end
+
   alias signum sgn
   alias sign   sgn
 
+  #
+  # comparison of self with other for equality
+  # takes into account the values expressed by self and other and the
+  # equality of the number of digits.
+  #
   def ==(other)
-    (other.kind_of? LongDecimal) && (self <=> other) == 0 && self.scale == other.scale
+    # (other.kind_of? LongDecimal) && (self <=> other) == 0 && self.scale == other.scale
+    (other.kind_of? LongDecimal) && self.int_val == other.int_val && self.scale == other.scale
   end
 
+  #
+  # check if the number expressed by self is 0 (zero)
+  # with any number of 0s after the decimal point.
+  #
   def zero?
     int_val.zero?
   end
 
+  #
+  # check if the number expressed by self is 1 (one)
+  # with any number of 0s after the decimal point.
+  #
   def one?
     (self-1).zero?
   end
@@ -1596,10 +1755,19 @@ end # LongDecimal
 #
 class LongDecimalQuot < Numeric
 
-  @RCS_ID='-$Id: longdecimal.rb,v 1.6 2006/03/10 20:10:45 bk1 Exp $-'
+  @RCS_ID='-$Id: longdecimal.rb,v 1.8 2006/03/14 20:25:22 bk1 Exp $-'
 
   include LongDecimalRoundingMode
 
+  #
+  # constructor
+  # first, second is either a pair of LongDecimals or a Rational and an Integer
+  # The resulting LongDecimal will contain a rational obtained by
+  # dividing the two LongDecimals or by taking the Rational as it is.
+  # The scale is there to provide a default rounding precision for
+  # conversion to LongDecimal, but it has no influence on the value
+  # expressed by the LongDecimalQuot
+  #
   def LongDecimalQuot.new!(first, second)
     new(first, second)
   end
@@ -1607,6 +1775,7 @@ class LongDecimalQuot < Numeric
   #
   # create a new LongDecimalQuot from a rational and a scale or a
   # pair of LongDecimals
+  #
   def initialize(first, second)
     if ((first.kind_of? Rational) || (first.kind_of? Integer)) && (second.kind_of? Integer) then
       @rat = Rational(first.numerator, first.denominator)
@@ -1621,24 +1790,35 @@ class LongDecimalQuot < Numeric
     end
   end
 
+  attr_reader :scale, :rat
 
-  def scale
-    @scale
-  end
+#   def scale
+#     @scale
+#   end
 
-  def rat
-    @rat
-  end
+#   def rat
+#     @rat
+#   end
 
+  #
+  # numerator of the included rational number.
+  # LongDecimals should duck type like Rationals
+  #
   def numerator
     rat.numerator
   end
 
+  #
+  # denominator of the included rational number.
+  # LongDecimals should duck type like Rationals
+  #
   def denominator
     rat.denominator
   end
 
-  # alter scale
+  #
+  # alter scale (only for internal use)
+  #
   def scale=(s)
     raise TypeError, "non integer arg \"#{s.inspect}\"" if ! s.kind_of? Integer
     raise TypeError, "negative arg \"#{s.inspect}\""    if s < 0
@@ -1647,33 +1827,53 @@ class LongDecimalQuot < Numeric
 
   private :scale=
 
+  #
+  # conversion to string.  Based on the conversion of Rational
+  #
   def to_s
     str = @rat.to_s
     str + "[" + scale.to_s + "]"
   end
 
+  #
+  # conversion to rational
+  #
   def to_r
     Rational(numerator, denominator)
   end
 
+  #
   # convert into Float
+  #
   def to_f
     to_r.to_f
   end
 
+  #
   # convert into Integer
+  #
   def to_i
     to_r.to_i
   end
 
+  #
+  # conversion to LongDecimal using the internal scale
+  #
   def to_ld
     round_to_scale(scale, ROUND_HALF_UP)
   end
 
+  #
+  # unary plus returns self
+  #
   def +@
     self
   end
 
+  #
+  # unary minus returns negation of self
+  # leaves self unchanged.
+  #
   def -@
     if self.zero? then
       self
@@ -1682,6 +1882,12 @@ class LongDecimalQuot < Numeric
     end
   end
 
+  #
+  # addition
+  # if other can be converted into LongDecimalQuot, add as
+  # LongDecimalQuot, using the addition of Rationals
+  # otherwise use BigDecimal, Complex or Float
+  #
   def +(other)
     o, s = coerce(other)
     if (s.kind_of? LongDecimalQuot) then
@@ -1850,6 +2056,15 @@ class LongDecimalQuot < Numeric
     LongDecimal(new_int_val, new_scale)
   end
 
+  #
+  # prepare binary operation of other with LongDecimalQuot
+  # Integer, LongDecimal, Rational and LongDecimalQuot can be
+  # expressed as LongDecimalQuot, using the scale of self in case of
+  # Integer and Rational.  Floats can be approximated by LongDecimals
+  # and thus be expressed as LongDecimalQuot
+  # In case of BigDecimal, Complex or any unknown type, convert self
+  # to BigDecimal or Float.
+  #
   def coerce(other)
     if other.kind_of? LongDecimal then
       return LongDecimalQuot(other.to_r, other.scale), self
@@ -1872,12 +2087,22 @@ class LongDecimalQuot < Numeric
     end
   end
 
+  #
+  # compare two numbers for equality.
+  # The LongDecimalQuot self is considered == to other if and only if
+  # other is also LongDecimalQuot, expresses the same value and has the
+  # same scale.
+  # It needs to be observed that scale does not influence the value expressed
+  # by the number, but only how rouding is performed by default if no
+  # explicit number of digits after the decimal point is given.  But
+  # scale needs to match for equality.
+  #
   def ==(other)
     (other.kind_of? LongDecimalQuot) && (self <=> other) == 0 && self.scale == other.scale
   end
 
   #
-  # Compares the two numbers.
+  # Compares the two numbers for < and > etc.
   #
   def <=> (other)
     diff = (self - other)
@@ -1888,20 +2113,31 @@ class LongDecimalQuot < Numeric
     end
   end
 
+  #
+  # compare scales with <=>
+  #
   def scale_ufo(other)
     raise TypeError, "only works for LongDecimal and LongDecimalQuot" unless (other.kind_of? LongDecimal) || (other.kind_of? LongDecimalQuot)
     self.scale <=> other.scale
   end
 
+  #
+  # check if scales are equal
+  #
   def scale_equal(other)
     scale_ufo(other).zero?
   end
 
+  #
   # is self expressable as an integer without loss of digits?
+  #
   def is_int?
     denominator == 1
   end
 
+  #
+  # sign of self
+  #
   def sgn
     numerator <=> 0
   end
@@ -1913,11 +2149,6 @@ class LongDecimalQuot < Numeric
   #
   def hash
     rat.hash ^ scale.hash
-  end
-
-
-  def scale
-    @scale
   end
 
 
@@ -1941,12 +2172,21 @@ def LongDecimal(a, b = 0)
   end
 end
 
+#
+# construct a LongDecimalQuot from the given parameters
+# 1st case: both are LongDecimals
+# 2nd case: first is Rational, second is scale
+#
 def LongDecimalQuot(first, second)
   LongDecimalQuot.new!(first, second)
 end
 
+
 class Numeric
 
+  #
+  # convert self to LongDecimal
+  #
   def to_ld
     LongDecimal(self)
   end
