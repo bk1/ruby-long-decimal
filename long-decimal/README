@@ -1,9 +1,10 @@
 Version
 -------
 
-This version ($Name: PRE_ALPHA_0_14 $) is functionally identically with the previous
-pre-alpha-0.13, but some tests have been added and some minor bugs
-have been fixed.
+This version ($Name: PRE_ALPHA_0_15 $) is functionally almost identical with the
+previous pre-alpha-0.14, but some tests have been added and some minor
+bugs have been fixed and some missing rdoc-comments have been
+supplied.
 
 It could be observed that gem-installation, as described below, fails
 on Windows 2000 with ruby 1.8.2, but works on Linux with ruby 1.8.4
@@ -49,9 +50,9 @@ ruby 1.8.4 and has been observed to fail on Windows 2000)
                   Linux/Unix-systems. 
         $RUBY_VERSION is the major version of your Ruby, like 1.8
         $LONG_DECIMAL_VERSION is the version of long-decimal that you
-                              have installed, like 0.00.13
+                              have installed, like 0.00.15
   on my machine that would be
-  /usr/local/lib/ruby/gems/1.8/doc/long-decimal-0.00.12/rdoc/index.html
+  /usr/local/lib/ruby/gems/1.8/doc/long-decimal-0.00.15/rdoc/index.html
 
 2. Installing from the sources (it is preferred to use the gem-installation)
 - download the newest source-tar.gz-file from long-decimal project at rubyforge

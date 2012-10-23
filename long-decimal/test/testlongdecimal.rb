@@ -2,8 +2,8 @@
 #
 # testlongdecimal.rb -- runit test for long-decimal.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.9 2006/03/19 11:17:55 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_14 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.11 2006/03/20 21:38:32 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_15 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -18,7 +18,7 @@ load "lib/long-decimal.rb"
 #
 class TestLongDecimal_class < RUNIT::TestCase
 
-  @RCS_ID='-$Id: testlongdecimal.rb,v 1.9 2006/03/19 11:17:55 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdecimal.rb,v 1.11 2006/03/20 21:38:32 bk1 Exp $-'
 
   #
   # helper method for test_split_merge_words
@@ -427,7 +427,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   end
 
   #
-  # helper method for test_sqrtb
+  # helper method for test_int_sqrtb
   #
   def check_sqrtb(x, s)
     y = LongMath.sqrtb(x)
@@ -441,7 +441,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   #
   # test method sqrtb for calculating sqrt of short integers
   #
-  def test_sqrtb
+  def test_int_sqrtb
     assert_equal(Complex(0,1), LongMath.sqrtb(-1), "sqrt(-1)=i")
     1024.times do |x|
       check_sqrtb(x, " loop x=#{x}")
@@ -477,7 +477,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   end
 
   #
-  # helper method of test_sqrtw
+  # helper method of test_int_sqrtw
   #
   def check_sqrtw(x, s)
     y = LongMath.sqrtw(x)
@@ -491,7 +491,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   #
   # test method sqrtb for calculating sqrt of long integers
   #
-  def test_sqrtw
+  def test_int_sqrtw
     assert_equal(Complex(0,1), LongMath.sqrtw(-1), "sqrt(-1)=i")
     1024.times do |x|
       check_sqrtw(x, " loop x=#{x}")
@@ -527,7 +527,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   end
 
   #
-  # helper method for test_sqrtb_with_remainder
+  # helper method for test_int_sqrtb_with_remainder
   #
   def check_sqrtb_with_remainder(x, s)
     y, r = LongMath.sqrtb_with_remainder(x)
@@ -543,7 +543,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   #
   # test method sqrtb_with_remainder for calculating sqrt _with_remainderof short integers
   #
-  def test_sqrtb_with_remainder
+  def test_int_sqrtb_with_remainder
     10.times do |x|
       check_sqrtb_with_remainder(x, " loop x=#{x}")
     end
@@ -583,7 +583,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   end
 
   #
-  # helper method for test_sqrtw_with_remainder
+  # helper method for test_int_sqrtw_with_remainder
   #
   def check_sqrtw_with_remainder(x, s)
     y, r = LongMath.sqrtw_with_remainder(x)
@@ -599,7 +599,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   #
   # test method sqrtb_with_remainder for calculating sqrt _with_remainderof long integers
   #
-  def test_sqrtw_with_remainder
+  def test_int_sqrtw_with_remainder
     10.times do |x|
       check_sqrtw_with_remainder(x, " loop x=#{x}")
     end
@@ -1713,6 +1713,303 @@ class TestLongDecimal_class < RUNIT::TestCase
   end
 
   #
+  # test of &-operator of LongDecimal
+  #
+  def test_logand
+    x = LongDecimal(224, 2) # 0x0e0 / 100
+
+    y = LongDecimal(3, 1)   # 0x01e / 100
+    z = x & y
+    zz = LongDecimal(0, 2)  # 0x000 / 100
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y & x
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = LongDecimal(32, 1)  # 0x140 / 100
+    z = x & y
+    zz = LongDecimal(64, 2) # 0x040 / 100
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y & x
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = 5                    # 0x1f4 / 100
+    z = x & y
+    zz = LongDecimal(224, 2) # 0x0e0 / 100
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # does not coerce
+    #     z = y & x
+    #     assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    #     assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = 1                    # 0x064 / 100
+    z = x & y
+    zz = LongDecimal(96, 2)  # 0x060 / 100
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # does not coerce
+    #     z = y & x
+    #     assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    #     assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = 256                  # 0x06400 / 100
+    z = x & y
+    zz = LongDecimal(0, 2)  # 0x000 / 100
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # does not coerce
+    #     z = y & x
+    #     assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    #     assert_equal(zz, z, "z=#{z.inspect}")
+  end
+
+  #
+  # test of |-operator of LongDecimal
+  #
+  def test_logior
+    x = LongDecimal(224, 2) # 0x0e0 / 100
+
+    y = LongDecimal(3, 1)   # 0x01e / 100
+    z = x | y
+    zz = LongDecimal(254, 2)  # 0x0fe / 100
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y | x
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = LongDecimal(32, 1)  # 0x140 / 100
+    z = x | y
+    zz = LongDecimal(480, 2) # 0x1e0 / 100
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y | x
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = 5                    # 0x1f4 / 100
+    z = x | y
+    zz = LongDecimal(500, 2) # 0x1f4 / 100
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # does not coerce
+    #     z = y | x
+    #     assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    #     assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = 1                    # 0x064 / 100
+    z = x | y
+    zz = LongDecimal(228, 2)  # 0x0e4 / 100
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # does not coerce
+    #     z = y | x
+    #     assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    #     assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = 256                  # 0x06400 / 100
+    z = x | y
+    zz = LongDecimal(25824, 2)   # 0x064e0 / 100
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # does not coerce
+    #     z = y | x
+    #     assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    #     assert_equal(zz, z, "z=#{z.inspect}")
+  end
+
+  #
+  # test of ^-operator of LongDecimal
+  #
+  def test_logxor
+    x = LongDecimal(224, 2) # 0x0e0 / 100
+
+    y = LongDecimal(3, 1)   # 0x01e / 100
+    z = x ^ y
+    zz = LongDecimal(254, 2)  # 0x0fe / 100
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y ^ x
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = LongDecimal(32, 1)  # 0x140 / 100
+    z = x ^ y
+    zz = LongDecimal(416, 2) # 0x1a0 / 100
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y ^ x
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = 5                    # 0x1f4 / 100
+    z = x ^ y
+    zz = LongDecimal(276, 2) # 0x114 / 100
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # does not coerce
+    #     z = y ^ x
+    #     assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    #     assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = 1                    # 0x064 / 100
+    z = x ^ y
+    zz = LongDecimal(132, 2)  # 0x084 / 100
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # does not coerce
+    #     z = y ^ x
+    #     assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    #     assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = 256                  # 0x06400 / 100
+    z = x ^ y
+    zz = LongDecimal(25824, 2)   # 0x064e0 / 100
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # does not coerce
+    #     z = y ^ x
+    #     assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    #     assert_equal(zz, z, "z=#{z.inspect}")
+  end
+
+  #
+  # test of ^-operator of LongDecimal
+  #
+  def test_lognot
+    x = LongDecimal(224, 2) # 0x0e0 / 100
+    y = ~x
+    z = LongDecimal(-225, 2)
+    assert_kind_of(LongDecimal, y, "y=#{y.inspect}")
+    assert_equal(z, y, "y=#{y.inspect}")
+    x = LongDecimal(0, 2) # 0x00 / 100
+    y = ~x
+    z = LongDecimal(-1, 2)
+    assert_kind_of(LongDecimal, y, "y=#{y.inspect}")
+    assert_equal(z, y, "y=#{y.inspect}")
+  end
+
+  #
+  # test << and >> of LongDecimal
+  #
+  def test_shift
+    n = 12345678901234567890
+    x = LongDecimal(n, 9)
+    y = x << 5
+    yy = LongDecimal(n * 32, 9)
+    z = y >> 5
+    assert_equal(yy, y, "shift left")
+    assert_equal(x, z, "shift left then right")
+
+    y = x >> 5
+    yy = LongDecimal(n >> 5, 9)
+    z = y << 5
+    zz = LongDecimal((n >> 5) << 5, 9)
+    assert_equal(yy, y, "shift right")
+    assert_equal(zz, z, "shift right then left")
+  end
+
+  #
+  # test [] access to digits
+  #
+  def test_bin_digit
+    n = 12345678901234567890
+    x = LongDecimal(n, 9)
+    100.times do |i|
+      assert_equal(n[i], x[i], "i=#{i}")
+    end
+    n = -12345678901234567890
+    x = LongDecimal(n, 9)
+    100.times do |i|
+      assert_equal(n[i], x[i], "i=#{i}")
+    end
+  end
+
+  #
+  # test move_point_left and move_point_right
+  #
+  def test_move_point
+    n = 12345678901234567890
+    x = LongDecimal(n, 9)
+
+    y = x.move_point_left(4)
+    yy = x.move_point_right(-4)
+    assert_equal(y, yy, "left / right 4")
+    z = LongDecimal(n, 13)
+    assert_equal(y, z, "left 4")
+    w = y.move_point_right(4)
+    assert_equal(x, w, "left 4 right 4")
+
+    y = x.move_point_left(12)
+    yy = x.move_point_right(-12)
+    assert_equal(y, yy, "left / right 12")
+    z = LongDecimal(n, 21)
+    assert_equal(y, z, "left 12")
+    w = y.move_point_right(12)
+    assert_equal(x, w, "left 12 right 12")
+
+    y = x.move_point_right(4)
+    z = LongDecimal(n, 4)
+    assert_equal(y, z, "right 4")
+    w = y.move_point_left(4)
+    ww = y.move_point_right(-4)
+    assert_equal(w, ww, "left / right 4")
+    assert_equal(x, w, "right 4 left 4")
+
+    y = x.move_point_left(12)
+    yy = x.move_point_right(-12)
+    assert_equal(y, yy, "left / right 12")
+    z = LongDecimal(n * 1000, 0)
+    assert_equal(y, z, "left 12")
+    w = y.move_point_right(12)
+    v = x.round_to_scale(12)
+    assert_equal(v, w, "right 12 left 12")
+  end
+
+  #
+  # helper method of test_sqrt
+  #
+  def check_sqrt(x, scale, mode, su0, su1, str)
+    y = x.sqrt(scale, mode)
+    z0 = (y+su0*y.unit).square
+    z1 = (y+su1*y.unit).square
+    assert(0 <= y.sign, "sqrt must be >= 0" + str)
+    assert(z0 <= x && x <= z1, "y=#{y}=sqrt(#{x}) and x in [#{z0}, #{z1})" + str)
+    y
+  end
+
+  #
+  # test sqrt of LongDecimal
+  #
+  def test_sqrt
+    x = LongDecimal.zero!(101)
+    y = check_sqrt(x, 120, LongDecimal::ROUND_UNNECESSARY, 0, 0, "zero")
+    assert(y.zero?, "sqrt(0)")
+   
+    x = LongDecimal.one!(101)
+    y = check_sqrt(x, 120, LongDecimal::ROUND_UNNECESSARY, 0, 0, "one")
+    assert(y.one?, "sqrt(1)")
+    
+    x = LongDecimal.two!(101)
+    y0 = check_sqrt(x, 120, LongDecimal::ROUND_DOWN, 0, 1, "two")
+    y1 = check_sqrt(x, 120, LongDecimal::ROUND_HALF_EVEN, -1, 1, "two")
+    y2 = check_sqrt(x, 120, LongDecimal::ROUND_UP, -1, 0, "two")
+    assert(y0 <= y1, "y0 y1")
+    assert(y1 <= y2, "y1 y2")
+    
+    x  = 4.to_ld.round_to_scale(101)
+    y0 = check_sqrt(x, 120, LongDecimal::ROUND_DOWN, 0, 0, "four")
+    y1 = check_sqrt(x, 120, LongDecimal::ROUND_HALF_EVEN, 0, 0, "four")
+    y2 = check_sqrt(x, 120, LongDecimal::ROUND_UP, 0, 0, "four")
+    assert_equal(y0, y1, "y0 y1")
+    assert_equal(y1, y2, "y1 y2")
+  end
+
+  #
   # test absolute value of LongDecimal
   #
   def test_abs
@@ -1818,6 +2115,11 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(zz, z, "z=#{z.inspect}")
 
   end
+
+  # TODO
+  # def test_is_int
+  # def test_zero
+  # def test_one
 
   #
   # test sign-method of LongDecimal
@@ -2199,7 +2501,10 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(ff, f, "must be equal")
   end
 
-  # to_i not tested, goes via to_r anyway
+  # test_to_i: to_i not tested, goes via to_r anyway
+
+  # TODO
+  # def test_to_ld
 
   #
   # test negation operator (unary -) of LongDecimalQuot
