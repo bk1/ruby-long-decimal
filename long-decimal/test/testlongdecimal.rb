@@ -2,8 +2,8 @@
 #
 # testlongdecimal.rb -- runit test for longdecimal.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.6 2006/03/10 20:10:45 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_10 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.7 2006/03/18 06:03:58 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_12 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -18,7 +18,7 @@ load "lib/longdecimal.rb"
 #
 class TestLongDecimal_class < RUNIT::TestCase
 
-  @RCS_ID='-$Id: testlongdecimal.rb,v 1.6 2006/03/10 20:10:45 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdecimal.rb,v 1.7 2006/03/18 06:03:58 bk1 Exp $-'
 
   def check_split_merge_words(x, l, wl)
     w = LongMath.split_to_words(x, l)
@@ -101,6 +101,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test the calculation of the exponential function
   #
   def test_exp
+    xx = LongMath.log(10.to_ld, 10)*100
     check_exp_floated(700, 10)
     check_exp_floated(100, 10)
     check_exp_floated(1, 10)
@@ -111,7 +112,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     check_exp_floated(-1, 10)
     check_exp_floated(-100, 10)
     check_exp_floated(-700, 10)
-
+    check_exp_floated(xx, 10)
+    check_exp_floated(-xx, 10)
+    
     check_exp_floated(700, 100)
     check_exp_floated(100, 100)
     check_exp_floated(1, 100)
@@ -122,6 +125,8 @@ class TestLongDecimal_class < RUNIT::TestCase
     check_exp_floated(-1, 100)
     check_exp_floated(-100, 100)
     check_exp_floated(-700, 100)
+    check_exp_floated(xx, 100)
+    check_exp_floated(-xx, 100)
   end
 
   #
@@ -153,15 +158,15 @@ class TestLongDecimal_class < RUNIT::TestCase
     if (y <= LongMath::MAX_EXP_ABLE) then
       eprec = prec
       if (y > 1) then
-	lx = 0
-	if (x > LongMath::MAX_FLOATABLE) then
-	  puts("unusual x=#{x} y=#{y}\n")
-	  lx = LongMath::MAX_EXP_ABLE
-	else
-	  lx = Math.log(x.to_f)
-	end
+        lx = 0
+        if (x > LongMath::MAX_FLOATABLE) then
+          puts("unusual x=#{x} y=#{y}\n")
+          lx = LongMath::MAX_EXP_ABLE
+        else
+          lx = Math.log(x.to_f)
+        end
         l10 = (lx / Math.log(10)).ceil
-        eprec -= l10
+        eprec = [ eprec - l10, 0 ].max
       end
 
       z = LongMath.exp(y, eprec)
@@ -176,7 +181,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   end
 
   #
-  # test the calculation of the exponential function
+  # test the calculation of the logarithm function
   #
   def test_log
     check_log_floated(10**2000, 10)
@@ -196,6 +201,145 @@ class TestLongDecimal_class < RUNIT::TestCase
     check_log_floated(1e-90, 100)
     check_log_floated(1e-300, 100)
     check_log_floated(LongDecimal(1, 2000), 100)
+  end
+
+  #
+  # helper method for test_exp
+  # tests if LongMath::power(x, y, prec) with precision prec is calculated correctly
+  #
+  def check_power_floated(x, y, prec)
+
+    # puts("start: check_power_floated: x=#{x} y=#{y} prec=#{prec}\n")
+    # make sure x and y are LongDecimal
+    x0 = x
+    x = x.to_ld
+    y0 = y
+    y = y.to_ld
+    # calculate z = x**y
+    z = LongMath.power(x, y, prec)
+
+    # compare y against w = x**y calculated using regular floating point arithmetic
+    w = (x.to_f) ** (y.to_f)
+    zf = z.to_f
+    assert((zf - w) / [zf.abs, w.abs, Float::MIN].max < 1e-9, "z=#{zf.to_s} and w=#{w.to_s} should be almost equal x=#{x} y=#{y}")
+
+    # check by taking log(z) = y * log(x)
+    # we have to take into account that we might not have enough
+    # significant digits, so we have to go down with the precision
+    if (z > 0) then
+      lprec = prec
+      if (z < 1) then
+        l10 = (Math.log(z.to_f) / Math.log(10)).round
+        lprec += l10
+      end
+      if (x < 1) then
+        l10 = (Math.log(x.to_f) / Math.log(10)).round
+        lprec += l10
+      end
+      l10y = 0
+      if (y > 1) then
+	l10y = (Math.log(y.to_f) / Math.log(10)).ceil
+      end
+      u = LongMath.log(z, lprec)
+      v = LongMath.log(x, lprec+l10y)
+      yv = (y*v).round_to_scale(lprec, LongDecimal::ROUND_HALF_DOWN)
+      assert((u - yv).abs <= u.unit, "u=#{u} and y*v=#{yv} should be almost equal (x=#{x.to_s} y=#{y.to_s} z=#{z.to_s} u=#{u.to_s} v=#{v.to_s} lprec=#{lprec} prec=#{prec})")
+    end
+    # puts("ok check_power_floated: x=#{x} y=#{y} prec=#{prec}\n")
+
+  end
+
+  #
+  # test the calculation of the exponential function
+  #
+  def test_lm_power
+    check_power_floated(1, 1, 10)
+    check_power_floated(1, 2, 10)
+    check_power_floated(2, 1, 10)
+    check_power_floated(2, 2, 10)
+    check_power_floated(100, 10, 10)
+    check_power_floated(10, 100, 10)
+    check_power_floated(10, 100, 100)
+  end
+
+  #
+  # helper method for test_log
+  # tests if log10(x) with precision prec is calculated correctly
+  #
+  def check_log10_floated(x, prec)
+
+    # make sure x is LongDecimal
+    x0 = x
+    x = x.to_ld
+    # calculate y = log10(x)
+    y = LongMath.log10(x, prec)
+
+    # compare y against z = log10(x) calculated using regular floating
+    # point arithmetic
+    if (x <= LongMath::MAX_FLOATABLE) then
+      xf = x.to_f
+      if (xf > 0) then
+        z = Math.log(x.to_f) / Math.log(10)
+        yf = y.to_f
+        assert((yf - z) / [yf.abs, z.abs, Float::MIN].max < 1e-9, "y=#{yf.to_s} and z=#{z.to_s} should be almost equal x=#{x}")
+      end
+    end
+
+    # check by taking 10**(log10(x))
+    # we have to take into account that we might not have enough
+    # significant digits, so we have to go down with the precision
+    if (y <= LongMath::MAX_EXP_ABLE) then
+      eprec = prec
+      if (y > 1) then
+        lx = 0
+        if (x > LongMath::MAX_FLOATABLE) then
+          puts("unusual x=#{x} y=#{y}\n")
+          lx = LongMath::MAX_EXP_ABLE
+        else
+          lx = Math.log(x.to_f)
+        end
+        l10 = (lx / Math.log(10)).ceil
+        eprec = [ eprec - l10, 0 ].max
+      end
+
+      z = LongMath.power(10.to_ld, y, eprec)
+      assert((x - z).abs <= z.unit, "x=#{x.to_s} and z=#{z.to_s} should be almost equal (y=#{y.to_s} eprec=#{eprec} prec=#{prec})")
+    end
+
+  end
+
+  #
+  # helper method for test_log
+  # tests if log10(x) with precision prec is calculated correctly
+  #
+  def check_log10_exact(x, log10x, prec)
+
+    # make sure x is LongDecimal
+    x0 = x
+    x = x.to_ld
+    log10x = log10x.to_ld.round_to_scale(prec)
+    # calculate y = log10(x)
+    y = LongMath.log10(x, prec)
+    assert_equal(y, log10x, "log x should match exactly x=#{x} y=#{y} log10x=#{log10x}")
+  end
+
+  #
+  # test the calculation of the logarithm function
+  #
+  def test_log10
+    check_log10_floated(10**2000, 30)
+    check_log10_floated(100, 30)
+    check_log10_floated(1, 30)
+    check_log10_floated(0.01, 30)
+    check_log10_floated(1e-10, 30)
+    check_log10_floated(1e-90, 30)
+    check_log10_floated(1e-300, 30)
+    check_log10_floated(LongDecimal(1, 2000), 30)
+
+    check_log10_exact(10**2000, 2000, 30)
+    check_log10_exact(10**0, 0, 30)
+    check_log10_exact(10**1, 1, 30)
+    check_log10_exact(10**10, 10, 30)
   end
 
   #
@@ -357,7 +501,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   end
 
   #
-  # test construction from Integer
+  # test construction of LongDecimal from Integer
   #
   def test_int_init
     l = LongDecimal(224)
@@ -415,7 +559,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   end
 
   #
-  # test rounding with ROUND_UP
+  # test rounding of LongDecimal with ROUND_UP
   #
   def test_round_to_scale_up
     l = LongDecimal("2.21")
@@ -761,6 +905,10 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(-23, l.to_i, "l=#{l.inspect}")
   end
 
+  #
+  # test adjustment of scale which is used as preparation for addition
+  # and subtraction
+  #
   def test_equalize_scale
     x = LongDecimal(1, 0)
     y = LongDecimal(10, 1)
@@ -778,6 +926,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(200, v.int_val, "int_val must be 200")
   end
 
+  #
+  # test adjustment of scale which is used as preparation for division
+  #
   def test_anti_equalize_scale
     x = LongDecimal(20, 3)
     y = LongDecimal(10, 1)
@@ -788,6 +939,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(1000, v.int_val, "int_val must be 1000")
   end
 
+  #
+  # test unary minus operation (negation)
+  #
   def test_negation
     x = LongDecimal(0, 5)
     assert_equal(-x, x, "x and -x are equal for negative x=#{x.inspect}")
@@ -798,6 +952,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(-224, y.int_val, "int_val of y must be -224 y=#{y.inspect}")
   end
 
+  #
+  # test addition of LongDecimal
+  #
   def test_add
     x = LongDecimal(224, 2)
 
@@ -856,6 +1013,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(zz, z, "z=#{z.inspect}")
   end
 
+  #
+  # test subtraction of LongDecimal
+  #
   def test_sub
     x = LongDecimal(224, 2)
 
@@ -920,6 +1080,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(zz, z, "z=#{z.inspect}")
   end
 
+  #
+  # test multiplication of LongDecimal
+  #
   def test_mul
     x = LongDecimal(224, 2)
 
@@ -978,6 +1141,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert((zz-z).abs < 1e-9, "z=#{z.inspect}")
   end
 
+  #
+  # test division of LongDecimal
+  #
   def test_div
     x = LongDecimal(224, 2)
 
@@ -1042,6 +1208,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert((zz-z).abs < 1e-9, "z=#{z.inspect}")
   end
 
+  #
+  # test power (**) of LongDecimal
+  #
   def test_pow
 
     x = LongDecimal(224, 2)
@@ -1101,6 +1270,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert((zz-z).abs < 1e-9, "z=#{z.inspect}")
   end
 
+  #
+  # test division with remainder of LongDecimal
+  #
   def test_divmod
     x = LongDecimal(224, 2)
 
@@ -1183,6 +1355,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     end
   end
 
+  #
+  # test absolute value of LongDecimal
+  #
   def test_abs
     x = LongDecimal(-224, 2)
     y = x.abs
@@ -1195,6 +1370,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(x, y, "abs of zero")
   end
 
+  #
+  # test moving of decimal point of LongDecimal
+  #
   def test_move_point
     x = LongDecimal(224, 2)
 
@@ -1228,6 +1406,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(z, y, "2240")
   end
 
+  #
+  # test ufo-operator (<=>) of LongDecimal
+  #
   def test_ufo
     x = LongDecimal(224, 2)
 
@@ -1281,6 +1462,9 @@ class TestLongDecimal_class < RUNIT::TestCase
 
   end
 
+  #
+  # test sign-method of LongDecimal
+  #
   def test_sgn
     x = LongDecimal(0, 5)
     s = x.sgn
@@ -1293,6 +1477,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(-1, s, "must be -1")
   end
 
+  #
+  # test equality-comparison (==) of LongDecimal
+  #
   def test_equal
     x = LongDecimal(224, 2)
     y = LongDecimal(2240, 3)
@@ -1303,6 +1490,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(y, y, "y equals y")
   end
 
+  #
+  # test construction of LongDecimalQuot from LongDecimal
+  #
   def test_ldq_ld_init
     x = LongDecimal(224, 2)
     y = LongDecimal(225, 3)
@@ -1311,6 +1501,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(zz, z, "224/225")
   end
 
+  #
+  # test rounding of LongDecimalQuot with ROUND_UP
+  #
   def test_ldq_round_to_scale_up
 
     # 0.99555555555555...
@@ -1344,6 +1537,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal("1.0000", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
   end
 
+  #
+  # test rounding of LongDecimalQuot with ROUND_DOWN
+  #
   def test_ldq_round_to_scale_down
 
     # 0.99555555555555...
@@ -1377,6 +1573,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal("1.0000", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
   end
 
+  #
+  # test rounding of LongDecimalQuot with ROUND_CEILING
+  #
   def test_ldq_round_to_scale_ceiling
 
     # 0.99555555555555...
@@ -1409,6 +1608,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal("1.0000", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
   end
 
+  #
+  # test rounding of LongDecimalQuot with ROUND_FLOOR
+  #
   def test_ldq_round_to_scale_floor
 
     # 0.99555555555555...
@@ -1441,6 +1643,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal("1.0000", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
   end
 
+  #
+  # test rounding of LongDecimalQuot with ROUND_HALF_UP
+  #
   def test_ldq_round_to_scale_half_up
 
     # 0.99555555555555...
@@ -1479,6 +1684,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal("225/4[0]", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
   end
 
+  #
+  # test rounding of LongDecimalQuot with ROUND_HALF_DOWN
+  #
   def test_ldq_round_to_scale_half_down
 
     # 0.99555555555555...
@@ -1517,6 +1725,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal("225/4[0]", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
   end
 
+  #
+  # test rounding of LongDecimalQuot with ROUND_HALF_EVEN
+  #
   def test_ldq_round_to_scale_half_even
 
     # 0.99555555555555...
@@ -1561,6 +1772,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal("227/4[0]", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
   end
 
+  #
+  # test rounding of LongDecimalQuot with ROUND_UNNECESSARY
+  #
   def test_ldq_round_to_scale_unnecessary
     l = LongDecimalQuot(Rational(225, 4), 5)
     r = l.round_to_scale(2, LongDecimal::ROUND_UNNECESSARY)
@@ -1573,6 +1787,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     end
   end
 
+  #
+  # test conversion of LongDecimalQuot to String
+  #
   def test_ldq_to_s
     l = LongDecimalQuot(Rational(224, 225), 226)
     assert_equal("224/225[226]", l.to_s, "l=#{l.inspect}")
@@ -1580,6 +1797,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal("-224/225[226]", l.to_s, "l=#{l.inspect}")
   end
 
+  #
+  # test conversion of LongDecimalQuot to Rational
+  #
   def test_ldq_to_r
     rr = Rational(224, 225)
     l = LongDecimalQuot(rr, 22)
@@ -1598,6 +1818,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(rr, r, "must be equal")
   end
 
+  #
+  # test conversion of LongDecimalQuot to Float
+  #
   def test_ldq_to_f
     rr = Rational(224, 225)
     l = LongDecimalQuot(rr, 22)
@@ -1621,6 +1844,9 @@ class TestLongDecimal_class < RUNIT::TestCase
 
   # to_i not tested, goes via to_r anyway
 
+  #
+  # test negation operator (unary -) of LongDecimalQuot
+  #
   def test_ldq_negation
     x = LongDecimalQuot(Rational(0, 2), 3)
     assert_equal(-x, x, "x and -x are equal for negative x=#{x.inspect}")
@@ -1632,6 +1858,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(yy, y, "yy and y must be equal")
   end
 
+  #
+  # test addition operator (binary +) of LongDecimalQuot
+  #
   def test_ldq_add
     x = LongDecimalQuot(Rational(224, 225), 226)
 
@@ -1692,6 +1921,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert((zz-z).abs < 1e-9, "z=#{z.inspect}")
   end
 
+  #
+  # test subtraction operator (binary -) of LongDecimalQuot
+  #
   def test_ldq_sub
     x = LongDecimalQuot(Rational(224, 225), 226)
 
@@ -1756,6 +1988,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert((zz-z).abs < 1e-9, "z=#{z.inspect} zz=#{zz.inspect}")
   end
 
+  #
+  # test multiplication operator (*) of LongDecimalQuot
+  #
   def test_ldq_mul
     x = LongDecimalQuot(Rational(224, 225), 226)
 
@@ -1814,6 +2049,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert((zz-z).abs < 1e-9, "z=#{z.inspect} zz=#{zz.inspect}")
   end
 
+  #
+  # test division operator (/) of LongDecimalQuot
+  #
   def test_ldq_div
     x = LongDecimalQuot(Rational(224, 225), 226)
 
@@ -1878,6 +2116,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert((zz-z).abs < 1e-9, "z=#{z.inspect} zz=#{zz.inspect}")
   end
 
+  #
+  # test power operator (**) of LongDecimalQuot
+  #
   def test_ldq_pow
 
     x = LongDecimalQuot(Rational(224, 225), 226)
@@ -1937,6 +2178,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert((zz-z).abs < 1e-9, "z=#{z.inspect}")
   end
 
+  #
+  # test divmod of LongDecimalQuot for division with remainder
+  #
   def test_ldq_divmod
     x = LongDecimalQuot(Rational(224, 225), 226)
 
@@ -2019,6 +2263,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     end
   end
 
+  #
+  # test absolute value of LongDecimalQuot
+  #
   def test_ldq_abs
     x = LongDecimalQuot(Rational(-224, 225), 226)
     y = x.abs
@@ -2031,6 +2278,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(x, y, "abs of zero")
   end
 
+  #
+  # test ufo operator (<=>) of LongDecimalQuot
+  #
   def test_ldq_ufo
     x = LongDecimalQuot(Rational(224, 225), 226)
 
@@ -2084,6 +2334,9 @@ class TestLongDecimal_class < RUNIT::TestCase
 
   end
 
+  #
+  # test sign method of LongDecimalQuot
+  #
   def test_ldq_sgn
     x = LongDecimalQuot(Rational(0, 5), 1000)
     s = x.sgn
@@ -2096,6 +2349,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(-1, s, "must be -1")
   end
 
+  #
+  # test equality operator (==) of LongDecimalQuot
+  #
   def test_ldq_equal
     x = LongDecimalQuot(Rational(224, 225), 226)
     y = LongDecimalQuot(Rational(224, 225), 227)

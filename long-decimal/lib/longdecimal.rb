@@ -1,8 +1,8 @@
 #
 # longdecimal.rb -- Arbitrary precision decimals with fixed decimal point
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/longdecimal.rb,v 1.8 2006/03/14 20:25:22 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_11 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/longdecimal.rb,v 1.9 2006/03/18 06:03:58 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_12 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 require "complex"
@@ -65,6 +65,8 @@ module LongMath
 
   MAX_FLOATABLE = Float::MAX.to_i
   MAX_EXP_ABLE  = Math.log(MAX_FLOATABLE).to_i
+  LOG2          = Math.log(2.0)
+  LOG10         = Math.log(10.0)
 
   #
   # helper method for internal use: checks if word_len is a reasonable
@@ -269,7 +271,7 @@ module LongMath
         end
         j += 1
         if (j > 10) then
-          puts("i=#{i} j=#{j} q=#{q} q0=#{q0} d0=#{d0} d=#{d} r=#{r} yi=#{yi} xi=#{xi}\n")
+          # puts("i=#{i} j=#{j} q=#{q} q0=#{q0} d0=#{d0} d=#{d} r=#{r} yi=#{yi} xi=#{xi}\n")
           break
         end
       end
@@ -411,20 +413,24 @@ module LongMath
   end
 
   #
-  # calc the power of x with exponent y to the given precision as
-  # LongDecimal.  Only supports values of y such that exp(y) still
-  # fits into a float (y <= 709)
+  # private helper method for exponentiation
+  # calculate internal precision
   #
-  def LongMath.power(x, y, prec, mode = LongDecimal::ROUND_HALF_DOWN)
-    check_is_ld(x, "x")
-    check_is_ld(y, "y")
-    raise TypeError, "y=#{y.inspect} must not be greater #{MAX_EXP_ABLE}" unless y <= MAX_EXP_ABLE
-    check_is_prec(prec, "prec")
-    check_is_mode(mode, "mode")
-    iprec = prec+2
-    logx = log(x, iprec, mode)
-    exp_internal(logx * y, prec, mode)
+  def LongMath.calc_iprec_for_exp(x, prec)
+    iprec_extra = 0
+    if (x > 1) then
+      xf = x.to_f
+      iprec_extra = (xf / LOG10).abs
+    end
+    iprec = ((prec+10)*1.20 + iprec_extra).round
+    if (iprec < prec) then
+      iprec = prec
+    end
+    # puts("calc_iprec_for_exp: x=#{x} prec=#{prec} iprec=#{iprec} iprec_extra=#{iprec_extra}\n")
+    iprec
   end
+
+  # private :calc_iprec_for_exp
 
   #
   # internal functionality of exp.  exposes some more parameters, that
@@ -434,7 +440,7 @@ module LongMath
   # not work correctly
   #
   def LongMath.exp_internal(x, prec = nil, final_mode = LongDecimal::ROUND_HALF_DOWN, j = nil, k = nil, iprec = nil, mode = LongDecimal::ROUND_HALF_DOWN)
-    check_is_ld(x)
+    check_is_ld(x, "x")
     if (prec == nil) then
       prec = x.scale
     end
@@ -448,19 +454,20 @@ module LongMath
 
     # if the result would come out to zero anyway, cut the work
     xi = x.to_i
-    if (xi < -LongMath::MAX_FLOATABLE) || -((xi.to_f - 1) / Math.log(10)) > prec+1 then
+    if (xi < -LongMath::MAX_FLOATABLE) || -((xi.to_f - 1) / LOG10) > prec+1 then
       return LongDecimal(25, prec+2).round_to_scale(prec, final_mode)
     end
 
     if j == nil || k == nil then
-      l2 = Math.log(2.0)
-      lb = Math.log(10.0)
-      s1 = (prec * lb / l2) ** (1.0/3.0)
+      s1 = (prec * LOG10 / LOG2) ** (1.0/3.0)
       if (j == nil) then
         j = s1.round
       end
       if (k == nil) then
-        k = (s1 + Math.log([1, prec].max) / l2).round
+        k = (s1 + Math.log([1, prec].max) / LOG2).round
+      end
+      if (x > 1) then
+	k += (Math.log(x.to_f) / LOG2).abs.round
       end
     end
     if (j <= 0) then
@@ -472,19 +479,11 @@ module LongMath
     check_is_int(j, "j")
     check_is_int(k, "k")
 
-    iprec_extra = 0
-    if (x > 1) then
-      xf = x.to_f
-      k += (Math.log(xf) / Math.log(2)).abs.round
-      iprec_extra = (xf / Math.log(10)).abs
-    end
     if (iprec == nil) then
-      iprec = ((prec+10)*1.20 + iprec_extra).round
-    end
-    if (iprec < prec) then
-      iprec = prec
+      iprec = calc_iprec_for_exp(x, prec)
     end
     check_is_prec(iprec, "iprec")
+    # puts("exp_internal: x=#{x} prec=#{prec} iprec=#{iprec}\n")
 
     dprec = [ iprec, (prec + 1) << 1 ].min
 
@@ -555,6 +554,7 @@ module LongMath
     lnxx = log_internal(xx, iprec, mode)
     ln10 = log_internal(10.to_ld, iprec, mode)
     y  = id + (lnxx / ln10).to_ld
+    return y.round_to_scale(prec, mode)
   end
 
   #
@@ -673,7 +673,7 @@ module LongMath
       i += 1
       sum += d
 
-      # puts("s=#{sum} d=#{d} x=#{x} i=#{i}\n")
+      # puts("log_internal: s=#{sum} d=#{d} x=#{x} i=#{i} p=#{p} iprec=#{iprec} dprec=#{dprec}\n") if (i & 0x0f == 0x0f)
     end
 
     # puts("y=#{y} s=#{s} f=#{factor} sum=#{sum}\n")
@@ -681,6 +681,56 @@ module LongMath
     # puts("y=#{y} s=#{s} f=#{factor} sum=#{sum}\n")
     return y.round_to_scale(prec, final_mode)
 
+  end
+
+  #
+  # calc the power of x with exponent y to the given precision as
+  # LongDecimal.  Only supports values of y such that exp(y) still
+  # fits into a float (y <= 709)
+  #
+  def LongMath.power(x, y, prec, mode = LongDecimal::ROUND_HALF_DOWN)
+    check_is_ld(x, "x")
+    check_is_ld(y, "y")
+    raise TypeError, "y=#{y.inspect} must not be greater #{MAX_EXP_ABLE}" unless y <= MAX_EXP_ABLE
+    raise TypeError, "x=#{x.inspect} must not be greater #{MAX_FLOATABLE}" unless x <= MAX_FLOATABLE
+    raise TypeError, "x=#{x.inspect} must not positive" unless x > 0
+    check_is_prec(prec, "prec")
+    check_is_mode(mode, "mode")
+    LongMath.power_internal(x, y, prec, mode)
+  end
+
+  #
+  # internal functionality of exp.  exposes some more parameters, that
+  # should usually be set to defaut values, in order to allow better testing.
+  # do not actually call this method unless you are testing exp.
+  # create a bug report, if the default settings for the parameters do
+  # not work correctly
+  #
+  def LongMath.power_internal(x, y, prec = nil, final_mode = LongDecimal::ROUND_HALF_DOWN, iprec = nil, mode = LongDecimal::ROUND_HALF_DOWN)
+    check_is_ld(x, "x")
+    if (prec == nil) then
+      prec = x.scale
+    end
+    check_is_prec(prec, "prec")
+
+    if (final_mode == nil)
+      final_mode = LongDecimal::ROUND_HALF_DOWN
+    end
+    check_is_mode(final_mode, "final_mode")
+    check_is_mode(mode, "mode")
+
+    logx_y_f = Math.log(x.to_f) * (y.to_f)
+
+    # iprec = (prec * 1.2 + 20 + (y.abs.to_f) * 1.5 * x.int_digits2).round
+    if (iprec == nil) then
+      iprec = calc_iprec_for_exp(logx_y_f, prec) + 2
+    end
+    # puts("power_internal: x=#{x} y=#{y} logx_y=#{logx_y_f} iprec=#{iprec} prec=#{prec}\n")
+    logx = log(x, iprec, mode)
+    logx_y = logx*y
+    xy = exp_internal(logx_y, prec + 1, mode)
+    # puts("power_internal: x=#{x} logx=#{logx} y=#{y} logx_y=#{logx_y} xy=#{xy} iprec=#{iprec} prec=#{prec}\n")
+    xy.round_to_scale(prec, final_mode)
   end
 
 end # LongMath
@@ -691,7 +741,7 @@ end # LongMath
 # digits and the other one the position of the decimal point.
 #
 class LongDecimal < Numeric
-  @RCS_ID='-$Id: longdecimal.rb,v 1.8 2006/03/14 20:25:22 bk1 Exp $-'
+  @RCS_ID='-$Id: longdecimal.rb,v 1.9 2006/03/18 06:03:58 bk1 Exp $-'
 
   include LongDecimalRoundingMode
 
@@ -1755,7 +1805,7 @@ end # LongDecimal
 #
 class LongDecimalQuot < Numeric
 
-  @RCS_ID='-$Id: longdecimal.rb,v 1.8 2006/03/14 20:25:22 bk1 Exp $-'
+  @RCS_ID='-$Id: longdecimal.rb,v 1.9 2006/03/18 06:03:58 bk1 Exp $-'
 
   include LongDecimalRoundingMode
 
