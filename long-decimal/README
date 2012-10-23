@@ -1,21 +1,27 @@
 Version
 -------
 
-This version ($Name: PRE_ALPHA_0_13 $) is functionally identically with the previous
-pre-alpha-0.12, but the ruby-file longdecimal.rb has been renamed to
-long-decimal.rb, in order to make usage as ruby-gem easier.
+This version ($Name: PRE_ALPHA_0_14 $) is functionally identically with the previous
+pre-alpha-0.13, but some tests have been added and some minor bugs
+have been fixed.
 
-There are no known bugs and this version can be considered complete in
-terms of functionality.  This version is still a pre-alpha-version,
-but it is expected to move it to alpha within the next weeks, after
-having added some more tests and having fixed potential bugs that
-these tests might reveal.
+It could be observed that gem-installation, as described below, fails
+on Windows 2000 with ruby 1.8.2, but works on Linux with ruby 1.8.4
+Any help from someone who knows more about Ruby on Windows would be
+apreciated.  For the time being long-decimal has to be considered
+platform specific for Linux/Unix.
 
-Please observe that this is still a pre-alpha-version which is
-intended for experimental use.
+Beyond this restriction there are no known bugs and this version can
+be considered complete in terms of functionality.  This version is
+still a pre-alpha-version, but it is expected to move it to alpha
+within the next weeks, after having added some more tests and having
+fixed potential bugs that these tests might reveal.
 
 Install
 -------
+
+(REMARK: installation has only been successfully tested on Linux with
+ruby 1.8.4 and has been observed to fail on Windows 2000)
 
 1. Using ruby-gems (preferred)
 - download the newest gem-file from long-decimal project at rubyforge
