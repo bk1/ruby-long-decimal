@@ -1,8 +1,8 @@
 #
 # longdecimal.rb -- Arbitrary precision decimals with fixed decimal point
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/longdecimal.rb,v 1.2 2006/02/25 20:05:53 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_06 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/longdecimal.rb,v 1.3 2006/02/28 09:57:10 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_07 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 require "complex"
@@ -11,33 +11,190 @@ require "rational"
 # require "bigdecimal/math"
 
 #
-# add a functionality to find gcd with a high power of some number
-# probably Integer is not the right place for this stuff, because it
-# is quite special and should go to some kind of Math-like class in the
-# future.
+# helper functions to support LongDecimal and LongDecimalQuot
+# functions for LongDecimal that do not go as methods of LongDecimal
 #
-class Integer
+module LongMath
 
   MAX_FLOATABLE = Float::MAX.to_i
   MIN_FLOATABLE = Float::MIN.to_i
 
   #
-  # find the gcd of self with b^n0 where n0 is a sufficiently high
-  # exponent such that gcd(self, b^m) = gcd(self, b^n)
+  # helper method: checks if word_len is of reasonable for splitting a
+  # number into parts
+  #
+  def LongMath.check_word_len(word_len)
+    raise TypeError, "word_len must be a positive number <= 1024" unless (word_len.kind_of? Fixnum) && word_len > 0 && word_len <= 1024
+    word_len
+  end
+
+  # private :check_word_len
+
+  #
+  # split number x into parts of word_len bits each
+  # such that the concatenation of these parts as bit patterns is x
+  #
+  def LongMath.split_to_words(x, word_len = 32)
+    check_word_len(word_len)
+    raise TypeError, "x must be Integer" unless x.kind_of? Integer
+    m = x.abs
+    s = (x <=> 0)
+    bit_pattern = (1 << word_len) - 1
+    words = []
+    while (m != 0 || words.length == 0) do
+      w = m & bit_pattern
+      m = m >> word_len
+      words.unshift(w)
+    end
+    if (s < 0) then
+      words[0] = -words[0]
+    end
+    words
+  end
+
+  #
+  # concatenate numbers given in words as bit patterns
+  #
+  def LongMath.merge_from_words(words, word_len = 32)
+    check_word_len(word_len)
+    raise TypeError, "words must be array of length > 0" unless (words.kind_of? Array) && words.length > 0
+    y = 0
+    s = (words[0] <=> 0)
+    if (s < 0) then
+      words[0] = -words[0]
+    end
+    words.each do |w|
+      y = y << word_len
+      y += w
+    end
+    if (s < 0) then
+      y = -y
+    end
+    y
+  end
+
+  #
+  # calculate the square root of an integer using bitwise algorithm
+  #
+  def LongMath.sqrtb(x)
+    a = sqrtb_with_remainder(x)
+    a[0]
+  end
+
+  def LongMath.sqrtb_with_remainder(x)
+    raise TypeError, "x must be integer" unless x.kind_of? Integer
+
+    s = (x <=> 0)
+    if (s == 0) then
+      return [0, 0]
+    elsif (s < 0)
+      a = sqrtb_with_remainder(-x)
+      return [ Complex(0, a[0]), a[1]]
+    end
+
+    xwords = split_to_words(x, 2)
+    xi = xwords[0] - 1
+    yi = 1
+
+    1.upto(xwords.length-1) do |i|
+      xi = (xi << 2) + xwords[i]
+      d0 = (yi << 2) + 1
+      r  = xi - d0
+      b  = 0
+      if (r >= 0) then
+        b  = 1
+        xi = r
+      end
+      yi = (yi << 1) + b
+    end
+    return [yi, xi]
+  end
+
+  #
+  # calculate the square root of an integer using larger chunks of the number
+  #
+  def LongMath.sqrtw(x, n = 16)
+    a = sqrtw_with_remainder(x, n)
+    a[0]
+  end
+
+  def LongMath.sqrtw_with_remainder(x, n = 16)
+    raise TypeError, "x must be integer" unless x.kind_of? Integer
+    raise TypeError, "n must be an integer" unless (n.kind_of? Integer)
+    n2 = n<<1
+    n1 = n+1
+    check_word_len(n2)
+
+    s = (x <=> 0)
+    if (s == 0) then
+      return [0, 0]
+    elsif (s < 0)
+      a = sqrtw_with_remainder(-x)
+      return [ Complex(0, a[0]), a[1]]
+    end
+
+    xwords = split_to_words(x, n2)
+    if (xwords.length == 1) then
+      return sqrtb_with_remainder(xwords[0])
+    end
+
+    # puts(xwords.inspect + "\n")
+    xi = (xwords[0] << n2) + xwords[1]
+    a  = sqrtb_with_remainder(xi)
+    yi = a[0]
+    if (xwords.length <= 2) then
+      return a
+    end
+
+    xi -= yi*yi
+    2.upto(xwords.length-1) do |i|
+      xi = (xi << n2) + xwords[i]
+      d0 = (yi << n1)
+      q  = (xi / d0).to_i
+      q0 = q
+      j  = 0
+      was_negative = false
+      while (true) do
+        d = d0 + q
+        r = xi - (q * d)
+        break if (0 <= r && (r < d || was_negative))
+        # puts("i=#{i} j=#{j} q=#{q} d0=#{d0} d=#{d} r=#{r} yi=#{yi} xi=#{xi}\n")
+        if (r < 0) then
+          was_negative = true
+          q = q-1
+        else
+          q = q+1
+        end
+        j += 1
+        if (j > 10) then
+          puts("i=#{i} j=#{j} q=#{q} q0=#{q0} d0=#{d0} d=#{d} r=#{r} yi=#{yi} xi=#{xi}\n")
+          break
+        end
+      end
+      xi = r
+      yi = (yi << n) + q
+    end
+    return [ yi, xi ]
+  end
+
+  #
+  # find the gcd of x with b^n0 where n0 is a sufficiently high
+  # exponent such that gcd(x, b^m) = gcd(x, b^n)
   # for all m, n > n0
   #
-  def gcd_with_high_power(b)
-    raise ZeroDivisionError, "gcd_with_high_power of zero with \"#{b.inspect}\" would be infinity" if self.zero?
+  def LongMath.gcd_with_high_power(x, b)
+    raise TypeError, "gcd_with_high_power can only be calculated for integers, but x=#{x.inspect} is no integer." unless x.kind_of? Integer
+    raise ZeroDivisionError, "gcd_with_high_power of zero with \"#{b.inspect}\" would be infinity" if x.zero?
     raise TypeError, "gcd_with_high_power can only be calculated for integers \"#{b.inspect}\" is no integer" unless b.kind_of? Integer
     raise ZeroDivisionError, "gcd_with_high_power with b < 2 is not defined. b=\"#{b.inspect}\"" if b < 2
-    s = self.abs
+    s = x.abs
     exponent = 1
     b = b.abs
     if (b < s && s < MAX_FLOATABLE)
       exponent = (Math.log(s) / Math.log(b)).ceil
     end
-    power    = b**exponent
-    result   = 1
+    power  = b**exponent
+    result = 1
     begin
       f = s.gcd(power)
       s /= f
@@ -51,45 +208,40 @@ class Integer
   # self.  Only works for prime numbers
   # works even for numbers that exceed the range of Float
   #
-  def multiplicity_of_factor(prime_number)
-    power = gcd_with_high_power(prime_number)
-    if (power.abs < MAX_FLOATABLE) then
-      result = (Math.log(power) / Math.log(prime_number)).round
-    else
-      e = (Math.log(MAX_FLOATABLE) / Math.log(prime_number)).floor
-      result = 0
-      partial = prime_number ** e
-      while (power > partial) do
-        power /= partial
-        result += e
+  def LongMath.multiplicity_of_factor(x, prime_number)
+
+    if (x.kind_of? Rational) || (x.kind_of? LongDecimalQuot) then
+      m1 = multiplicity_of_factor(x.numerator, prime_number)
+      m2 = multiplicity_of_factor(x.denominator, prime_number)
+      return m1 - m2
+
+    elsif (x.kind_of? LongDecimal)
+      m1 = x.numerator.multiplicity_of_factor(prime_number)
+      if (prime_number == 2 || prime_number == 5) then
+        return m1 - x.scale
+      else
+        return m1
       end
-      result += (Math.log(power) / Math.log(prime_number)).round
-      # result = (BigMath.log(BigDecimal(power.to_s + ".0", power.size)) / BigMath.log(BigDecimal(prime_number.to_s + ".0", prime_number.size))).round
-      # raise TypeError, "numbers are too big p=#{prime_number} power=#{power}"
+
+    elsif (x.kind_of? Integer)
+
+      power = gcd_with_high_power(x, prime_number)
+      if (power.abs < MAX_FLOATABLE) then
+        result = (Math.log(power) / Math.log(prime_number)).round
+      else
+        e = (Math.log(MAX_FLOATABLE) / Math.log(prime_number)).floor
+        result = 0
+        partial = prime_number ** e
+        while (power > partial) do
+          power /= partial
+          result += e
+        end
+        result += (Math.log(power) / Math.log(prime_number)).round
+      end
+      return result
+    else
+      raise TypeError, "type of x is not supported #{x.class} #{x.inpect}"
     end
-    result
-  end
-end
-
-#
-# add some functionality to Rational.
-# probably Rational is not the right place for this stuff, because it
-# is quite special and should go to some kind of Math-like class in the
-# future.
-#
-class Rational
-
-  #
-  # find the exponent of the highest power of b that divides
-  # self.  Count negative, if it divides the denominator
-  # Only works for prime numbers
-  # @todo: needs some improvements, in order to work well for numbers
-  #        that exceed the range of Float
-  #
-  def multiplicity_of_factor(prime_number)
-    m1 = numerator.multiplicity_of_factor(prime_number)
-    m2 = denominator.multiplicity_of_factor(prime_number)
-    m1 - m2
   end
 
 end
@@ -134,7 +286,7 @@ end
 # digits and the other one the position of the decimal point.
 #
 class LongDecimal < Numeric
-  @RCS_ID='-$Id: longdecimal.rb,v 1.2 2006/02/25 20:05:53 bk1 Exp $-'
+  @RCS_ID='-$Id: longdecimal.rb,v 1.3 2006/02/28 09:57:10 bk1 Exp $-'
 
   include LongDecimalRoundingMode
 
@@ -242,8 +394,8 @@ class LongDecimal < Numeric
       # we need to come up with a better rule here.
       # if denominator is any product of powers of 2 and 5, we do not need to round
       denom = x.denominator
-      mul_2 = denom.multiplicity_of_factor(2)
-      mul_5 = denom.multiplicity_of_factor(5)
+      mul_2 = LongMath.multiplicity_of_factor(denom, 2)
+      mul_5 = LongMath.multiplicity_of_factor(denom, 5)
       iscale = [mul_2, mul_5].max
       scale += iscale
       denom /= 2 ** mul_2
@@ -640,7 +792,7 @@ class LongDecimal < Numeric
     end
     if (q.kind_of? LongDecimal) || (q.kind_of? LongDecimalQuot) then
       if (new_scale.nil?) then
-	new_scale = q.scale
+        new_scale = q.scale
       end
       q.round_to_scale(new_scale, rounding_mode)
     else
@@ -692,20 +844,6 @@ class LongDecimal < Numeric
     end
     q = (self / other).to_i
     return q, self - other * q
-  end
-
-  #
-  # find the exponent of the highest power of prime number p that divides
-  # self.  Only works for prime numbers
-  # works even for numbers that exceed the range of Float
-  #
-  def multiplicity_of_factor(prime_number)
-    m1 = numerator.multiplicity_of_factor(prime_number)
-    if (prime_number == 2 || prime_number == 5) then
-      m1 - scale
-    else
-      m1
-    end
   end
 
   def %(other)
@@ -837,11 +975,28 @@ class LongDecimal < Numeric
   protected :move_point_left_int, :move_point_right_int
 
   #
-  # calculate the sqare of self
+  # calculate the square of self
   #
   def square
     self * self
   end
+
+  def sqrt(new_scale, rounding_mode)
+    raise TypeError, "new_scale #{new_scale.inspect} must be integer" unless new_scale.kind_of? Integer
+    raise TypeError, "new_scale #{new_scale.inspect} must be >= 0" unless new_scale >= 0
+    raise TypeError, "mode #{mode.inspect} must be legal rounding mode" unless rounding_mode.kind_of? RoundingModeClass
+
+    new_scale1 = new_scale + 1
+    old_scale  = (new_scale1 << 1)
+    x = round_to_scale(old_scale, rounding_mode)
+    root, rem = LongMath.sqrtb_with_remainder(x.int_val)
+    if (rem > 0 && (rounding_mode == ROUND_HALF_EVEN || rounding_mode == ROUND_HALF_DOWN)) then
+      rounding_mode = ROUND_HALF_UP
+    end
+    y = LongDecimal(root, new_scale1)
+    y.round_to_scale(new_scale, rounding_mode)
+  end
+
 
   #
   # calculate the multiplicative inverse
@@ -940,7 +1095,6 @@ class LongDecimal < Numeric
     sprintf("LongDecimal(%s, %s)", int_val.inspect, scale.inspect)
   end
 
-
 end
 
 #
@@ -950,7 +1104,7 @@ end
 #
 class LongDecimalQuot < Numeric
 
-  @RCS_ID='-$Id: longdecimal.rb,v 1.2 2006/02/25 20:05:53 bk1 Exp $-'
+  @RCS_ID='-$Id: longdecimal.rb,v 1.3 2006/02/28 09:57:10 bk1 Exp $-'
 
   include LongDecimalRoundingMode
 
@@ -1114,15 +1268,6 @@ class LongDecimalQuot < Numeric
 #       s % o
 #     end
 #   end
-
-  #
-  # find the exponent of the highest power of prime number p that divides
-  # self.  Only works for prime numbers
-  # works even for numbers that exceed the range of Float
-  #
-  def multiplicity_of_factor(prime_number)
-    rat.multiplicity_of_factor(prime_number)
-  end
 
   def square
     self * self

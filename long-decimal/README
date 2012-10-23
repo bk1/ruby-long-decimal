@@ -6,13 +6,21 @@ load "longdecimal.rb"
 to your ruby-file.  Please read the code to get an idea how to use this.
 
 To test on Linux/Unix:
-put longdecimal.rb and testlongdecimal.rb into the same directory,
-do 
-chmod +x testlongdecimal.rb
-and run it
-./testlongdecimal.rb
+go into a directory long-decimal, put longdecimal.rb into a
+sub-directory lib and testlongdecimal.rb into a sub-directory test.
+This is the directory structure you get when unpacking the tar.gz
+archive.  Then:
 
-Licence
+chmod +x test/testlongdecimal.rb
+
+and run it:
+
+./test/testlongdecimal.rb
+
+You should not get any error nor any failure.  The tests will take a
+minute or so, depending on the CPU-speed of your machine.
+
+License
 -------
 
 Ruby's license or LGPL
@@ -31,3 +39,4 @@ Author
 
 Karl Brodowsky
 http://www.velofahren.de/cgi-bin/mailform.cgi
+(no direct mail address because I do not like spam)

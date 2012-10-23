@@ -2,8 +2,8 @@
 #
 # testlongdecimal.rb -- runit test for longdecimal.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.2 2006/02/25 19:52:11 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_06 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.3 2006/02/28 09:57:10 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_07 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -15,38 +15,126 @@ load "lib/longdecimal.rb"
 
 class TestLongDecimal_class < RUNIT::TestCase
 
-  @RCS_ID='-$Id: testlongdecimal.rb,v 1.2 2006/02/25 19:52:11 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdecimal.rb,v 1.3 2006/02/28 09:57:10 bk1 Exp $-'
+
+  def check_sqrtb(x, s)
+    y = LongMath.sqrtb(x)
+    z = y * y
+    zz = (y+1)*(y+1)
+    assert(0 <= y, "sqrt must be >= 0" + s)
+    assert(z <= x && x < zz, "y=#{y}=sqrt(#{x}) and x in [#{z}, #{zz})" + s)
+    y
+  end
+
+  def _test_sqrtb
+    assert_equal(Complex(0,1), LongMath.sqrtb(-1), "sqrt(-1)=i")
+    1024.times do |x|
+      check_sqrtb(x, " loop x=#{x}")
+    end
+    512.times do |i|
+      x1 = i*i
+      y = check_sqrtb(x1, " i*i i=#{i}")
+      assert_equal(i, y, "i=#{i} y=#{y}")
+      if (i > 0) then
+	x2 = x1 + 1
+	y = check_sqrtb(x2, " i*i+1 i=#{i}")
+	assert_equal(i, y, "i=#{i} y=#{y}")
+	x0 = x1 - 1
+	y = check_sqrtb(x0, " i*i-1 i=#{i}")
+	assert_equal(i-1, y, "i=#{i} y=#{y}")
+      end
+      
+      x1 = 1 << i
+      y = check_sqrtb(x1, " 2**i i=#{i}")
+      if (i[0] == 0)
+	assert_equal(1 << (i>>1), y, "2^(i/2) i=#{i} y=#{y}")
+      end
+      if (i > 0) then
+	check_sqrtb(x1-1, " 2**i-1 i=#{i}")
+	check_sqrtb(x1+1, " 2**i+1 i=#{i}")
+      end
+
+      x1 = 3 << i
+      check_sqrtb(x1, " 3*2**i i=#{i}")
+      check_sqrtb(x1-1, " 3*2**i-1 i=#{i}")
+      check_sqrtb(x1+1, " 3*2**i+1 i=#{i}")
+    end
+  end
+
+  def check_sqrtw(x, s)
+    y = LongMath.sqrtw(x)
+    z = y * y
+    zz = (y+1)*(y+1)
+    assert(0 <= y, "sqrt must be >= 0" + s)
+    assert(z <= x && x < zz, "y=#{y}=sqrt(#{x}) and x in [#{z}, #{zz})" + s)
+    y
+  end
+
+  def test_sqrtw
+    assert_equal(Complex(0,1), LongMath.sqrtw(-1), "sqrt(-1)=i")
+    1024.times do |x|
+      check_sqrtw(x, " loop x=#{x}")
+    end
+    1024.times do |i|
+      x1 = i*i
+      y = check_sqrtw(x1, " i*i i=#{i}")
+      assert_equal(i, y, "i=#{i} y=#{y}")
+      if (i > 0) then
+	x2 = x1 + 1
+	y = check_sqrtw(x2, " i*i+1 i=#{i}")
+	assert_equal(i, y, "i=#{i} y=#{y}")
+	x0 = x1 - 1
+	y = check_sqrtw(x0, " i*i-1 i=#{i}")
+	assert_equal(i-1, y, "i=#{i} y=#{y}")
+      end
+      
+      x1 = 1 << i
+      y = check_sqrtw(x1, " 2**i i=#{i}")
+      if (i[0] == 0)
+	assert_equal(1 << (i>>1), y, "2^(i/2) i=#{i} y=#{y}")
+      end
+      if (i > 0) then
+	check_sqrtw(x1-1, " 2**i-1 i=#{i}")
+	check_sqrtw(x1+1, " 2**i+1 i=#{i}")
+      end
+
+      x1 = 3 << i
+      check_sqrtw(x1, " 3*2**i i=#{i}")
+      check_sqrtw(x1-1, " 3*2**i-1 i=#{i}")
+      check_sqrtw(x1+1, " 3*2**i+1 i=#{i}")
+    end
+  end
 
   def test_gcd_with_high_power
     n = 224
-    assert_equal(32, n.gcd_with_high_power(2), "2-part of 224 is 32")
-    assert_equal(7, n.gcd_with_high_power(7), "7-part of 224 is 7")
-    assert_equal(1, n.gcd_with_high_power(3), "3-part of 224 is 1")
+    assert_equal(32, LongMath.gcd_with_high_power(n, 2), "2-part of 224 is 32")
+    assert_equal(7, LongMath.gcd_with_high_power(n, 7), "7-part of 224 is 7")
+    assert_equal(1, LongMath.gcd_with_high_power(n, 3), "3-part of 224 is 1")
   end
 
   def test_multiplicity_of_factor
     n = 224
-    assert_equal(5, n.multiplicity_of_factor(2), "ny_2(224) is 5")
-    assert_equal(1, n.multiplicity_of_factor(7), "ny_7(224) is 1")
-    assert_equal(0, n.multiplicity_of_factor(3), "ny_3(224) is 0")
+    assert_equal(5, LongMath.multiplicity_of_factor(n, 2), "ny_2(224) is 5")
+    assert_equal(1, LongMath.multiplicity_of_factor(n, 7), "ny_7(224) is 1")
+    assert_equal(0, LongMath.multiplicity_of_factor(n, 3), "ny_3(224) is 0")
   end
 
   def test_rat_multiplicity_of_factor
     n = Rational(224, 225)
-    assert_equal(5, n.multiplicity_of_factor(2), "ny_2(n) is 5")
-    assert_equal(1, n.multiplicity_of_factor(7), "ny_7(n) is 1")
-    assert_equal(-2, n.multiplicity_of_factor(3), "ny_3(n) is -2")
-    assert_equal(-2, n.multiplicity_of_factor(5), "ny_5(n) is -2")
-    assert_equal(0, n.multiplicity_of_factor(11), "ny_11(n) is 0")
+    assert_equal(5, LongMath.multiplicity_of_factor(n, 2), "ny_2(n) is 5")
+    assert_equal(1, LongMath.multiplicity_of_factor(n, 7), "ny_7(n) is 1")
+    assert_equal(-2, LongMath.multiplicity_of_factor(n, 3), "ny_3(n) is -2")
+    assert_equal(-2, LongMath.multiplicity_of_factor(n, 5), "ny_5(n) is -2")
+    assert_equal(0, LongMath.multiplicity_of_factor(n, 11), "ny_11(n) is 0")
   end
 
   def test_rat_long_multiplicity_of_factor
     n = Rational(224*(10**600+1), 225*(5**800))
-    assert_equal(5, n.multiplicity_of_factor(2), "ny_2(n) is 5")
-    assert_equal(1, n.multiplicity_of_factor(7), "ny_7(n) is 1")
-    assert_equal(-2, n.multiplicity_of_factor(3), "ny_3(n) is -2")
-    assert_equal(-802, n.multiplicity_of_factor(5), "ny_5(n) is -2")
-    assert_equal(0, n.multiplicity_of_factor(11), "ny_11(n) is 0")
+    assert_equal(5, LongMath.multiplicity_of_factor(n, 2), "ny_2(n) is 5")
+    assert_equal(1, LongMath.multiplicity_of_factor(n, 7), "ny_7(n) is 1")
+    assert_equal(-2, LongMath.multiplicity_of_factor(n, 3), "ny_3(n) is -2")
+    assert_equal(-802, LongMath.multiplicity_of_factor(n, 5), "ny_5(n) is -2")
+    assert_equal(0, LongMath.multiplicity_of_factor(n, 11), "ny_11(n) is 0")
   end
 
   def test_int_init
