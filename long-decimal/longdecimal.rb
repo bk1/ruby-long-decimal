@@ -1,8 +1,8 @@
 #
 # longdecimal.rb -- Arbitrary precision decimals with fixed decimal point
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/longdecimal.rb,v 1.5 2006/02/16 20:34:19 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_01 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/longdecimal.rb,v 1.6 2006/02/17 20:51:37 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_02 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 require "complex"
@@ -116,7 +116,7 @@ end
 # class for holding fixed point long decimal numbers
 #
 class LongDecimal < Numeric
-  @RCS_ID='-$Id: longdecimal.rb,v 1.5 2006/02/16 20:34:19 bk1 Exp $-'
+  @RCS_ID='-$Id: longdecimal.rb,v 1.6 2006/02/17 20:51:37 bk1 Exp $-'
 
   include LongDecimalRoundingMode
 
@@ -342,9 +342,14 @@ class LongDecimal < Numeric
   def equalize_scale(other)
     o, s = coerce(other)
     if (s.kind_of? LongDecimal) then
-      new_scale = [s.scale, o.scale].max
-      s = s.round_to_scale(new_scale)
-      o = o.round_to_scale(new_scale)
+      # make sure Floats do not mess up our number of significant digits when adding
+      if (other.kind_of? Float) then
+	o = o.round_to_scale(s.scale, ROUND_HALF_UP)
+      else 
+	new_scale = [s.scale, o.scale].max
+	s = s.round_to_scale(new_scale)
+	o = o.round_to_scale(new_scale)
+      end
     end
     return s, o
   end
@@ -361,8 +366,8 @@ class LongDecimal < Numeric
       factor   = 10**exponent
       s *= factor
       o *= factor
-      s.round_to_scale(0)
-      o.round_to_scale(0)
+      s = s.round_to_scale(0)
+      o = o.round_to_scale(0)
     end
     return s, o
   end
@@ -394,7 +399,7 @@ class LongDecimal < Numeric
     if s.kind_of? LongDecimal then
       LongDecimal(s.int_val - o.int_val, s.scale)
     else
-      s + o
+      s - o
     end
   end
 
@@ -485,7 +490,10 @@ class LongDecimal < Numeric
       return LongDecimalQuot(other, s), LongDecimalQuot(self.to_r, s)
     elsif (other.kind_of? Integer) || (other.kind_of? Float) then
       other = LongDecimal(other)
-      return other.round_to_scale(scale, ROUND_HALF_UP), self
+      if (other.scale > scale) then
+	other = other.round_to_scale(scale, ROUND_HALF_UP)
+      end
+      return other, self
     elsif other.kind_of? Numeric then
       s, o = other.coerce(self.to_f)
       return o, s
@@ -501,7 +509,11 @@ class LongDecimal < Numeric
   alias sign   sgn
 
   def ==(other)
-    (self <=> other) == 0 && self.scale == other.scale
+    (other.kind_of? LongDecimal) && (self <=> other) == 0 && self.scale == other.scale
+  end
+
+  def zero?
+    int_val.zero?
   end
 
   #
@@ -528,7 +540,7 @@ end
 #
 class LongDecimalQuot < Rational
 
-  @RCS_ID='-$Id: longdecimal.rb,v 1.5 2006/02/16 20:34:19 bk1 Exp $-'
+  @RCS_ID='-$Id: longdecimal.rb,v 1.6 2006/02/17 20:51:37 bk1 Exp $-'
 
   include LongDecimalRoundingMode
 
@@ -596,7 +608,7 @@ class LongDecimalQuot < Rational
     o, s = coerce(other)
     p "adding #{s.inspect} + #{o.inspect}"
     if (s.kind_of? LongDecimalQuot) then
-      LongDecimalQuot(super(other), scale)
+      LongDecimalQuot(super(o), [s.scale, o.scale].max)
     else
       s + o
     end
@@ -604,12 +616,12 @@ class LongDecimalQuot < Rational
 
   def -(other)
     o, s = coerce(other)
-    LongDecimalQuot(super(other), scale)
+    LongDecimalQuot(super(o), [s.scale, o.scale].max)
   end
 
   def *(other)
     o, s = coerce(other)
-    LongDecimalQuot(super(other), scale)
+    LongDecimalQuot(super(other), s.scale + o.scale)
   end
 
   def /(other)
@@ -778,4 +790,4 @@ class Numeric
 
 end
 
-# end
+# end of file longdecimal.rb
