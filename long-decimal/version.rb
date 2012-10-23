@@ -6,7 +6,7 @@
 # (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
 #
 # CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/version.rb,v 1.9 2011/01/22 12:34:39 bk1 Exp $
-# CVS-Label: $Name: RELEASE_1_00_00 $
+# CVS-Label: $Name:  $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 

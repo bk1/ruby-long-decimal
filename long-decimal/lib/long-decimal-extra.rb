@@ -3,8 +3,8 @@
 #
 # (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal-extra.rb,v 1.26 2011/01/16 18:12:50 bk1 Exp $
-# CVS-Label: $Name: RELEASE_1_00_00 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal-extra.rb,v 1.29 2011/02/04 23:17:21 bk1 Exp $
+# CVS-Label: $Name:  $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 require "complex"
@@ -23,6 +23,7 @@ class LongDecimal
     @timer[i] = Time.now
   end
 
+  # helper method for performance measurements
   def te(i)
     @@tt ||= []
     @@tt[i] ||= 0
@@ -32,6 +33,7 @@ class LongDecimal
     @@tc[i] += 1
   end
 
+  # helper method for performance measurements
   def tt(i)
     @@tt ||= []
     @@tt[i] ||= 0
@@ -420,7 +422,14 @@ module LongMath
   def LongMath.log_f(x)
     raise TypeError, "x=#{x.inspect} must not be positive" unless x > 0
     unless x.kind_of? LongDecimal
-      x = x.to_ld(18, LongDecimalRoundingMode::ROUND_HALF_UP)
+      x_rounded = x.to_ld(18, LongDecimalRoundingMode::ROUND_HALF_UP)
+      if (x_rounded.one?)
+        # x rounds to 1, if we cut of the last digits?
+        # near 1 the derivative of log(x) is approximately 1, so we can assume log_f(x) ~ x-1
+        return x - 1
+      else
+        x = x_rounded
+      end
     end
     y = 0
     while (x > LongMath::MAX_FLOATABLE)
@@ -465,11 +474,11 @@ module LongMath
     iprec_y  = iprec_x
     iprec    = iprec_x + 2
     if (logx_f < 0)
-      iprec_x -= (logx_f/LOG10).round
+      iprec_x -= (-1.5 + logx_f/LOG10).round
     end
     if (y_f.abs < 1)
       logy_f = LongMath.log_f(y.abs)
-      iprec_y -= (logy_f/LOG10).round
+      iprec_y -= (- 1.5 + logy_f/LOG10).round
     end
     [ iprec, iprec_x, iprec_y, logx_y_f ]
 
@@ -797,6 +806,7 @@ module LongMath
 
   end # power_internal
 
+  # logarithms of integers to base 2
   LOGARR = [ nil, \
            0.0, \
            1.0, \

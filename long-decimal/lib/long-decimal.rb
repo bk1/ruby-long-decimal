@@ -7,8 +7,8 @@
 # additional functionality, mostly transcendental functions,
 # may be found in long-decimal-extra.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal.rb,v 1.85 2011/01/16 18:39:22 bk1 Exp $
-# CVS-Label: $Name: RELEASE_1_00_00 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal.rb,v 1.87 2011/01/30 20:01:40 bk1 Exp $
+# CVS-Label: $Name:  $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -353,7 +353,7 @@ end
 # common base class for LongDecimal and LongDecimalQuot
 #
 class LongDecimalBase < Numeric
-  @@RCS_ID='-$Id: long-decimal.rb,v 1.85 2011/01/16 18:39:22 bk1 Exp $-'
+  @@RCS_ID='-$Id: long-decimal.rb,v 1.87 2011/01/30 20:01:40 bk1 Exp $-'
 
   # allow easy check if running with version 1.9
   RUNNING_19 = RUBY_VERSION.match /^1\.9/
@@ -583,7 +583,7 @@ end # class LongDecimalBase
 # digits and the other one the position of the decimal point.
 #
 class LongDecimal < LongDecimalBase
-  @@RCS_ID='-$Id: long-decimal.rb,v 1.85 2011/01/16 18:39:22 bk1 Exp $-'
+  @@RCS_ID='-$Id: long-decimal.rb,v 1.87 2011/01/30 20:01:40 bk1 Exp $-'
 
   #  MINUS_ONE = LongDecimal(-1)
   #  ZERO      = LongDecimal(0)
@@ -1880,7 +1880,7 @@ end # LongDecimal
 #
 class LongDecimalQuot < LongDecimalBase
 
-  @@RCS_ID='-$Id: long-decimal.rb,v 1.85 2011/01/16 18:39:22 bk1 Exp $-'
+  @@RCS_ID='-$Id: long-decimal.rb,v 1.87 2011/01/30 20:01:40 bk1 Exp $-'
 
   #
   # constructor
@@ -1924,7 +1924,7 @@ class LongDecimalQuot < LongDecimalBase
       # digits before the decimal point.  Since division is usually
       # not expressable exactly in decimal digits, it is up to the
       # calling application to decide on the number of digits actually
-      # used for the result, which can be more that new_scale.
+      # used for the result, which can be more than new_scale.
       sx = first.scale
       sy = second.scale
       dx = first.sint_digits10
@@ -2912,7 +2912,7 @@ module LongMath
   #
   # calculate the square root of an integer x using bitwise algorithm
   # the result is rounded to an integer y such that
-  # y**2 <= x < (y+1)**2
+  # y**2&nbsp;<=&nbsp;x&nbsp;<&nbsp;(y+1)**2
   #
   def LongMath.sqrtb(x)
     a = sqrtb_with_remainder(x)
@@ -2920,8 +2920,8 @@ module LongMath
   end
 
   #
-  # calculate an integer s >= 0 and a remainder r >= 0 such that
-  # x = s**2 + r and s**2 <= x < (s+1)**2
+  # calculate an integer s&nbsp;>=&nbsp;0 and a remainder r&nbsp;>=&nbsp;0 such that
+  # x&nbsp;=&nbsp;s**2&nbsp;+&nbsp;r and s**2&nbsp;<=&nbsp;x&nbsp;<&nbsp;(s+1)**2
   # the bitwise algorithm is used, which works well for relatively
   # small values of x.
   #
@@ -2961,7 +2961,7 @@ module LongMath
   # 32 bit systems, because internally parts of the double size are
   # used.
   # the result is rounded to an integer y such that
-  # y**2 <= x < (y+1)**2
+  # y**2&nbsp;<=&nbsp;x&nbsp;<&nbsp;(y+1)**2
   #
   def LongMath.sqrtw(x, n = 16)
     a = sqrtw_with_remainder(x, n)
@@ -2970,7 +2970,7 @@ module LongMath
 
   #
   # calculate the an integer s >= 0 and a remainder r >= 0 such that
-  # x = s**2 + r and s**2 <= x < (s+1)**2
+  # x&nbsp;=&nbsp;s**2&nbsp;+&nbsp;r and s**2&nbsp;<=&nbsp;x&nbsp;<&nbsp;(s+1)**2
   # the wordwise algorithm is used, which works well for relatively
   # large values of x.  n defines the word size to be used for the
   # algorithm.  It is good to use half of the machine word, but the
@@ -3036,7 +3036,7 @@ module LongMath
   #
   # calculate the cubic root of an integer x using bitwise algorithm
   # the result is rounded to an integer y such that
-  # y**3 <= x < (y+1)**3
+  # y**3&nbsp;<=&nbsp;x&nbsp;<&nbsp;(y+1)**3
   #
   def LongMath.cbrtb(x)
     a = cbrtb_with_remainder(x)
@@ -3044,8 +3044,8 @@ module LongMath
   end
 
   #
-  # calculate an integer s >= 0 and a remainder r >= 0 such that
-  # x = s**3 + r and s**3 <= x < (s+1)**3
+  # calculate an integer s&nbsp;>=&nbsp;0 and a remainder r&nbsp;>=&nbsp;0 such that
+  # x&nbsp;=&nbsp;s**3&nbsp;+&nbsp;r and s**3&nbsp;<=&nbsp;x&nbsp;<&nbsp;(s+1)**3
   # for negative numbers x return negative remainder and result.
   # the bitwise algorithm is used, which works well for relatively
   # small values of x.
@@ -3302,14 +3302,25 @@ module LongMath
     iprec
   end
 
-  public
+  private
 
   #
   # internal functionality of exp.  exposes some more parameters, that
-  # should usually be set to defaut values, in order to allow better testing.
+  # should usually be set to default values, in order to allow better testing.
   # do not actually call this method unless you are testing exp.
   # create a bug report, if the default settings for the parameters do
   # not work correctly
+  #
+  # x is the number of which we want to calculate the exponential function.
+  # prec is the precision that we need to achieve for the final result.
+  # final_mode is the rounding mode that we use for the end result
+  # j number of summands that are grouped together for better performance of the calculation
+  #   (defaults to the cube root of the desired number of base 2 digits to express the fractonal part of result.)
+  # k is an integer such that calculation of exp(x/2**k) has good convergence.  We calculate that and finally take a power of the result:
+  #   exp(x) = exp(x/2**k)**(2**k)
+  # iprec is the precision used internally during the calculation
+  # mode is the rounding mode used internally
+  # cache_result indicates if the result of the calculation should be cached.
   #
   def LongMath.exp_internal(x, prec = nil, final_mode = LongMath.standard_mode, j = nil, k = nil, iprec = nil, mode = LongMath.standard_imode, cache_result = true) # down?
 
@@ -3330,16 +3341,20 @@ module LongMath
 
     # if the result would come out to zero anyway, cut the work
     xi = x.to_i
-    # if (xi < -LongMath::MAX_FLOATABLE) || -((xi.to_f - 1) / LOG10) > prec+10 then
     if (xi < -LongMath::MAX_FLOATABLE) || xi + 1 < -prec * LOG10 - LOG2 then
+      # the result is 1/4 of the smallest positive number that can be expressed with the given precision.
+      # this is rounded according to the final rounding mode, yielding 0.00000...00 or 0.00000...01.
       return LongDecimal(25, prec+2).round_to_scale(prec, final_mode)
     end
+
+    # if x is negative, do the calculation with -x and take 1/exp(-x) as the final result later.
     x_was_neg = false
     if (x < 0) then
       x = -x
       x_was_neg = true
     end
 
+    # calculate j and k if they are not given.
     if j.nil? || k.nil? then
       s1 = (prec * LOG10 / LOG2) ** (1.0/3.0)
       if (j.nil?) then
@@ -3361,21 +3376,25 @@ module LongMath
     check_is_int(j, "j")
     check_is_int(k, "k")
 
+    # calculate iprec if it is not given.
     if (iprec.nil?) then
       iprec = calc_iprec_for_exp(x, prec, x_was_neg)
     end
     iprec = check_is_prec(iprec, "iprec")
 
-    # we only cache exp(1)
+    # we only cache exp(1), exp(10), exp(100), exp(MAX_EXP_ABLE.to_i), otherwise cache_key is returned as nil.
     cache_key = get_cache_key("exp", x, mode, [1, 10, 100, MAX_EXP_ABLE.to_i])
     y_k = get_cached(cache_key, x, iprec)
 
+    # if the cache did not yield our result, calculate it.
     if (y_k.nil?) then
       y_k = exp_raw(x, prec, j, k, iprec, mode)
 
-      # keep result around for exp(1)
+      # keep result around for exp(1), exp(10), exp(100), exp(MAX_EXP_ABLE.to_i)
       set_cached(cache_key, y_k) if (cache_result)
     end
+
+    # take 1/exp(-x) as result, if x was negative.
     if (x_was_neg)
       y_k = y_k.reciprocal
     end
@@ -3388,25 +3407,48 @@ module LongMath
   # calculation of exp(x) with precision used internally.  Needs to be
   # rounded to be accurate to all digits that are provided.
   #
+  # x is the number of which we want to calculate the exponential function.
+  # prec is the precision that we need to achieve for the final result.
+  # final_mode is the rounding mode that we use for the end result
+  # j number of summands that are grouped together for better performance of the calculation
+  # k is an integer such that calculation of exp(x/2**k) has good convergence.  We calculate that and finally take a power of the result:
+  #   exp(x) = exp(x/2**k)**(2**k)
+  # iprec is the precision used internally during the calculation
+  # mode is the rounding mode used internally
+  # cache_result indicates if the result of the calculation should be cached.
+  #
   def LongMath.exp_raw(x, prec, j, k, iprec, mode)
     dprec = [ (iprec*0.9).round, prec ].max
 
+    # convert to LongDecimal, if necessary:
     unless (x.kind_of? LongDecimal)
       x = x.to_ld(iprec, mode)
     end
-
+    
+    # we use this x_k in the Taylor row:
     x_k = (x / (1 << k)).round_to_scale(iprec, mode)
+    # x_k ** j
     x_j = (x_k ** j).round_to_scale(iprec, mode)
+    # vector with j entries
     s = [ LongDecimal(0) ] * j
     t = LongDecimal(1)
     last_t = 1
     f = 0
+
+    # do the Taylor sum
     loop do
+      # do the partial loop: i=0..j-1
+      # we avoid excessive multiplication with powers of x_k and keep these to the final calculation, thus having to apply them only once for each i.
       j.times do |i|
+        # s[i] = 1 / i! + x_k ** j / (i+j)! + x_k ** (2j) / (i+2*j)! + ...  + x_k ** (n*j) / f!
         s[i] += t
         f += 1
+        # adjust: t = x_k**(n*j)/f!
         t = (t / f).round_to_scale(iprec, mode)
+        break if (t.zero?)
       end
+      # multiply t by x_k**j.  Detect when we can stop, if summands are zero or irrelevant for final result.
+      break if (t.zero?)
       t = (t * x_j).round_to_scale(iprec, mode)
       break if (t.zero?)
       tr = t.round_to_scale(dprec, LongDecimal::ROUND_DOWN).abs
@@ -3415,6 +3457,8 @@ module LongMath
       break if (tr <= tu && last_t <= tu)
       last_t = tr
     end
+
+    # calculate result exp(x_k)
     x_i = 1
     y_k = LongDecimal(0)
     j.times do |i|
@@ -3423,12 +3467,16 @@ module LongMath
       end
       y_k += (s[i] * x_i).round_to_scale(iprec, mode)
     end
+
+    # square exp(x_k) k times to get exp(x):
     k.times do |i|
       y_k = y_k.square.round_to_scale(iprec, mode)
     end
 
     y_k
   end # exp_raw
+
+  public
 
   #
   # calculate approximation of sqrt of a LongDecimal.

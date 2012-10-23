@@ -4,8 +4,8 @@
 #
 # (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdeclib.rb,v 1.41 2011/01/16 21:12:42 bk1 Exp $
-# CVS-Label: $Name: RELEASE_1_00_00 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdeclib.rb,v 1.42 2011/02/03 00:22:39 bk1 Exp $
+# CVS-Label: $Name:  $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -27,7 +27,7 @@ end
 #
 module TestLongDecHelper
 
-  @RCS_ID='-$Id: testlongdeclib.rb,v 1.41 2011/01/16 21:12:42 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdeclib.rb,v 1.42 2011/02/03 00:22:39 bk1 Exp $-'
 
   def assert_equal_float(lhs, rhs, delta=0, msg="")
     if ((lhs - rhs).abs >= delta)
@@ -499,6 +499,11 @@ module TestLongDecHelper
     y = y.to_ld
     # calculate z = x**y
     z = LongMath.power(x, y, prec)
+    prec_dp = 2*prec+1
+    z_dp = LongMath.power(x, y, prec_dp)
+    msg = "x=#{x}\ny=#{y}\nz=#{z}\nz_dp=#{z_dp}\nprec=#{prec}"
+    puts msg
+    assert((z - z_dp).abs <= 2*z.unit, msg)
 
     corr2 = (x - 1).abs*1000000000 # 10**9
     if (z.abs < LongMath::MAX_FLOATABLE && corr2 > 1)
@@ -525,7 +530,10 @@ module TestLongDecHelper
       # puts "delta=#{delta} corr_f=#{corr_f} corr=#{corr}"
 
       diff  = (zf - wf).abs
-      assert_equal_float(zf, wf, delta, "z=#{z}=#{zf} and wf=#{wf.to_s} should be almost equal x=#{x}=#{xf} y=#{y}=#{yf} delta=#{delta} l=#{l} diff=#{diff} prec=#{prec} corr=#{corr}=#{corr.to_f} corr2=#{corr2}=#{corr2.to_f} corr_f=#{corr_f}")
+      msg = "z=#{z}=#{zf} and wf=#{wf.to_s} should be almost equal\nx=#{x}=#{xf}\ny=#{y}=#{yf}\ndelta=#{delta}\nl=#{l}\ndiff=#{diff}\nprec=#{prec}\ncorr=#{corr}=#{corr.to_f}\ncorr2=#{corr2}=#{corr2.to_f}\ncorr_f=#{corr_f}"
+      puts msg
+      assert_equal_float(zf, wf, delta, msg)
+      puts "OK"
     end
 
     # check by taking log(z) = y * log(x)
@@ -549,9 +557,14 @@ module TestLongDecHelper
       if (y.abs > 1) then
         l10y = (Math.log(y.abs.to_f) / Math.log(10)).ceil
       end
+      lprec_dp = 2*lprec+1
       u = LongMath.log(z, lprec)
+      u_dp = LongMath.log(z_dp, lprec_dp)
       v = LongMath.log(x, lprec+l10y)
+      v_dp = LongMath.log(x, lprec_dp + l10y)
       yv = (y*v).round_to_scale(lprec, LongDecimal::ROUND_HALF_DOWN)
+      yv_dp = (y * v_dp).round_to_scale(lprec_dp, LongDecimal::ROUND_HALF_DOWN)
+      assert((u_dp - yv_dp).abs <= unit, "u=log(z,#{lprec})=#{u_dp}=#{u} and yv=y*v=y*log(x,#{lprec+l10y})=#{yv_dp}=#{yv} should be almost equal (unit=#{unit} x=#{x.to_s} y=#{y.to_s} z=#{z_dp}=#{z.to_s} u=#{u_dp}=#{u.to_s} v=#{v_dp}=#{v.to_s} lprec=#{lprec} prec=#{prec} lprec_dp=#{lprec_dp} prec_dp=#{prec_dp})")
       assert((u - yv).abs <= unit, "u=log(z,#{lprec})=#{u} and yv=y*v=y*log(x,#{lprec+l10y})=#{yv} should be almost equal (unit=#{unit} x=#{x.to_s} y=#{y.to_s} z=#{z.to_s} u=#{u.to_s} v=#{v.to_s} lprec=#{lprec} prec=#{prec})")
     end
 

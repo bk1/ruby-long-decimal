@@ -4,8 +4,8 @@
 #
 # (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal-extra.rb,v 1.28 2009/05/17 21:27:20 bk1 Exp $
-# CVS-Label: $Name: RELEASE_1_00_00 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal-extra.rb,v 1.29 2011/02/03 00:22:38 bk1 Exp $
+# CVS-Label: $Name:  $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -27,14 +27,14 @@ LongMath.prec_overflow_handling = :warn_use_max
 class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   include TestLongDecHelper
 
-  @RCS_ID='-$Id: testlongdecimal-extra.rb,v 1.28 2009/05/17 21:27:20 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdecimal-extra.rb,v 1.29 2011/02/03 00:22:38 bk1 Exp $-'
 
   MAX_FLOAT_I = (Float::MAX).to_i
 
   #
   # test conversion to Float
   #
-  def test_to_f
+  def _test_to_f
     print "\ntest_to_f [#{Time.now}]: "
     l = LongDecimal(224, 0)
     assert((l.to_f - 224).abs < 224 * 0.000001, "l=#{l.inspect}")  # t2
@@ -72,7 +72,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test to_f of Rational (trivial cases)
   #
-  def test_r_to_f_small
+  def _test_r_to_f_small
     print "\ntest_r_to_f_small [#{Time.now}]: "
     # trivial: 0, 1, -1,...
     r = Rational(0, 1)
@@ -90,7 +90,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test to_f of Rational (max of to_f_orig)
   #
-  def test_r_to_f_max_float
+  def _test_r_to_f_max_float
     print "\ntest_r_to_f_max_float [#{Time.now}]: "
     # still numerator and denominator expressable as Float
     r = Rational(LongMath::MAX_FLOATABLE, LongMath::MAX_FLOATABLE - 1)
@@ -125,7 +125,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test to_f of Rational with numerator.abs > Float::MAX
   #
-  def test_r_to_f_big_numerator
+  def _test_r_to_f_big_numerator
     print "\ntest_r_to_f_big_numerator [#{Time.now}]: "
     # numerator beyond Float::MAX
     r = Rational(LongMath::MAX_FLOATABLE + 1, LongMath::MAX_FLOATABLE - 1)
@@ -149,7 +149,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test to_f of Rational with denominator.abs > Float::MAX
   #
-  def test_r_to_f_big_numerator
+  def _test_r_to_f_big_numerator
     print "\ntest_r_to_f_big_numerator [#{Time.now}]: "
 
     # denominator beyond Float::MAX
@@ -174,7 +174,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test to_f of Rational with numerator.abs > Float::MAX and denominator.abs > Float::MAX
   #
-  def test_r_to_f_big_numerator
+  def _test_r_to_f_big_numerator
     print "\ntest_r_to_f_big_numerator [#{Time.now}]: "
     # both beyond Float::MAX
     delta = 1/Float::MAX
@@ -209,7 +209,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test to_f of Rational with medium sized absolute value
   #
-  def test_r_to_f_medium
+  def _test_r_to_f_medium
     print "\ntest_r_to_f_medium [#{Time.now}]: "
 
     # use some value < 1 "in the middle"
@@ -279,7 +279,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test to_f of Rational (trivial cases)
   #
-  def test_ld_to_f_small
+  def _test_ld_to_f_small
     print "\ntest_ld_to_f_small [#{Time.now}]: "
     # trivial: 0, 1, -1,...
     r = LongDecimal(0, 0)
@@ -297,7 +297,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test to_f of LongDecimal
   #
-  def test_ld_to_f_max_float
+  def _test_ld_to_f_max_float
     print "\ntest_ld_to_f_max_float [#{Time.now}]: "
     y = 1.7976931348623158
     z = 0.1 ** Float::MAX_10_EXP
@@ -323,7 +323,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test to_f of LongDecimal with numerator.abs > Float::MAX
   #
-  def test_ld_to_f_big_numerator
+  def _test_ld_to_f_big_numerator
     print "\ntest_ld_to_f_big_numerator [#{Time.now}]: "
     y = 1.7976931348623158
     u = 1.3407807929942596e308
@@ -349,7 +349,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test to_f of LongDecimal with denominator.abs > Float::MAX
   #
-  def test_ld_to_f_big_numerator
+  def _test_ld_to_f_big_numerator
     print "\ntest_ld_to_f_big_numerator [#{Time.now}]: "
     y = 1.7976931348623158
     z = 0.1 ** Float::MAX_10_EXP + 1
@@ -372,7 +372,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test to_f of LongDecimal with numerator.abs > Float::MAX and denominator.abs > Float::MAX
   #
-  def test_ld_to_f_big_numerator
+  def _test_ld_to_f_big_numerator
     print "\ntest_ld_to_f_big_numerator [#{Time.now}]: "
     y = 1.7976931348623158
     z = 0.1 ** Float::MAX_10_EXP + 1
@@ -436,7 +436,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test to_f of LongDecimal with medium sized absolute value
   #
-  def test_ld_to_f_medium
+  def _test_ld_to_f_medium
     print "\ntest_ld_to_f_medium [#{Time.now}]: "
 
     # use some value < 1 "in the middle"
@@ -501,7 +501,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   end
 
   # do some conversions that lead to infinity
-  def test_ld_to_f_infinity
+  def _test_ld_to_f_infinity
     print "\ntest_ld_to_f_infinity [#{Time.now}]: "
     f1 = LongDecimal(1000000000000001, 15)
     r = LongDecimal(LongMath::MAX_FLOATABLE + 1, 0)
@@ -537,7 +537,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   end
 
   # test t7
-  def test_ld_to_f_zero_t7
+  def _test_ld_to_f_zero_t7
     print "\ntest_ld_to_f_zero_t7 [#{Time.now}]: "
     scale = 600
     divisor = 10 ** scale
@@ -563,7 +563,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test to_f of LongDecimalQuot (trivial cases)
   #
-  def test_ldq_to_f_small
+  def _test_ldq_to_f_small
     print "\ntest_ldq_to_f_small [#{Time.now}]: "
     # trivial: 0, 1, -1,...
     r = LongDecimalQuot(Rational(0, 1), 7)
@@ -581,7 +581,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test to_f of LongDecimalQuot
   #
-  def test_ldq_to_f_max_float
+  def _test_ldq_to_f_max_float
     print "\ntest_ldq_to_f_max_float [#{Time.now}]: "
     # still numerator and denominator expressable as Float
     r = LongDecimalQuot(Rational(LongMath::MAX_FLOATABLE, LongMath::MAX_FLOATABLE - 1), 7)
@@ -608,7 +608,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test to_f of LongDecimalQuot with numerator.abs > Float::MAX
   #
-  def test_ldq_to_f_big_numerator
+  def _test_ldq_to_f_big_numerator
     print "\ntest_ldq_to_f_big_numerator [#{Time.now}]: "
     # numerator beyond Float::MAX
     r = LongDecimalQuot(Rational(LongMath::MAX_FLOATABLE + 1, LongMath::MAX_FLOATABLE - 1), 7)
@@ -632,7 +632,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test to_f of LongDecimalQuot with denominator.abs > Float::MAX
   #
-  def test_ldq_to_f_big_numerator
+  def _test_ldq_to_f_big_numerator
     print "\ntest_ldq_to_f_big_numerator [#{Time.now}]: "
 
     # denominator beyond Float::MAX
@@ -657,7 +657,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test to_f of LongDecimalQuot with numerator.abs > Float::MAX and denominator.abs > Float::MAX
   #
-  def test_ldq_to_f_big_numerator
+  def _test_ldq_to_f_big_numerator
     print "\ntest_ldq_to_f_big_numerator [#{Time.now}]: "
     # both beyond Float::MAX
     delta = 1/Float::MAX
@@ -692,7 +692,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test to_f of LongDecimalQuot with medium sized absolute value
   #
-  def test_ldq_to_f_medium
+  def _test_ldq_to_f_medium
     print "\ntest_ldq_to_f_medium [#{Time.now}]: "
 
     # use some value < 1 "in the middle"
@@ -762,7 +762,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test exp2 of LongMath
   #
-  def test_exp2
+  def _test_exp2
     print "\ntest_exp2 [#{Time.now}]: "
     10.times do |i|
       n = (i*i+i)/2
@@ -785,7 +785,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   # test the calculation of the exponential function where result is
   # near zero
   #
-  def test_exp2_near_zero
+  def _test_exp2_near_zero
     print "\ntest_exp2_near_zero [#{Time.now}]: "
 
     x = LongDecimal(1, 100)
@@ -802,7 +802,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test exp10 of LongMath
   #
-  def test_exp10
+  def _test_exp10
     print "\ntest_exp10 [#{Time.now}]: "
     10.times do |i|
       n  = (i*i+i)/2
@@ -821,7 +821,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   # test the calculation of the exponential function where result is
   # near zero
   #
-  def test_exp10_near_zero
+  def _test_exp10_near_zero
     print "\ntest_exp10_near_zero [#{Time.now}]: "
 
     x = LongDecimal(1, 100)
@@ -838,7 +838,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test LongMath.power for bases that can be expressed as integer
   #
-  def test_lm_power_xint
+  def _test_lm_power_xint
     print "\ntest_lm_power_xint [#{Time.now}]: "
 
     xx = LongMath.log(3, 40)
@@ -934,7 +934,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test LongMath.power for bases that can be expressed as integer
   #
-  def test_lm_power_yint
+  def _test_lm_power_yint
     print "\ntest_lm_power_yint [#{Time.now}] (2 min): "
 
     xx = LongMath.log(3, 40)
@@ -1018,7 +1018,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test LongMath.power for bases that can be expressed as integer
   #
-  def test_lm_power_yhalfint
+  def _test_lm_power_yhalfint
     print "\ntest_lm_power_yhalfint [#{Time.now}] (10 min): "
 
     xx = LongMath.log(3, 40)
@@ -1090,7 +1090,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test LongMath.power with non-LongDecimal arguments
   #
-  def test_non_ld_power
+  def _test_non_ld_power
     print "\ntest_non_ld_power [#{Time.now}]: "
     xi = 77
     yi = 88
@@ -1118,7 +1118,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   #
   # test the calculation of the power-function of LongMath
   #
-  def test_lm_power
+  def _test_lm_power
     print "\ntest_lm_power [#{Time.now}]: "
     check_power_floated(1.001, 1.001, 10)
     check_power_floated(1.001, 2.001, 10)
@@ -1150,7 +1150,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     # random tests that have failed
   end
 
-  def test_lm_power0a
+  def _test_lm_power0a
     print "\ntest_lm_power0a [#{Time.now}]: "
     check_power_floated(LongDecimal("0.000000000077517987624900000000000000000000000000000000000000000000000000000000000000000000000000000014809051260000000000000000000000000000000000000000000000000000000000000000000000000000000000707281"),
                         LongDecimal("26.627053911388694974442854299008649887946027550330988420533923061901183724914978160564862753777080769340"),
@@ -1158,7 +1158,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "a"
   end
 
-  def test_lm_power0b
+  def _test_lm_power0b
     print "\ntest_lm_power0b [#{Time.now}]: "
     check_power_floated(LongDecimal("1.000000000000000151000000000000000000000000000000000000000000000000000000000000057800000000205"),
                         LongDecimal("-680.0000000000000000000013100000000000000000000000000000000000000165000000000000000000234"),
@@ -1166,7 +1166,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "b"
   end
 
-  def test_lm_power0c
+  def _test_lm_power0c
     print "\ntest_lm_power0c [#{Time.now}]: "
     check_power_floated(LongDecimal("1.0000000000000000000000000000000000000000000068000000000853000000000926"),
                         LongDecimal("-536.000000000086100000000000000000000000000019200000000000000000000000000000000000000000000000166"),
@@ -1174,7 +1174,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "c"
   end
 
-  def test_lm_power0d
+  def _test_lm_power0d
     print "\ntest_lm_power0d [#{Time.now}]: "
     check_power_floated(LongDecimal("1.0000000000000000049000000000002090000000000447"),
                         LongDecimal("-328.00000000000000000000000000000000567000000000000000026600000000000000000000000679"),
@@ -1182,7 +1182,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "d"
   end
 
-  def test_lm_power0e
+  def _test_lm_power0e
     print "\ntest_lm_power0e [#{Time.now}]: "
     check_power_floated(LongDecimal("1.0000000000000000000003580000000000000000000000376238"),
                         LongDecimal("-359.0000000003910721000000000000000000000000000000000000000000000000000000000000000000000000479"),
@@ -1190,7 +1190,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "e"
   end
 
-  def test_lm_power0f
+  def _test_lm_power0f
     print "\ntest_lm_power0f [#{Time.now}]: "
     check_power_floated(LongDecimal("1.000000000000000000000032000000001500000000000000000000439"),
                         LongDecimal("-252.00000000000000025500000000000176907"),
@@ -1198,7 +1198,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "f"
   end
 
-  def test_lm_power0g
+  def _test_lm_power0g
     print "\ntest_lm_power0g [#{Time.now}]: "
     check_power_floated(LongDecimal("1.0000000000000008590000521000000000000621"),
                         LongDecimal("-135.0000000000000000000000000000000000000000000000000000000074400000000000000000000000000321"),
@@ -1206,7 +1206,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "g"
   end
 
-  def test_lm_power0h
+  def _test_lm_power0h
     print "\ntest_lm_power0h [#{Time.now}]: "
     check_power_floated(LongDecimal("1.000000000000000151000000000000000000000000000000000000000000000000000000000000057800000000205"),
                         LongDecimal("-680.0000000000000000000013100000000000000000000000000000000000000165000000000000000000234"),
@@ -1214,7 +1214,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "h"
   end
 
-  def test_lm_power0i
+  def _test_lm_power0i
     print "\ntest_lm_power0i [#{Time.now}]: "
     check_power_floated(LongDecimal("1.02350000000000000000000356000000000000000000000000000000000000000000000000000000000104"),
                         LongDecimal("-971.0000000000000000055400000000000000000000000000000000000000000000000000040900000000000000000000000603"),
@@ -1222,7 +1222,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "i"
   end
 
-  def test_lm_power0j
+  def _test_lm_power0j
     print "\ntest_lm_power0j [#{Time.now}]: "
     check_power_floated(LongDecimal("1.0023800000000000000000000000000000000000000000000000000000000000265000000000000000000000000000000453"),
                         LongDecimal("-277.000000000000000000000000000000000000000000000000000000000000113000000000000000000041400000294"),
@@ -1230,7 +1230,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "j"
   end
 
-  def test_lm_power0k
+  def _test_lm_power0k
     print "\ntest_lm_power0k [#{Time.now}]: "
     check_power_floated(LongDecimal("0.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003422250001093950095910422515315300670761"),
                         LongDecimal("-0.99999999999999999999999999999999999999999999999999997909999999999999999999999999667999957000000000000000065521500000000000000000000020816402696099999999999997719321110428280027729999999129874367303020000000000071412895105695789681563000036363932570289984431712381817869482773696988055442648559706239710901091550702341077381290973316336980640165855210736680"),
@@ -1238,7 +1238,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "k"
   end
 
-  def test_lm_power0l
+  def _test_lm_power0l
     print "\ntest_lm_power0l [#{Time.now}]: "
     check_power_floated(LongDecimal("0.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000049273899694369"),
                         LongDecimal("-0.99999999999999999999999999999999999999988899963450000000000000000000000000000001847988671170038537499999999999999999999658146648184996349480690906250000000000066400422857493760370353798820585648437488207957808220483456569835670219978619056054192244103752969215743872596800486621906638928959243058783356441503226136251748249991020724187893339868"),
@@ -1246,7 +1246,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "l"
   end
 
-  def test_lm_power0m
+  def _test_lm_power0m
     print "\ntest_lm_power0m [#{Time.now}]: "
     check_power_floated(LongDecimal("0.0000000000000000000000000000003868840000000000000000000328416000000000000000000006969600000000000000000000000000000059338800000000000000000002518560000000000000000000000000000000000000000000000000000000227529"),
                         LongDecimal("-0.999999999999999999999999999999999999999999999999999998264999999999999999999999999999616741000000000000000004515337500000000000000000000001994863094999999999999986943149282831191620999999999993077825060350000000000033980453035745280148525000000024019946927993617107497210600671335038418031107762499920991889855598841096454678838495791189026426859181655270271342"),
@@ -1254,7 +1254,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "m"
   end
 
-  def test_lm_power0n
+  def _test_lm_power0n
     print "\ntest_lm_power0n [#{Time.now}]: "
     check_power_floated(LongDecimal("0.0000000000000000000000000000000000000000000000435600000000000000000000000000000000000000000000000006204000000075240000000000000000000000000000000000000022090000000535800000003249"),
                         LongDecimal("-4.50377349099168904759987513420506734335755704389619751192197520413005925604849718759451665302464588879636922713303481423460050066204079523260315868192642742903330525895063299416"),
@@ -1262,7 +1262,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "n"
   end
 
-  def test_lm_power0o
+  def _test_lm_power0o
     print "\ntest_lm_power0o [#{Time.now}]: "
     check_power_floated(LongDecimal("0.0000000000000000000000000000700720943029391693947940220429504569709269190190365416713568"),
                         LongDecimal("-6.633249580710799698229865473341373367854177091179010213018664944871230"),
@@ -1270,7 +1270,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "o"
   end
 
-  def test_lm_power0p
+  def _test_lm_power0p
     print "\ntest_lm_power0p [#{Time.now}]: "
     check_power_floated(LongDecimal("0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000816700000697"),
                         LongDecimal("-0.58685446009389671361502347417840375586854460093896713614906034406753510106019528753113359342280707917300359276157963863070992095386428055722936293804476401957909668625460628698383384886591034139"),
@@ -1278,7 +1278,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "p"
   end
 
-  def test_lm_power0q
+  def _test_lm_power0q
     print "\ntest_lm_power0q [#{Time.now}]: "
     check_power_floated(LongDecimal("0.000000000000000000000000000000000000046500000000000015087"),
                         LongDecimal("-1.0000000037300000000000000000000000000000000000000000003924"),
@@ -1286,7 +1286,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "q"
   end
 
-  def test_lm_power0r
+  def _test_lm_power0r
     print "\ntest_lm_power0r [#{Time.now}]: "
     check_power_floated(LongDecimal("0.0000000000000000000000000000000000000000000000000000000000000000002450257484405715360000000000000000097614149083200000000000000000000000972196"),
                         LongDecimal("-1.00000008600000184900000000000000000000000000000000000000012640000543520000000000000000000013300000571900000000000000399424000000000000000000000000000840560000000000000000000000000000442225"),
@@ -1294,7 +1294,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "r"
   end
 
-  def test_lm_power0s
+  def _test_lm_power0s
     print "\ntest_lm_power0s [#{Time.now}]: "
     check_power_floated(LongDecimal("0.00000000000000000000000000000000000000000000000000000000000000000000367236000000000000000093202800000000000000005914074196000000000000000058905400000000000000000000146689"),
                         LongDecimal("-1.000000000008800000000019360000000062800000000276320250000000001100000985960000000000007850000000000000015625"),
@@ -1302,7 +1302,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "s"
   end
 
-  def test_lm_power0t
+  def _test_lm_power0t
     print "\ntest_lm_power0t [#{Time.now}]: "
     check_power_floated(LongDecimal("0.000000000000000000000000000000000000000000000000000000000000000000002777290000000006513720000000003819240000000000000000000000000000100340800000000117667200000000000000000000000000000000000000000000906304"),
                         LongDecimal("-0.5773502691896257645091447198050641552797247036332110311421498194545129249630222981047763195372146430879281215100223411775138874331819083544781222838698051829302865547075365868655847179043571799566074987574406310154782766513220296853158689786573196010629608653145605201822170964422894732870490642190250948498852022304300879727510280657218553"),
@@ -1310,7 +1310,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "t"
   end
 
-  def test_lm_power0u
+  def _test_lm_power0u
     print "\ntest_lm_power0u [#{Time.now}]: "
     check_power_floated(LongDecimal("0.000000000000000000000000000000000000000000007350000295000915"),
                         LongDecimal("-1.000002193000861"),
@@ -1318,7 +1318,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "u"
   end
 
-  def test_lm_power0v
+  def _test_lm_power0v
     print "\ntest_lm_power0v [#{Time.now}]: "
     check_power_floated(LongDecimal("0.0000000086862400000000000000015172960006039360000000662596000527472000104976"),
                         LongDecimal("-0.999999999999999999999999999999999999999999999999999999999997169999999999996784999999999687000000000000000000000000000012013350000000027295350000002672874337500003018885000000146896669625999999845508318999984783776699499965759759873248317316431267825611053489338193758007138415641516991908731376997678345955102618540146326218008264916981179817214058767402196571"),
@@ -1326,7 +1326,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "v"
   end
 
-  def test_lm_power0w
+  def _test_lm_power0w
     print "\ntest_lm_power0w [#{Time.now}]: "
     check_power_floated(LongDecimal("0.00000000000000000000000000624000383000000000000000000000000000000000000000000000358"),
                         LongDecimal("-1.0000004600000000000000000000000000000004210"),
@@ -1334,7 +1334,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "w"
   end
 
-  def test_lm_power0x
+  def _test_lm_power0x
     print "\ntest_lm_power0x [#{Time.now}]: "
     check_power_floated(LongDecimal("0.00000000006236994468492015585972291475115698519825552824875948893004062366348813472156776148562881057978611940708477498267201430163921921918813918304834563518614088250202460271818014152969"),
                         LongDecimal("-21.81742422927144044215775880732087497227530694228658299334049542576403906256739064739549866577137008231569804502022381108724983114382624747999460445291671084230968250529511708947428208082234"),
@@ -1342,7 +1342,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "x"
   end
 
-  def test_lm_power0y
+  def _test_lm_power0y
     print "\ntest_lm_power0y [#{Time.now}]: "
     check_power_floated(LongDecimal("0.0000000000000000000000000000000000000000000000000000000000000000000035600000000928000000000000000450"),
                         LongDecimal("-0.70821529745042492917661444999959874487397062785764977666003279651340417551441776107007487983685090756343178115766012078677210548592741818458068450268168492334992979756923"),
@@ -1350,7 +1350,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "y"
   end
 
-  def test_lm_power0z
+  def _test_lm_power0z
     print "\ntest_lm_power0z [#{Time.now}]: "
     check_power_floated(LongDecimal("0.0000000000000000000000000000025900000000000000000000000000000000000000000022100000000000000000032"),
                         LongDecimal("-0.999943403203378688766215832183174473300891276419706031790088430934495839737458766990116492"),
@@ -1391,7 +1391,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   end
 
   # SLOW!!!
-  def _test_lm_power1e
+  def test_lm_power1e
     print "\ntest_lm_power1e [#{Time.now}] (2 hours): "
     check_power_floated(LongDecimal("0.0000000000000000000000000000000000000000000000000000000000000000002450257484405715360000000000000000097614149083200000000000000000000000972196"),
                         LongDecimal("-1.00000008600000184900000000000000000000000000000000000000012640000543520000000000000000000013300000571900000000000000399424000000000000000000000000000840560000000000000000000000000000442225"),
@@ -1400,7 +1400,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   end
 
   # SLOW!!!
-  def _test_lm_power1f
+  def test_lm_power1f
     print "\ntest_lm_power1f [#{Time.now}] (2 hours): "
     check_power_floated(LongDecimal("0.999999999999983820000000000052544300000001372125483999980457478288050051600649560171986452284020178492146835403829341250837967306416835643061512149984415283328897050537606939603101940467080257495289168053434691062993302374332577706782680685214083677104079828206433042861334386773091111658939537092356816922764138900649581031721453211835260155666851398044388924204855221543729490461274063089475188763279119570"),
                         LongDecimal("80321932.89024988628926432624765785135567744505377819122460049392916097399960142838065367057138986526363804"),
@@ -1409,7 +1409,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   end
 
   # SLOW!!!
-  def _test_lm_power1g
+  def test_lm_power1g
     print "\ntest_lm_power1g [#{Time.now}] (3 hours): "
     check_power_floated(LongDecimal("0.999999999999999999999999999999998351999999999999983020000000000002036927999998210041974559999999997978335404004424810825925120045592892314014072707890311225042124730264194167337496376801852022987153782535008598977724682635285958668331865904517437818865287190004735483899633845078360662820274644903126498781970492928578903950"),
                         LongDecimal("24449877750611246943765281173.594132029339853300733454400081300326994697544849684064538112517261374573394648075725881734888526076256999828217542217625441301525934675012853453406806380262764050867999"),
@@ -1430,6 +1430,15 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     puts "h"
   end
 
+  def test_lm_power1h_i
+
+    print "\ntest_lm_power1h_i [#{Time.now}]: "
+    check_power_floated(LongDecimal("0.999999999999999862599981980000014159073713922242243328677707050386499779178242565766291900177208859765599761583988066205590104341111429059119646260524293805643133602429678974677397380813589741657940554009198199034562447106122960905140273768835224006261013069576237942279008951360618433986"),
+                        LongDecimal("10266940451745"),
+                        14)
+    puts "h"
+  end
+
   # FAILURE!!! (needs to be fixed)
   def test_lm_power1i
     #  33) Failure:
@@ -1438,6 +1447,14 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
     print "\ntest_lm_power1i [#{Time.now}]: "
     check_power_floated(LongDecimal("0.999999999999999981500000000000000256687499999999996834187500000000036604706930449997823687754750325053502286291757658419972795166437108241085949094447949893401640711985948839881287077716265593625727522425306777978451009970778400655052736724232660803755458234164496101454557290134193942433026948513566480800350007916601440691706219670728270104113540"),
                         LongDecimal("41380294430118397.455148144857963343847598908617723236165122243380531570432704458595232182042029429597565318650987561380534985825811466980798564531839364855305381553585381037046185516421336524897364607404185776449463"),
+                        26)
+    puts "i"
+  end
+
+  def test_lm_power1i_i
+    print "\ntest_lm_power1i_i [#{Time.now}]: "
+    check_power_floated(LongDecimal("0.999999999999999981500000000000000256687499999999996834187500000000036604706930449997823687754750325053502286291757658419972795166437108241085949094447949893401640711985948839881287077716265593625727522425306777978451009970778400655052736724232660803755458234164496101454557290134193942433026948513566480800350007916601440691706219670728270104113540"),
+                        LongDecimal("41380294430118397"),
                         26)
     puts "i"
   end
@@ -1531,7 +1548,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   end
 
   # SLOW!!!
-  def _test_lm_power1u
+  def test_lm_power1u
     print "\ntest_lm_power1u [#{Time.now}] (2 hours): "
     check_power_floated(LongDecimal("0.99999999999999999999999999999999999999999999999999992269999999999999999990289999999999999999450000000000597529000000000000001501166000000000000085972840999953811008406809999999825939805325"),
                         LongDecimal("714285714285714285714285714.2857142367346938756989795918367346938775543790087466096793002963472667638481661974177164821324438268046647105967619250931245847564869975795833510071"),
@@ -1540,7 +1557,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   end
 
   # SLOW!!!
-  def _test_lm_power1v
+  def test_lm_power1v
     print "\ntest_lm_power1v [#{Time.now}] (2 hours): "
     check_power_floated(LongDecimal("0.999999999999999999072867000000000000859575599688999999203059095533538363738068211580703976213177165458547180420859035425970198975506846513796073745523480165"),
                         LongDecimal("34260010678356060340110500.7153234888531563303375970232929042708037751160246890208435860708347495272359620209409070219221760532838693330228630931194027855701638117625325214394917620590686906959334466842413732434252133614001314264745394120941492068918606855981807681794442879762888899961878810388388032398007558964413624601333106812667470835155455035290542870179962369969203293410746331815980"),
@@ -1565,7 +1582,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
   end
 
   # SLOW!!!
-  def _test_lm_power1y
+  def test_lm_power1y
     print "\ntest_lm_power1y [#{Time.now}] (3 hours): "
     check_power_floated(LongDecimal("0.9999999999999999999999999999999999999999999938200000000000000000000000000000000000000000379683968899999999999999999999999999999999997667396464396000000000000000000000000000000014330439460181976721"),
                         LongDecimal("2277904328018223234624145785876970127.80132938289029176166582780311904615875187470778863280340852479308725681566723062546696023632646350474949485203212931524794058129718906431046410107451255702719381563833303042603168923"),

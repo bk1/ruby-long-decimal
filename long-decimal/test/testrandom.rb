@@ -4,17 +4,19 @@
 #
 # (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testrandom.rb,v 1.17 2009/05/09 15:37:00 bk1 Exp $
-# CVS-Label: $Name: RELEASE_1_00_00 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testrandom.rb,v 1.18 2011/02/03 00:22:39 bk1 Exp $
+# CVS-Label: $Name:  $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
-require "runit/testcase"
-require "runit/cui/testrunner"
-require "runit/testsuite"
+# require "runit/testcase"
+# require "runit/cui/testrunner"
+# require "runit/testsuite"
+require "test/unit"
 
-#require "rubygems"
-require "crypt/ISAAC"
+require "rubygems"
+# require "crypt/ISAAC"
+require "crypt-isaac"
 
 load "lib/long-decimal.rb"
 load "test/testlongdeclib.rb"
@@ -29,7 +31,7 @@ class TestRandom_class < RUNIT::TestCase
   include TestLongDecHelper
   include TestRandomHelper
 
-  @RCS_ID='-$Id: testrandom.rb,v 1.17 2009/05/09 15:37:00 bk1 Exp $-'
+  @RCS_ID='-$Id: testrandom.rb,v 1.18 2011/02/03 00:22:39 bk1 Exp $-'
 
   # for how many seconds should this test run? change to different
   # value on demand
