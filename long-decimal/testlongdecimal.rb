@@ -2,8 +2,8 @@
 #
 # testlongdecimal.rb -- runit test for longdecimal.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/testlongdecimal.rb,v 1.4 2006/02/18 15:39:14 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_03 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/testlongdecimal.rb,v 1.6 2006/02/20 01:39:55 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_04 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -15,7 +15,7 @@ load "longdecimal.rb"
 
 class TestLongDecimal_class < RUNIT::TestCase
 
-  @RCS_ID='-$Id: testlongdecimal.rb,v 1.4 2006/02/18 15:39:14 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdecimal.rb,v 1.6 2006/02/20 01:39:55 bk1 Exp $-'
 
   def test_gcd_with_high_power
     n = 224
@@ -33,11 +33,20 @@ class TestLongDecimal_class < RUNIT::TestCase
 
   def test_rat_multiplicity_of_factor
     n = Rational(224, 225)
-    assert_equal(5, n.multiplicity_of_factor(2), "ny_2(224) is 5")
-    assert_equal(1, n.multiplicity_of_factor(7), "ny_7(224) is 1")
-    assert_equal(-2, n.multiplicity_of_factor(3), "ny_3(224) is -2")
-    assert_equal(-2, n.multiplicity_of_factor(5), "ny_5(224) is -2")
-    assert_equal(0, n.multiplicity_of_factor(11), "ny_11(224) is 0")
+    assert_equal(5, n.multiplicity_of_factor(2), "ny_2(n) is 5")
+    assert_equal(1, n.multiplicity_of_factor(7), "ny_7(n) is 1")
+    assert_equal(-2, n.multiplicity_of_factor(3), "ny_3(n) is -2")
+    assert_equal(-2, n.multiplicity_of_factor(5), "ny_5(n) is -2")
+    assert_equal(0, n.multiplicity_of_factor(11), "ny_11(n) is 0")
+  end
+
+  def test_rat_long_multiplicity_of_factor
+    n = Rational(224*(10**600+1), 225*(5**800))
+    assert_equal(5, n.multiplicity_of_factor(2), "ny_2(n) is 5")
+    assert_equal(1, n.multiplicity_of_factor(7), "ny_7(n) is 1")
+    assert_equal(-2, n.multiplicity_of_factor(3), "ny_3(n) is -2")
+    assert_equal(-802, n.multiplicity_of_factor(5), "ny_5(n) is -2")
+    assert_equal(0, n.multiplicity_of_factor(11), "ny_11(n) is 0")
   end
 
   def test_int_init
