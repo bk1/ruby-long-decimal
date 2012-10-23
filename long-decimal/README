@@ -1,25 +1,15 @@
 Version
 -------
 
-This version ($Name: BETA_02_01 $) is similar to the previous alpha-0.01.03.
+This version ($Name: RELEASE_1_00_00 $) is similar to the previous beta-0.02.01
 
 Improvements over the previous version:
 
-- full support for JRuby
-- workaround for a bug in JRuby's Fixnum-multiplication, which has
-  been fixed for the next JRuby-version, but not for the existing installed base.
-- calculation of powers with exponents having huge magnitude and with
-  bases close to 1 works better now.
-- new method initialize_copy needed for clone()
-- new method cbrt (cubic root)
-- improved to_f which works better near Float::MAX
-- new Method LongMath.log_f to obtain a Float-Approximation of the log
-  of a LongDecimal
-- more and improved runit-Tests
+- better rubydoc
 
 All this functionality did not show any bugs during intensive
 testing, so it could be assumed that the whole library is good for
-beta and possibly even quite soon for production/stable.
+for production/stable.
 
 This software development effort is hosted on RubyForge (
 http://rubyforge.org/ ) under the project name "long-decimal", to be
@@ -123,7 +113,7 @@ $ cd /tmp
 $ wget http://rubyforge.org/frs/download.php/6461/crypt-isaac_0.9.1.gem
 $ su -l
 # cd /tmp
-# gem install ruby-isaac
+# gem install crypt-isaac
 (you may need to adjust the URL for downloading the gem)
 
  .... and then go into the directory, where the gem is
@@ -254,11 +244,12 @@ Find copies of these licenses on http://www.gnu.org/ or http://www.ruby-lang.org
 Warranty
 --------
 
-This is a beta-version.  Tests indicate that most functions work
+This is free software and it comes with absolutely no warranty.
+Tests indicate that most functions work
 relyably in all situations and all functions work relyably in most
 situations.  But do not expect too much!  This is work in progress!  I
 do not take any responsibility.  Please use it as it is, change it
-according to the terms of the license or wait for a more stable
+according to the terms of the license or wait for a future
 version (for which I can't take any warranty either...)
 
 Author

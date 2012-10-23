@@ -7,8 +7,8 @@
 # additional functionality, mostly transcendental functions,
 # may be found in long-decimal-extra.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal.rb,v 1.60 2009/04/21 04:27:39 bk1 Exp $
-# CVS-Label: $Name: BETA_02_01 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal.rb,v 1.85 2011/01/16 18:39:22 bk1 Exp $
+# CVS-Label: $Name: RELEASE_1_00_00 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -22,7 +22,7 @@ BYTE_SIZE_OF_ONE = 1.size
 
 #
 # define rounding modes to be used for LongDecimal
-# this serves the purpose of an "enum" in C/C++
+# this serves the purpose of an "enum" in C/C++/Java
 #
 module LongDecimalRoundingMode
 
@@ -83,6 +83,7 @@ module LongDecimalRoundingMode
   ROUND_HALF_EVEN    = RoundingModeClass.new(:ROUND_HALF_EVEN, 8)
   ROUND_UNNECESSARY  = RoundingModeClass.new(:ROUND_UNNECESSARY, 9)
 
+  # which mode is to be used instead when we do an multiplicative inversion?
   MUL_INVERSE_MODE = {
     ROUND_UP           =>   ROUND_DOWN,
     ROUND_DOWN         =>   ROUND_UP,
@@ -96,6 +97,7 @@ module LongDecimalRoundingMode
     ROUND_UNNECESSARY  =>   ROUND_UNNECESSARY
   }
 
+  # which mode is to be used instead when we do an additive inversion?
   ADD_INVERSE_MODE = {
     ROUND_UP           =>   ROUND_UP,
     ROUND_DOWN         =>   ROUND_DOWN,
@@ -159,6 +161,7 @@ if (RUBY_PLATFORM == 'java')
 
       alias :mul :*
 
+      # fix multiplication
       def *(y)
         if (self == 0 || y == 0)
           return self.mul(y)
@@ -262,17 +265,17 @@ class Integer
     upper = self + (r_upper - r_self)
 
     unless (lower < self && self < upper)
-      raise Error, "self=#{self} not in (#{lower}, #{upper})"
+      raise ArgumentError, "self=#{self} not in (#{lower}, #{upper})"
     end
     if (rounding_mode == LongDecimalRoundingMode::ROUND_UNNECESSARY) then
       raise ArgumentError, "mode ROUND_UNNECESSARY not applicable, self=#{self.to_s} is in open interval (#{lower}, #{upper})"
     end
 
-#     if (rounding_mode == LongDecimalRoundingMode::ROUND_FLOOR) then
-#       return lower
-#     elsif (rounding_mode == LongDecimalRoundingMode::ROUND_CEILING) then
-#       return upper
-#     end
+    #     if (rounding_mode == LongDecimalRoundingMode::ROUND_FLOOR) then
+    #       return lower
+    #     elsif (rounding_mode == LongDecimalRoundingMode::ROUND_CEILING) then
+    #       return upper
+    #     end
 
     sign_self = self.sign
     if (sign_self == 0) then
@@ -292,14 +295,14 @@ class Integer
           elsif (zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS) then
             return lower
           else
-            raise Error, "this case can never happen: zero_rounding_mode=#{zero_rounding_mode}"
+            raise ArgumentError, "this case can never happen: zero_rounding_mode=#{zero_rounding_mode}"
           end
         elsif (zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS) then
           return upper
         elsif (zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS) then
           return lower
         else
-          raise Error, "this case can never happen: zero_rounding_mode=#{zero_rounding_mode}"
+          raise ArgumentError, "this case can never happen: zero_rounding_mode=#{zero_rounding_mode}"
         end
       end
     end
@@ -332,7 +335,7 @@ class Integer
       elsif (rounding_mode == LongDecimalRoundingMode::ROUND_HALF_CEILING) then
         rounding_mode = LongDecimalRoundingMode::ROUND_CEILING
       else
-        raise Error, "this case can never happen: rounding_mode=#{rounding_mode}"
+        raise ArgumentError, "this case can never happen: rounding_mode=#{rounding_mode}"
       end
     end
 
@@ -341,7 +344,7 @@ class Integer
     elsif (rounding_mode == LongDecimalRoundingMode::ROUND_CEILING) then
       return upper
     else
-      raise Error, "this case can never happen: rounding_mode=#{rounding_mode}"
+      raise ArgumentError, "this case can never happen: rounding_mode=#{rounding_mode}"
     end
   end
 end
@@ -350,7 +353,10 @@ end
 # common base class for LongDecimal and LongDecimalQuot
 #
 class LongDecimalBase < Numeric
-  @@RCS_ID='-$Id: long-decimal.rb,v 1.60 2009/04/21 04:27:39 bk1 Exp $-'
+  @@RCS_ID='-$Id: long-decimal.rb,v 1.85 2011/01/16 18:39:22 bk1 Exp $-'
+
+  # allow easy check if running with version 1.9
+  RUNNING_19 = RUBY_VERSION.match /^1\.9/
 
   include LongDecimalRoundingMode
 
@@ -457,6 +463,118 @@ class LongDecimalBase < Numeric
     scale_ufo(other).zero?
   end
 
+  private
+
+  #
+  # helper method for round_to_scale
+  #
+  def round_to_scale_helper(dividend, divisor, new_scale, mode)
+
+    sign_quot = dividend <=> 0
+    if sign_quot == 0 then
+      # finish zero without long calculations at once
+      return LongDecimal(0, new_scale)
+    end
+
+    divisor   = divisor
+    quot, rem = dividend.divmod(divisor)
+    sign_rem  = rem  <=> 0
+    if (sign_rem == 0)
+      # if self can be expressed without loss as LongDecimal with
+      # new_scale digits after the decimal point, just do it.
+      return LongDecimal(quot, new_scale)
+    end
+
+    # we do not expect negative signs of remainder.  To make sure that
+    # this does not cause problems in further code, we just throw an
+    # exception.  This should never happen (and did not happen during
+    # testing).
+    raise ArgumentError, "signs do not match self=#{self.to_s} f=#{factor} dividend=#{dividend} divisor=#{divisor} quot=#{quot} rem=#{rem}" if sign_rem <= 0
+
+    if (sign_quot < 0) then
+      # handle negative sign of self
+      rem -= divisor
+      quot += 1
+      sign_rem = rem <=> 0
+      raise ArgumentError, "signs do not match self=#{self.to_s} f=#{factor} dividend=#{dividend} divisor=#{divisor} quot=#{quot} rem=#{rem}" if sign_rem >= 0
+    end
+
+    if mode == ROUND_UNNECESSARY then
+      # this mode means that rounding should not be necessary.  But
+      # the case that no rounding is needed, has already been covered
+      # above, so it is an error, if this mode is required and the
+      # result could not be returned above.
+      raise ArgumentError, "mode ROUND_UNNECESSARY not applicable, remainder #{rem.to_s} is not zero"
+    end
+
+    if (mode == ROUND_CEILING)
+      # ROUND_CEILING goes to the closest allowed number >= self, even
+      # for negative numbers.  Since sign is handled separately, it is
+      # more conveniant to use ROUND_UP or ROUND_DOWN depending on the
+      # sign.
+      mode = (sign_quot > 0) ? ROUND_UP : ROUND_DOWN
+
+    elsif (mode == ROUND_FLOOR)
+      # ROUND_FLOOR goes to the closest allowed number <= self, even
+      # for negative numbers.  Since sign is handled separately, it is
+      # more conveniant to use ROUND_UP or ROUND_DOWN depending on the
+      # sign.
+      mode = (sign_quot < 0) ? ROUND_UP : ROUND_DOWN
+
+    else
+
+      if (mode == ROUND_HALF_CEILING)
+        # ROUND_HALF_CEILING goes to the closest allowed number >= self, even
+        # for negative numbers.  Since sign is handled separately, it is
+        # more conveniant to use ROUND_HALF_UP or ROUND_HALF_DOWN depending on the
+        # sign.
+        mode = (sign_quot > 0) ? ROUND_HALF_UP : ROUND_HALF_DOWN
+
+      elsif (mode == ROUND_HALF_FLOOR)
+        # ROUND_HALF_FLOOR goes to the closest allowed number <= self, even
+        # for negative numbers.  Since sign is handled separately, it is
+        # more conveniant to use ROUND_HALF_UP or ROUND_HALF_DOWN depending on the
+        # sign.
+        mode = (sign_quot < 0) ? ROUND_HALF_UP : ROUND_HALF_DOWN
+
+      end
+
+      # handle the ROUND_HALF_... stuff and find the adequate ROUND_UP
+      # or ROUND_DOWN to use
+      abs_rem = rem.abs
+      half    = (abs_rem << 1) <=> divisor
+      if (mode == ROUND_HALF_UP || mode == ROUND_HALF_DOWN || mode == ROUND_HALF_EVEN) then
+        if (half < 0) then
+          mode = ROUND_DOWN
+        elsif half > 0 then
+          mode = ROUND_UP
+        else
+          # half == 0
+          if (mode == ROUND_HALF_UP) then
+            mode = ROUND_UP
+          elsif (mode == ROUND_HALF_DOWN) then
+            mode = ROUND_DOWN
+          else
+            # mode == ROUND_HALF_EVEN
+            mode = (quot[0] == 1 ? ROUND_UP : ROUND_DOWN)
+          end
+        end
+      end
+    end
+
+    if mode == ROUND_UP
+      # since the case where we can express the result exactly without
+      # loss has already been handled above, ROUND_UP can be handled
+      # correctly by adding one unit.
+      quot += sign_quot
+    end
+
+    # put together result
+    new_int_val = quot
+    LongDecimal(new_int_val, new_scale)
+
+  end
+
 end # class LongDecimalBase
 
 #
@@ -465,7 +583,7 @@ end # class LongDecimalBase
 # digits and the other one the position of the decimal point.
 #
 class LongDecimal < LongDecimalBase
-  @@RCS_ID='-$Id: long-decimal.rb,v 1.60 2009/04/21 04:27:39 bk1 Exp $-'
+  @@RCS_ID='-$Id: long-decimal.rb,v 1.85 2011/01/16 18:39:22 bk1 Exp $-'
 
   #  MINUS_ONE = LongDecimal(-1)
   #  ZERO      = LongDecimal(0)
@@ -499,7 +617,7 @@ class LongDecimal < LongDecimalBase
   # digits after the decimal point (scale=s)
   #
   def LongDecimal.one!(s = 0)
-    new(10**s, s)
+    new(LongMath.npower10(s), s)
   end
 
 
@@ -508,7 +626,7 @@ class LongDecimal < LongDecimalBase
   # digits after the decimal point (scale=s)
   #
   def LongDecimal.two!(s = 0)
-    new(2*10**s, s)
+    new(2*LongMath.npower10(s), s)
   end
 
 
@@ -517,7 +635,7 @@ class LongDecimal < LongDecimalBase
   # digits after the decimal point (scale=s)
   #
   def LongDecimal.ten!(s = 0)
-    new(10**(s+1), s)
+    new(LongMath.npower10(s+1), s)
   end
 
   #
@@ -525,7 +643,7 @@ class LongDecimal < LongDecimalBase
   # digits after the decimal point (scale=s)
   #
   def LongDecimal.half!(s = 1)
-    new(5*10**(s-1), s)
+    new(5 * LongMath.npower10(s-1), s)
   end
 
 
@@ -534,7 +652,7 @@ class LongDecimal < LongDecimalBase
   # digits after the decimal point (scale=s)
   #
   def LongDecimal.minus_one!(s = 0)
-    new(-1*10**s, s)
+    new(-1*LongMath.npower10(s), s)
   end
 
 
@@ -546,15 +664,15 @@ class LongDecimal < LongDecimalBase
   def LongDecimal.power_of_ten!(e, s = 0)
     LongMath.check_is_int(e, "e")
     raise TypeError, "negative 1st arg \"#{e.inspect}\""    if e < 0
-    new(10**(s+e), s)
+    new(LongMath.npower10(s+e), s)
   end
 
   #
   # needed for clone()
   #
   def initialize_copy(x)
-    @int_val = x.int_val
-    @scale   = x.scale
+    @int_val  = x.int_val
+    @scale    = x.scale
   end
 
   #
@@ -572,8 +690,9 @@ class LongDecimal < LongDecimalBase
     raise TypeError, "complex numbers not supported \"#{x.inspect}\"" if x.kind_of? Complex
 
     # handle some obvious errors with optional second parameter, if present
-    raise TypeError, "non integer 2nd arg \"#{s.inspect}\"" if ! s.kind_of? Integer
-    raise TypeError, "negative 2nd arg \"#{s.inspect}\""    if s < 0
+    LongMath.check_is_prec(s, "scale", :raise_error)
+#    raise TypeError, "non integer 2nd arg \"#{s.inspect}\"" if ! s.kind_of? Integer
+#    raise TypeError, "negative 2nd arg \"#{s.inspect}\""    if s < 0
 
     # scale is the second parameter or 0 if it is missing
     scale   = s
@@ -597,7 +716,7 @@ class LongDecimal < LongDecimalBase
       denom /= 5 ** mul_5
       iscale2 = Math.log10(denom).ceil
       scale += iscale2
-      int_val = (x * 10 ** (iscale2+iscale)).to_i
+      int_val = (x * LongMath.npower10(iscale2+iscale)).to_i
 
     else
       # we assume a string or a floating point number
@@ -686,7 +805,7 @@ class LongDecimal < LongDecimalBase
       # multiply int_val by a power of 10 in order to compensate for
       # the change of scale and to keep number in the same order of magnitude.
       d = s - @scale
-      f = 10 ** (d.abs)
+      f = LongMath.npower10(d.abs)
       if (d >= 0) then
         @int_val = (@int_val * f).to_i
       else
@@ -724,28 +843,20 @@ class LongDecimal < LongDecimalBase
   #
   def round_to_scale(new_scale, mode = ROUND_UNNECESSARY)
 
-    raise TypeError, "new_scale #{new_scale.inspect} must be integer" unless new_scale.kind_of? Integer
-    raise TypeError, "new_scale #{new_scale.inspect} must be >= 0" unless new_scale >= 0
+    new_scale = LongMath.check_is_prec(new_scale)
     raise TypeError, "mode #{mode.inspect} must be legal rounding mode" unless mode.kind_of? RoundingModeClass
     if @scale == new_scale then
       self
     else
       diff   = new_scale - scale
-      factor = 10 ** (diff.abs)
+      factor = LongMath.npower10(diff.abs)
       if (diff > 0) then
         # we become more precise, no rounding issues
         new_int_val = int_val * factor
+        return LongDecimal(new_int_val, new_scale)
       else
-        quot, rem = int_val.divmod(factor)
-        if (rem == 0) then
-          new_int_val = quot
-        elsif (mode == ROUND_UNNECESSARY) then
-          raise ArgumentError, "mode ROUND_UNNECESSARY not applicable, remainder #{rem.to_s} is not zero"
-        else
-          return LongDecimalQuot(self, LongDecimal(1)).round_to_scale(new_scale, mode)
-        end
+        return round_to_scale_helper(int_val, factor, new_scale, mode)
       end
-      LongDecimal(new_int_val, new_scale)
     end
   end
 
@@ -789,7 +900,7 @@ class LongDecimal < LongDecimalBase
       expanded = self.round_to_scale(new_scale, rounding_mode)
       return expanded.round_to_allowed_remainders(new_scale, remainders, modulus, rounding_mode, zero_rounding_mode)
     elsif @scale > new_scale
-      factor = 10**(@scale - new_scale)
+      factor = LongMath.npower10(@scale - new_scale)
       remainders = remainders.collect do |r|
         r * factor
       end
@@ -828,7 +939,7 @@ class LongDecimal < LongDecimalBase
       unless (base.kind_of? Integer) && 2 <= base && base <= 36 then
         raise TypeError, "base must be integer between 2 and 36"
       end
-      quot    = (self.move_point_right(scale) * base ** shown_scale) / 10 ** scale
+      quot    = (self.move_point_right(scale) * base ** shown_scale) / LongMath.npower10(scale)
       rounded = quot.round_to_scale(0, mode)
       rounded.to_s_internal(base, shown_scale)
     end
@@ -870,53 +981,163 @@ class LongDecimal < LongDecimalBase
   # within the ranges expressable as Floats.  Goes via string
   # representation otherwise.
   #
+  # to_f has to consider the following cases:
+  # if 10**scale or int_val > MAX_FLOATABLE, divide by an adequate power of 10 to reach the ranges, where the conversion below works.
+  # if 10**scale and int_val both < MAX_FLOATABLE, use lookup for float-representation 1/10**scale -> int_val.to_f * (1/10**scale)
+  # special care has to be taken for the "border cases".
+  #
   def to_f
-    # handle overflow: raise exception
-    if (self.abs > LongMath::MAX_FLOATABLE) then
-      raise ArgumentError, "self=#{self.inspect} cannot be expressed as Float"
-    end
 
-    # handle underflow: return 0.0
-    if (self.abs < LongMath::MIN_FLOATABLE) then
+    # result 0.0 if int_val == 0
+    if (int_val == 0)
+      # t1
+      # puts "t1 #{self.to_s}=#{self.inspect} -> 0.0"
       return 0.0
     end
 
-    if (self < 0) then
-      return -(-self).to_f
+    if (scale == 0)
+      if (int_val.abs <= LongMath::MAX_FLOATABLE)
+        y = int_val.to_f
+        # t2
+        # puts "t2 #{self.to_s}=#{self.inspect} -> #{y}"
+        return y
+      elsif int_val < 0
+        # t13
+        # puts "t13 #{self.to_s}=#{self.inspect} -> -Infinity"
+        return -1.0/0.0
+      elsif int_val > 0
+        # t14
+        # puts "t13 #{self.to_s}=#{self.inspect} -> Infinity"
+        return 1.0/0.0
+      end
     end
 
-    dividend = numerator
-    divisor  = denominator
+    # negative: can be handled by doing to_f of the absolute value and negating the result.
+    if (self < 0) then
+      y = -(-self).to_f
+      # t3
+      # puts "t3 #{self.to_s}=#{self.inspect} -> #{y}"
+      return y
+    end
 
-    if (divisor == 1) then
-      return dividend.to_f
-    elsif dividend.abs <= LongMath::MAX_FLOATABLE then
-      if (divisor.abs > LongMath::MAX_FLOATABLE) then
-        q = 10**(scale - Float::MAX_10_EXP)
-        f = (dividend / q).to_f
-        d = LongMath::MAX_FLOATABLE10
-        # d = divisor / q
-        return f / d
-      else
-        f = dividend.to_f
-        return f / divisor
+    # handle the usual case first, avoiding expensive calculations
+    if (int_val <= LongMath::MAX_FLOATABLE && scale <= Float::MAX_10_EXP)
+      y = to_f_simple(int_val, scale)
+      # t4
+      # puts "t4 #{self.to_s}=#{self.inspect} -> #{y}"
+      return y
+    end
+
+    divisor = denominator
+
+    # result NaN if int_val > MAX_FLOATABLE * 10**scale
+    # handle overflow: raise exception
+    if (int_val > divisor * LongMath::MAX_FLOATABLE) then
+      # t5
+      # puts "t5 #{self.to_s}=#{self.inspect} -> Infinity"
+      return 1/0.0 # Infinity
+    end
+
+    # result 0.0 if int_val * MAX_FLOATABLE < 10**scale
+    # handle underflow: return 0.0
+    if (int_val * LongMath::INV_MIN_FLOATABLE * 20 < divisor) then
+      # t6
+      # puts "t6 #{self.to_s}=#{self.inspect} -> 0.0"
+      p = int_val * LongMath::INV_MIN_FLOATABLE * 20
+      d = divisor
+      n = int_val
+      return 0.0
+    end
+
+    if int_val <= LongMath::MAX_FLOATABLE then
+      # the case divisor <= LongMath::MAX_FLOATABLE has been dealt with above already.
+      # ==> denominator > LongMath::MAX_FLOATABLE is true
+      # the case self < LongMath::MIN_FLOATABLE has been handed above
+      # int_val beeing < LongMath::MAX_FLOATABLE we know that qe < 2 * Float::MAX_10_EXP
+      y = int_val.to_f
+      s = scale
+      while (s > 0)
+        qe = [ s, Float::MAX_10_EXP ].min
+        q  = LongMath.neg_float_npower10(qe)
+        y *= q
+        if (y == 0.0)
+          # t7
+          # puts "t7 #{self.to_s}=#{self.inspect} -> #{y}"
+          return y
+        end
+        s -= qe
       end
-    elsif dividend.abs < divisor
-      # self is between -1 and 1
+      # t8
+      # puts "t8 #{self.to_s}=#{self.inspect} -> #{y}"
+      return y
+    end
 
-      # factor = dividend.abs.div(LongMath::MAX_FLOATABLE)
-      # digits = factor.to_ld.int_digits10
-      # return LongDecimal(dividend.div(10**digits), scale -digits).to_f
-      return self.to_s.to_f
+    # we can now assume that int_val > LongMath::MAX_FLOATABLE, but not self > LongMath::MAX_FLOATABLE
+    # so rounding should help.
+    # we need to retain some 16 digits to be safely when going via integer
+    if int_val >= LongMath::FLOATABLE_WITHOUT_FRACTION * divisor
+      $stdout.flush
+      rounded_ld = round_to_scale(0, ROUND_HALF_UP)
+      # scale = 0, 0 < int_val <= MAX_FLOATABLE
+      y = to_f_simple(rounded_ld.int_val, rounded_ld.scale)
+      # t9
+      # puts "t9 #{self.to_s}=#{self.inspect} #{rounded_ld.to_s}=#{rounded_ld.inspect} -> #{y}"
+      return y
+    end
+
+    # we need to retain some digits after the decimal point
+    # it can be assumed that self < LongMath::FLOATABLE_WITHOUT_FRACTION, so retaining some digits is necessary
+
+    cmp = int_val <=> divisor
+
+    if (cmp == 0)
+      # t10
+      # puts "t10 #{self.to_s}=#{self.inspect} -> 1.0"
+      return 1.0
+    elsif (cmp > 0)
+      # self > 1, retain MAX_SIGNIFICANT_FLOATABLE_DIGITS
+      rounded_ld = round_to_scale(LongMath::MAX_SIGNIFICANT_FLOATABLE_DIGITS, ROUND_HALF_UP)
+      # self >= LongMath::FLOATABLE_WITHOUT_FRACTION > self > 1, scale = 16,
+      y = to_f_simple(rounded_ld.int_val, rounded_ld.scale)
+      # t11
+      # puts "t11 #{self.to_s}=#{self.inspect} #{rounded_ld.to_s}=#{rounded_ld.inspect} -> #{y}"
+      return y
     else
-      q = dividend.abs / divisor
-      if (q.abs > 1000000000000000000000)
-        return q.to_f
-      else
-        return self.to_s.to_f
-      end
+      # self < 1
+      # sd <= 0, since self <= 0
+      sd = sint_digits10
+      # add some reserve, to keep room for to_f's rounding
+      reserve = 5
+      # significant_digits = sd + scale
+      # reduction = significant_digits - MAX_SIGNIFICANT_FLOATABLE_DIGITS
+      # new_scale = scale - reduction + reserve
+      # simplifies to the following expression
+      new_scale = LongMath::MAX_SIGNIFICANT_FLOATABLE_DIGITS - sd + reserve
+      rounded_ld = round_to_scale(new_scale, ROUND_HALF_UP)
+      y = to_f_simple(rounded_ld.int_val, rounded_ld.scale)
+      # t12
+      # puts "t12 #{self.to_s}=#{self.inspect} #{rounded_ld.to_s}=#{rounded_ld.inspect} sd=#{sd} #{self <=> 1} -> #{y}"
+      return y
     end
   end
+
+  private
+
+  # private helper method for to_f
+  def to_f_simple(int_val, scale)
+    if (scale > Float::MAX_10_EXP - 10)
+      ds1 = scale >> 1
+      ds2 = scale - ds1
+      f1 = int_val.to_f
+      f2 = LongMath.neg_float_npower10(ds1)
+      f3 = LongMath.neg_float_npower10(ds2)
+      f1 * f2 * f3
+    else
+      int_val.to_f * LongMath.neg_float_npower10(scale)
+    end
+  end
+
+  public
 
   #
   # convert self into Integer
@@ -942,7 +1163,7 @@ class LongDecimal < LongDecimalBase
   end
 
   #
-  # convert selt into BigDecimal
+  # convert self into BigDecimal
   #
   def to_bd
     # this operation is probably not used so heavily, so we can live with a
@@ -953,13 +1174,13 @@ class LongDecimal < LongDecimalBase
   #
   # LongDecimals can be seen as a fraction with a power of 10 as
   # denominator for compatibility with other numeric classes this
-  # method is included, returning 10**scale.
+  # method is included, returning LongMath.npower10(scale).
   # Please observe that there may be common factors of numerator and
   # denominator in case of LongDecimal, which does not occur in case
   # of Rational
   #
   def denominator
-    10**scale
+    LongMath.npower10(scale)
   end
 
   #
@@ -1061,7 +1282,7 @@ class LongDecimal < LongDecimalBase
     o, s = coerce(other)
     if (s.kind_of? LongDecimal) then
       exponent = [s.scale, o.scale].max
-      factor   = 10**exponent
+      factor   = LongMath.npower10(exponent)
       s *= factor
       o *= factor
       s = s.round_to_scale(0)
@@ -1177,7 +1398,15 @@ class LongDecimal < LongDecimalBase
   def *(other)
     o, s = coerce(other)
     if s.kind_of? LongDecimal then
-      LongDecimal(s.int_val * o.int_val, s.scale + o.scale)
+      new_scale = s.scale + o.scale
+      prod      = s.int_val * o.int_val
+      if (new_scale > LongMath.prec_limit)
+        reduced_scale = LongMath.check_is_prec(new_scale)
+        reduction     = new_scale - reduced_scale
+        LongDecimal(prod / LongMath.npower10(reduction), reduced_scale)
+      else
+        LongDecimal(prod, new_scale)
+      end
     else
       s * o
     end
@@ -1267,7 +1496,7 @@ class LongDecimal < LongDecimalBase
       else
         abs_other = -other
         new_scale = abs_other * scale
-        LongDecimalQuot(Rational(10 ** new_scale, int_val ** abs_other), new_scale)
+        LongDecimalQuot(Rational(LongMath.npower10(new_scale), int_val ** abs_other), new_scale)
       end
     else
       if (other.kind_of? LongDecimalBase) then
@@ -1336,7 +1565,7 @@ class LongDecimal < LongDecimalBase
   # bitwise inversion
   #
   def ~
-    LongDecimal(~int_val, scale)
+      LongDecimal(~int_val, scale)
   end
 
   #
@@ -1413,7 +1642,7 @@ class LongDecimal < LongDecimalBase
   def move_point_right_int(n)
     raise TypeError, "only implemented for Fixnum >= 0" unless n >= 0
     if (n > scale) then
-      LongDecimal(int_val * 10**(n-scale), 0)
+      LongDecimal(int_val * LongMath.npower10(n-scale), 0)
     else
       LongDecimal(int_val, scale-n)
     end
@@ -1524,8 +1753,18 @@ class LongDecimal < LongDecimalBase
       # Complex.  It need to be observed that this will fail if self
       # has too many digits before the decimal point to be expressed
       # as Float.
-      s, o = other.coerce(Complex(self.to_f, 0))
-      return o, s
+      # s, o = other.coerce(self.to_f)
+      if (RUNNING_19)
+        s, o = other.coerce(self)
+        # puts "complex coerce 19: #{self}, #{other} -> #{s}, #{o}"
+        return o, s
+      else
+        s, o = other.coerce(Complex(self, 0))
+        # puts "complex coerce 18/J: #{self}, #{other} -> #{s}, #{o}"
+        return o, s
+      end
+      # s, o = other.coerce(Complex(self.to_f, 0))
+      # return o, s
 
     elsif other.kind_of? Numeric then
       # all other go by expressing self as Float and seeing how it
@@ -1543,7 +1782,7 @@ class LongDecimal < LongDecimalBase
   # is self expressable as an integer without loss of digits?
   #
   def is_int?
-    scale == 0 || int_val % 10**scale == 0
+    scale == 0 || int_val % LongMath.npower10(scale) == 0
   end
 
   #
@@ -1564,9 +1803,32 @@ class LongDecimal < LongDecimalBase
   # takes into account the values expressed by self and other and the
   # equality of the number of digits.
   #
+  def eql?(other)
+    (other.kind_of? LongDecimal) && (self <=> other) == 0 && self.scale == other.scale
+  end
+
+  #
+  # comparison of self with other for equality
+  # takes into account the values expressed by self
+  #
   def ==(other)
     # (other.kind_of? LongDecimal) && (self <=> other) == 0 && self.scale == other.scale
-    (other.kind_of? LongDecimal) && self.int_val == other.int_val && self.scale == other.scale
+    if (other.kind_of? LongDecimal)
+      scale_diff = self.scale - other.scale
+      if (scale_diff == 0)
+        return self.int_val == other.int_val
+      elsif (scale_diff < 0)
+        return self.int_val * LongMath.npower10(-scale_diff) == other.int_val
+      else
+        return self.int_val == other.int_val * LongMath.npower10(scale_diff)
+      end
+    elsif other.kind_of? Integer
+      return self.int_val == other * LongMath.npower10(scale)
+    elsif other.kind_of? Numeric
+      return (self <=> other).zero?
+    else
+      return false
+    end
   end
 
   #
@@ -1618,7 +1880,7 @@ end # LongDecimal
 #
 class LongDecimalQuot < LongDecimalBase
 
-  @@RCS_ID='-$Id: long-decimal.rb,v 1.60 2009/04/21 04:27:39 bk1 Exp $-'
+  @@RCS_ID='-$Id: long-decimal.rb,v 1.85 2011/01/16 18:39:22 bk1 Exp $-'
 
   #
   # constructor
@@ -1647,7 +1909,8 @@ class LongDecimalQuot < LongDecimalBase
   #
   def initialize(first, second)
     @digits10 = nil
-    if ((first.kind_of? Rational) || (first.kind_of? Integer)) && (second.kind_of? Integer) then
+    if ((first.kind_of? Rational) || (first.kind_of? LongDecimalQuot) || (first.kind_of? Integer)) && (second.kind_of? Integer) then
+      LongMath.check_is_prec(second)
       @rat   = Rational(first.numerator, first.denominator)
       @scale = second
 
@@ -1669,6 +1932,9 @@ class LongDecimalQuot < LongDecimalBase
       new_scale = [ 0, 2 * dy + sx + sy - [ dx + sx, dy + sy ].max - 3].max
 
       first, second = first.anti_equalize_scale(second)
+      if (second.zero?)
+        raise ZeroDivisionError, "second=#{second.inspect} must not be zero. (first=#{first.inspect})"
+      end
       @rat   = Rational(first.to_i, second.to_i)
       @scale = new_scale
     else
@@ -1723,8 +1989,8 @@ class LongDecimalQuot < LongDecimalBase
   #
   # conversion to BigDecimal
   #
-  def to_bd
-    to_ld.to_bd
+  def to_bd(prec = scale, mode = LongMath.standard_mode)
+    to_ld(prec, mode).to_bd
   end
 
   #
@@ -1830,6 +2096,7 @@ class LongDecimalQuot < LongDecimalBase
     if (s.kind_of? LongDecimalQuot) then
       LongDecimalQuot(s.rat - o.rat, [s.scale, o.scale].max)
     else
+      # puts "ldq-coerce: s=#{s} o=#{o} self=#{self} other=#{other}"
       s - o
     end
   end
@@ -1937,110 +2204,13 @@ class LongDecimalQuot < LongDecimalBase
     raise TypeError, "new_scale #{new_scale.inspect} must be >= 0" unless new_scale >= 0
     raise TypeError, "mode #{mode.inspect} must be legal rounding mode" unless mode.kind_of? RoundingModeClass
 
-    sign_quot = numerator <=> 0
-    if sign_quot == 0 then
-      # finish zero without long calculations at once
-      return LongDecimal(0, new_scale)
-    end
-
-    factor    = 10**new_scale
+    factor    = LongMath.npower10(new_scale)
     prod      = numerator * factor
-    divisor   = denominator
-    quot, rem = prod.divmod(divisor)
-    sign_rem  = rem  <=> 0
-    if (sign_rem == 0)
-      # if self can be expressed without loss as LongDecimal with
-      # new_scale digits after the decimal point, just do it.
-      return LongDecimal(quot, new_scale)
-    end
-
-    # we do not expect negative signs of remainder.  To make sure that
-    # this does not cause problems in further code, we just throw an
-    # exception.  This should never happen (and did not happen during
-    # testing).
-    raise Error, "signs do not match self=#{self.to_s} f=#{factor} prod=#{prod} divisor=#{divisor} quot=#{quot} rem=#{rem}" if sign_rem <= 0
-
-    if (sign_quot < 0) then
-      # handle negative sign of self
-      rem -= divisor
-      quot += 1
-      sign_rem = rem <=> 0
-      raise Error, "signs do not match self=#{self.to_s} f=#{factor} prod=#{prod} divisor=#{divisor} quot=#{quot} rem=#{rem}" if sign_rem >= 0
-    end
-
-    if mode == ROUND_UNNECESSARY then
-      # this mode means that rounding should not be necessary.  But
-      # the case that no rounding is needed, has already been covered
-      # above, so it is an error, if this mode is required and the
-      # result could not be returned above.
-      raise ArgumentError, "mode ROUND_UNNECESSARY not applicable, remainder #{rem.to_s} is not zero"
-    end
-
-    if (mode == ROUND_CEILING)
-      # ROUND_CEILING goes to the closest allowed number >= self, even
-      # for negative numbers.  Since sign is handled separately, it is
-      # more conveniant to use ROUND_UP or ROUND_DOWN depending on the
-      # sign.
-      mode = (sign_quot > 0) ? ROUND_UP : ROUND_DOWN
-
-    elsif (mode == ROUND_FLOOR)
-      # ROUND_FLOOR goes to the closest allowed number <= self, even
-      # for negative numbers.  Since sign is handled separately, it is
-      # more conveniant to use ROUND_UP or ROUND_DOWN depending on the
-      # sign.
-      mode = (sign_quot < 0) ? ROUND_UP : ROUND_DOWN
-
-    else
-
-      if (mode == ROUND_HALF_CEILING)
-        # ROUND_HALF_CEILING goes to the closest allowed number >= self, even
-        # for negative numbers.  Since sign is handled separately, it is
-        # more conveniant to use ROUND_HALF_UP or ROUND_HALF_DOWN depending on the
-        # sign.
-        mode = (sign_quot > 0) ? ROUND_HALF_UP : ROUND_HALF_DOWN
-
-      elsif (mode == ROUND_HALF_FLOOR)
-        # ROUND_HALF_FLOOR goes to the closest allowed number <= self, even
-        # for negative numbers.  Since sign is handled separately, it is
-        # more conveniant to use ROUND_HALF_UP or ROUND_HALF_DOWN depending on the
-        # sign.
-        mode = (sign_quot < 0) ? ROUND_HALF_UP : ROUND_HALF_DOWN
-
-      end
-
-      # handle the ROUND_HALF_... stuff and find the adequate ROUND_UP
-      # or ROUND_DOWN to use
-      abs_rem = rem.abs
-      half    = (abs_rem << 1) <=> denominator
-      if (mode == ROUND_HALF_UP || mode == ROUND_HALF_DOWN || mode == ROUND_HALF_EVEN) then
-        if (half < 0) then
-          mode = ROUND_DOWN
-        elsif half > 0 then
-          mode = ROUND_UP
-        else
-          # half == 0
-          if (mode == ROUND_HALF_UP) then
-            mode = ROUND_UP
-          elsif (mode == ROUND_HALF_DOWN) then
-            mode = ROUND_DOWN
-          else
-            # mode == ROUND_HALF_EVEN
-            mode = (quot[0] == 1 ? ROUND_UP : ROUND_DOWN)
-          end
-        end
-      end
-    end
-
-    if mode == ROUND_UP
-      # since the case where we can express the result exactly without
-      # loss has already been handled above, ROUND_UP can be handled
-      # correctly by adding one unit.
-      quot += sign_quot
-    end
-
-    # put together result
-    new_int_val = quot
-    LongDecimal(new_int_val, new_scale)
+    raise TypeError, "numerator=#{numerator} must be integer" unless numerator.kind_of? Integer
+    raise TypeError, "denominator=#{denominator}=#{denominator.inspect} must be integer" unless denominator.kind_of? Integer
+    raise TypeError, "factor=#{factor} (new_scale=#{new_scale}) must be integer" unless factor.kind_of? Integer
+    raise TypeError, "prod=#{prod} must be integer" unless prod.kind_of? Integer
+    return round_to_scale_helper(prod, denominator, new_scale, mode)
 
   end # round_to_scale
 
@@ -2075,7 +2245,8 @@ class LongDecimalQuot < LongDecimalBase
 
     elsif other.kind_of? BigDecimal then
       # for BigDecimal, convert self to BigDecimal as well
-      s, o = other.coerce(self.to_bd)
+      s, o = other.coerce(self.to_bd(scale + 10))
+      return o, s
 
     elsif other.kind_of? Numeric then
       # for all other numeric types convert self to Float.  This may
@@ -2101,8 +2272,25 @@ class LongDecimalQuot < LongDecimalBase
   # explicit number of digits after the decimal point is given.  But
   # scale needs to match for equality.
   #
-  def ==(other)
+  def eql?(other)
     (other.kind_of? LongDecimalQuot) && (self <=> other) == 0 && self.scale == other.scale
+  end
+
+
+  #
+  # compare two numbers for equality.
+  # The LongDecimalQuot self is considered == to other if and only if
+  # it expresses the same value
+  # It needs to be observed that scale does not influence the value expressed
+  # by the number, but only how rouding is performed by default if no
+  # explicit number of digits after the decimal point is given.
+  #
+  def ==(other)
+    if other.kind_of? Numeric
+      (self <=> other) == 0
+    else
+      false
+    end
   end
 
   #
@@ -2200,6 +2388,77 @@ class Numeric
 
 end # Numeric
 
+class Complex
+
+  alias :cdiv :/
+
+  # fix problems with complex division depending on Ruby version
+  if (RUBY_VERSION.match /^1\.8/)
+    #
+    # Division by real or complex number for Ruby 1.8
+    #
+    def / (other)
+      if other.kind_of?(Complex)
+        p = self*other.conjugate
+        d = other.abs2
+        r = p.real/d
+        i = p.image/d
+        Complex(r, i)
+      elsif Complex.generic?(other)
+        Complex(@real/other, @image/other)
+      elsif other.kind_of? BigDecimal
+        Complex(@real/other, @image/other)
+      else
+        x, y = other.coerce(self)
+        x/y
+      end
+    end
+  else
+    #
+    # Division by real or complex number for Ruby 1.9
+    #
+    def / (other)
+      if other.kind_of?(Complex)
+        p = self*other.conjugate
+        d = other.abs2
+        r = nil
+        i = nil
+        if (d.kind_of? Integer) && (p.real.kind_of? Integer)
+          r = Rational(p.real, d)
+        else
+          r = p.real/d
+        end
+        if (d.kind_of? Integer) && (p.image.kind_of? Integer)
+          i = Rational(p.image, d)
+        else
+          i = p.image/d
+        end
+        Complex(r, i)
+      elsif Complex.generic?(other)
+        r = nil
+        i = nil
+        if (other.kind_of? Integer) && (real.kind_of? Integer)
+          r = Rational(real, other)
+        else
+          r = real/other
+        end
+        if (other.kind_of? Integer) && (image.kind_of? Integer)
+          i = Rational(image, other)
+        else
+          i = image/other
+        end
+        Complex(r, i)
+      elsif other.kind_of? BigDecimal
+        Complex(real/other, image/other)
+      else
+        x, y = other.coerce(self)
+        x/y
+      end
+    end
+  end
+end
+
+
 class Rational
 
   #
@@ -2218,6 +2477,54 @@ class Rational
     end
   end
 
+  # retain original to_f under different name
+  alias :to_f_orig :to_f
+
+  FLOAT_MAX_I         = Float::MAX.to_i
+  FLOAT_SIGNIFICANT_I = 2**56
+
+  unless (RUBY_VERSION.match /^1\.9/)
+
+    # fix eql? for Ruby 1.8
+    def eql?(other)
+      (other.kind_of? Rational) && self.numerator == other.numerator && self.denominator == other.denominator
+    end
+
+    # improved to_f, works better where numerator and denominator are integers beyond the range of float, but their Quotient is still expressable as Float
+    def to_f
+      num = @numerator
+      den = @denominator
+      sign = num <=> 0
+      if (sign.zero?)
+        return 0.0
+      elsif sign < 0
+        num = -num
+      end
+      num_big = nil
+      den_big = nil
+      while num >= FLOAT_SIGNIFICANT_I && den >= FLOAT_SIGNIFICANT_I && (num >= FLOAT_MAX_I || den >= FLOAT_MAX_I)
+        num += 0x80
+        num >>= 8
+        den += 0x80
+        den >>= 8
+      end
+
+      if num >= FLOAT_MAX_I
+        num = (num + den/2) / den
+        return (sign * num).to_f
+      elsif den >= FLOAT_MAX_I
+        den = (den + num/2) / num
+        if (den >= FLOAT_MAX_I)
+          return 0.0
+        else
+          return sign/den.to_f
+        end
+      else
+        return sign * (num.to_f / den.to_f)
+      end
+    end
+  end
+
 end # Rational
 
 #
@@ -2233,12 +2540,61 @@ module LongMath
 
   MAX_FLOATABLE   = Float::MAX.to_i
   MAX_FLOATABLE2  = MAX_FLOATABLE / 2
-  MAX_FLOATABLE10 = 10.0 ** Float::MAX_10_EXP
-  MAX_EXP_ABLE   = 709
-  MIN_FLOATABLE  = Float::MIN.to_ld(340, LongMath::ROUND_UP)
-  LOG2           = Math.log(2.0)
-  LOG10          = Math.log(10.0)
+  # moved to bottom because of dependencies
+  # MAX_FLOATABLE10 = 10.0 ** Float::MAX_10_EXP
+  MAX_EXP_ABLE    = 709
+  # moved to the bottom because of dependencies
+  # MIN_FLOATABLE   = Float::MIN.to_ld(340, LongMath::ROUND_UP)
 
+  # some arbritrary limit, so we do not exhaust too much memory.
+  MAX_PREC        = 2097161 # largest integral number n such that 10**n can be calculated in Ruby.
+  DEFAULT_MAX_PREC = MAX_PREC / 10
+
+  # maximum exponent of 0.1 yielding a non-zero result 0.1**n
+  MAX_NEG_10_EXP  = Float::MAX_10_EXP + 16
+  LOG2            = Math.log(2.0)
+  LOG10           = Math.log(10.0)
+
+  #
+  # constants and module variables for LongMath.npower10
+  #
+  POWERS_SMALL_EXP_PARAM = 8
+  POWERS_SMALL_EXP_LIMIT = 1 << POWERS_SMALL_EXP_PARAM  # 256
+  POWERS_SMALL_EXP_MASK  = POWERS_SMALL_EXP_LIMIT - 1   # 255
+  POWERS_MED_EXP_PARAM   = 16
+  POWERS_MED_EXP_LIMIT   = 1 << POWERS_MED_EXP_PARAM  # 65536
+  POWERS_MED_EXP_MASK    = POWERS_MED_EXP_LIMIT - 1   # 65535
+  POWERS_BIG_EXP_LIMIT   = MAX_PREC
+
+  private
+
+  # POWERS_BIG_BASE = 10**POWERS_MED_EXP_LIMIT: calculate on demand
+  def LongMath.powers_big_base
+    npower10_cached(POWERS_MED_EXP_LIMIT)
+  end
+
+  # powers of powers_big_base
+  def LongMath.npower_of_big_base(n1)
+    power = @@powers_of_big_base[n1]
+    if (power.nil?)
+      power = powers_big_base ** n1
+      @@powers_of_big_base[n1] = power
+      puts "npower_of_big_base(n1=#{n1}) c->#{power.size}"
+    else
+      puts "npower_of_big_base(n1=#{n1}) c<-#{power.size}"
+   end
+    power
+  end
+
+  # stores power 10**i at position i (memoize pattern)
+  @@small_powers_of_10 = []
+  # stores power (POWERS_BIG_BASE)**i at position i (memoize pattern)
+  @@powers_of_big_base = []
+
+  # stores power 10.0**(-i) at position i (memoize pattern)
+  @@negative_powers_of_10_f = []
+
+  # keep certain common calculations in memory (memoize-pattern)
   @@cache = {}
 
   CacheKey = Struct.new(:fname, :arg, :mode)
@@ -2276,6 +2632,48 @@ module LongMath
       return r
     end
 
+  end
+
+  #
+  # lookup the upper limit for scale of LongDecimal
+  #
+  def LongMath.prec_limit
+    @@prec_limit ||= LongMath::DEFAULT_MAX_PREC
+  end
+
+  #
+  # lookup the rule for handling errors with overflow of LongDecimal scale
+  #
+  def LongMath.prec_overflow_handling
+    @@prec_overflow_handling ||= :raise_error
+  end
+
+  #
+  # set the rule for handling errors with overflow of LongDecimal scale
+  # possible values are:
+  # :raise_error  : immediately raise an error
+  # :use_max      : tacitely reduce scale to the maximum allowed value
+  # :warn_use_max : print a warning and reduce scale to the max allowed
+  #
+  def LongMath.prec_overflow_handling=(poh)
+    unless (poh == :raise_error || poh == :use_max || poh == :warn_use_max)
+      raise ArgumentError, "poh=#{poh} no accepted value"
+    end
+    @@prec_overflow_handling = poh
+  end
+
+  #
+  # get the rule for handling errors with overflow of LongDecimal scale
+  # possible values are:
+  # :raise_error  : immediately raise an error
+  # :use_max      : tacitely reduce scale to the maximum allowed value
+  # :warn_use_max : print a warning and reduce scale to the max allowed
+  #
+ def LongMath.prec_limit=(l = LongMath::DEFAULT_MAX_PREC)
+    LongMath.check_is_int(l)
+    raise ArgumentError, "#{l} must be >= #{Float::MAX_10_EXP}"  unless l >= Float::MAX_10_EXP
+    raise ArgumentError, "#{l} must be <= #{LongMath::MAX_PREC}" unless l <= LongMath::MAX_PREC
+    @@prec_limit = l
   end
 
   private
@@ -2341,6 +2739,78 @@ module LongMath
   public
 
   #
+  # optimize calculation of power of 10 by non-negative integer,
+  # because it is essential to LongDecimal to us it very often.
+  # n is the exponent (must be >= 0 and Integer)
+  #
+  def LongMath.npower10(n)
+    check_is_prec(n, "n", :raise_error, MAX_PREC)
+    n0 = n & POWERS_MED_EXP_MASK
+    n1 = n >> POWERS_MED_EXP_PARAM
+    p  = npower10_cached(n0)
+    if (n1 > 0) then
+      puts "n0=#{n0} n1=#{n1}"
+      p1 = npower_of_big_base(n1)
+      puts "n0=#{n0} n1=#{n1} p1"
+      p *= p1
+      puts "n0=#{n0} n1=#{n1} p"
+    end
+    return p
+  end
+
+  private
+
+  #
+  # helper method for npower10
+  # only for internal use
+  #
+  def LongMath.npower10_cached(n)
+    p = @@small_powers_of_10[n]
+    if (p.nil?)
+      n0 = n &  POWERS_SMALL_EXP_MASK
+      n1 = n >> POWERS_SMALL_EXP_PARAM
+      p = npower10_cached_small(n0)
+      if (n1 > 0)
+        p *= npower10_cached_small(POWERS_SMALL_EXP_LIMIT) ** n1
+      end
+      @@small_powers_of_10[n] = p
+    end
+    p
+  end
+
+  #
+  # helper method for npower10
+  # only for internal use
+  #
+  def LongMath.npower10_cached_small(n)
+    p = @@small_powers_of_10[n]
+    if (p.nil?)
+      p = 10 ** n
+      @@small_powers_of_10[n] = p
+    end
+    p
+  end
+
+  public
+
+  #
+  # helper method for npower10
+  # only for internal use
+  #
+  def LongMath.neg_float_npower10(n)
+    if (n > MAX_NEG_10_EXP)
+      return 0.0
+    end
+    p = @@negative_powers_of_10_f[n]
+    if (p.nil?)
+      #p = 0.1 ** n
+      p = "1e-#{n}".to_f # 0.1 ** n
+      @@negative_powers_of_10_f[n] = p
+    end
+    p
+  end
+
+  #
   # helper method for internal use: checks if word_len is a reasonable
   # size for splitting a number into parts
   #
@@ -2367,9 +2837,23 @@ module LongMath
   # helper method for internal use: checks if parameter x is a
   # reasonable value for the precision (scale) of a LongDecimal
   #
-  def LongMath.check_is_prec(prec, name="prec")
-    check_is_int(prec, "prec")
-    raise TypeError, "#{name}=#{prec.inspect} must be >= 0" unless prec >= 0
+  def LongMath.check_is_prec(prec, name="prec", error_handling = nil, pl = prec_limit)
+    raise TypeError, "#{name}=#{prec.inspect} must be Fixnum" unless prec.kind_of? Integer
+    raise ArgumentError, "#{name}=#{prec.inspect} must be >= 0" unless prec >= 0
+    unless (prec.kind_of? Fixnum) && prec <= pl
+      poh = LongMath.prec_overflow_handling
+      if poh == :raise_error || error_handling == :raise_error
+        raise ArgumentError, "#{name}=#{prec.inspect} must be <= #{pl}"
+      elsif poh == :warn_use_max
+        warn "WARNING: #{name}=#{prec} too big => reduced to #{pl}"
+        prec = pl
+      elsif poh == :use_max
+        prec = pl
+      else
+        raise ArgumentError, "unsupported value for prec_overflow_handling=#{poh} found #{name}=#{prec} > #{pl}"
+      end
+    end
+    prec
   end
 
   #
@@ -2733,7 +3217,7 @@ module LongMath
   #
   def LongMath.pi(prec, final_mode = LongMath.standard_mode, iprec = nil, mode = nil, cache_result = true) # DOWN?
 
-    check_is_prec(prec, "prec")
+    prec = check_is_prec(prec, "prec")
     if (mode.nil?)
       mode  = LongMath.standard_mode
     end
@@ -2744,7 +3228,7 @@ module LongMath
     if (iprec.nil?)
       iprec = 5*(prec+1)
     end
-    check_is_prec(iprec, "iprec")
+    iprec = check_is_prec(iprec, "iprec")
     sprec = (iprec >> 1) + 1
     dprec = (prec+1) << 1
 
@@ -2792,7 +3276,7 @@ module LongMath
   #
   def LongMath.exp(x, prec, mode = LongMath.standard_mode) # down?
     raise TypeError, "x=#{x.inspect} must not be greater #{MAX_EXP_ABLE}" unless x <= MAX_EXP_ABLE
-    check_is_prec(prec, "prec")
+    prec = check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
     exp_internal(x, prec, mode)
   end
@@ -2810,12 +3294,11 @@ module LongMath
       iprec_extra = (xf / LOG10).abs
     end
     iprec = ((prec+12) * 1.20 + iprec_extra * 1.10).round
-    if (iprec < prec) then
-      iprec = prec
-    end
+    iprec = [ iprec, prec ].max
     if (x_was_neg)
       iprec += 2
     end
+    iprec = check_is_prec(iprec, "iprec")
     iprec
   end
 
@@ -2837,7 +3320,7 @@ module LongMath
         raise ArgumentError, "precision must be supplied either as precision of x=#{x} or explicitely"
       end
     end
-    check_is_prec(prec, "prec")
+    prec = check_is_prec(prec, "prec")
 
     if (final_mode.nil?)
       final_mode = LongMath.standard_mode
@@ -2881,7 +3364,7 @@ module LongMath
     if (iprec.nil?) then
       iprec = calc_iprec_for_exp(x, prec, x_was_neg)
     end
-    check_is_prec(iprec, "iprec")
+    iprec = check_is_prec(iprec, "iprec")
 
     # we only cache exp(1)
     cache_key = get_cache_key("exp", x, mode, [1, 10, 100, MAX_EXP_ABLE.to_i])
@@ -2967,7 +3450,7 @@ module LongMath
   # internal helper method for calculationg sqrt and sqrt_with_remainder
   #
   def LongMath.sqrt_internal(x, prec, mode, with_rem, cache_result = true)
-    check_is_prec(prec, "prec")
+    prec = check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
     unless (x.kind_of? LongDecimal)
       x = x.to_ld(2 * (prec+1), mode)
@@ -3035,7 +3518,7 @@ module LongMath
   # internal helper method for calculationg cbrt and cbrt_with_remainder
   #
   def LongMath.cbrt_internal(x, prec, mode, with_rem, cache_result = true)
-    check_is_prec(prec, "prec")
+    prec = check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
     unless (x.kind_of? LongDecimal)
       x = x.to_ld(3 * (prec+1), mode)
@@ -3088,7 +3571,7 @@ module LongMath
   # LongDecimal.
   #
   def LongMath.log(x, prec, mode = LongMath.standard_mode) # down?
-    check_is_prec(prec, "prec")
+    prec = check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
     log_internal(x, prec, mode)
   end
@@ -3110,7 +3593,7 @@ module LongMath
         raise ArgumentError, "precision must be supplied either as precision of x=#{x} or explicitely"
       end
     end
-    check_is_prec(prec, "prec")
+    prec = check_is_prec(prec, "prec")
 
     if (final_mode.nil?)
       final_mode = LongMath.standard_mode
@@ -3124,7 +3607,7 @@ module LongMath
     if (iprec < prec) then
       iprec = prec
     end
-    check_is_prec(iprec, "iprec")
+    iprec = check_is_prec(iprec, "iprec")
     unless (x.kind_of? LongDecimal)
       x = x.to_ld(iprec, mode)
     end
@@ -3218,10 +3701,12 @@ module LongMath
 
   @@standard_mode = ROUND_HALF_UP
 
+  # default to be used as rounding mode when no explicit mode is provided
   def LongMath.standard_mode
     @@standard_mode
   end
 
+  # set default to be used as rounding mode when no explicit mode is provided
   def LongMath.standard_mode=(x)
     LongMath.check_is_mode(x)
     @@standard_mode = x
@@ -3237,6 +3722,14 @@ module LongMath
     LongMath.check_is_mode(x)
     @@standard_imode = x
   end
+
+  MAX_FLOATABLE10 = LongMath.npower10(Float::MAX_10_EXP)
+  MIN_FLOATABLE   = Float::MIN.to_ld(340, LongMath::ROUND_UP)
+  INV_MIN_FLOATABLE = MIN_FLOATABLE.reciprocal.round_to_scale(0, LongMath::ROUND_HALF_UP).to_i
+  # numbers >= FLOATABLE_WITHOUT_FRACTION yield the same result when converted to Float, regardless of what follows after the decimal point
+  FLOATABLE_WITHOUT_FRACTION = (2 / Float::EPSILON).to_i
+  MAX_SIGNIFICANT_FLOATABLE_DIGITS = Float::DIG + 1
+
 
 end # LongMath
 

@@ -4,8 +4,8 @@
 #
 # (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdeclib.rb,v 1.29 2009/04/21 16:56:49 bk1 Exp $
-# CVS-Label: $Name: BETA_02_01 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdeclib.rb,v 1.41 2011/01/16 21:12:42 bk1 Exp $
+# CVS-Label: $Name: RELEASE_1_00_00 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -27,19 +27,60 @@ end
 #
 module TestLongDecHelper
 
-  @RCS_ID='-$Id: testlongdeclib.rb,v 1.29 2009/04/21 16:56:49 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdeclib.rb,v 1.41 2011/01/16 21:12:42 bk1 Exp $-'
+
+  def assert_equal_float(lhs, rhs, delta=0, msg="")
+    if ((lhs - rhs).abs >= delta)
+      msg2 = "delta=#{delta} #{msg}"
+      assert_equal(lhs, rhs, msg2)
+    end
+  end
+
+  def assert_equal_rbo(lhs, rhs, msg="", lhsname="lhs", rhsname="rhs", delta=0)
+    msg2 = "#{lhsname}=#{lhs} #{rhsname}=#{rhs} " + msg
+    if (lhs.kind_of? Rational) && (rhs.kind_of? BigDecimal) || (lhs.kind_of? BigDecimal) && (rhs.kind_of? Rational)
+      assert_equal(lhs.to_ld, rhs.to_ld, msg2)
+    elsif (delta > 0 && ((lhs.kind_of? Float) || (rhs.kind_of? Float)))
+      assert_equal_float(lhs, rhs, delta, msg2 + " d=#{delta}")
+    else
+      assert_equal(lhs, rhs, msg2)
+    end
+  end
+
+  def assert_equal_complex(lhs, rhs, msg="", delta=0)
+    msg2 = "lhs=#{lhs} rhs=#{rhs} " + msg
+    assert_equal_rbo(lhs.real, rhs.real,   "real: #{lhs.real==rhs.real} "   + msg2, "lhsr", "rhsr", delta)
+    assert_equal_rbo(lhs.image, rhs.image, "imag: #{lhs.image==rhs.image} " + msg2, "lhsi", "rhsi", delta)
+  end
+
+  #
+  # convenience method for comparing two numbers. true if and only if
+  # they express the same value
+  #
+  def assert_eql(expected, actual, message="")
+    full_message = build_message(message, "Expected <?> to match <?>", actual, expected)
+    assert((expected.eql? actual), full_message)
+#     _wrap_assertion {
+#       full_message = build_message(message, "Expected <?> to match <?>", actual, expected)
+#       assert_block(full_message) {
+#         (expected <=> actual).zero?
+#       }
+#     }
+  end
 
   #
   # convenience method for comparing two numbers. true if and only if
   # they express the same value
   #
   def assert_val_equal(expected, actual, message="")
-    _wrap_assertion {
-      full_message = build_message(message, "Expected <?> to match <?>", actual, expected)
-      assert_block(full_message) {
-        (expected <=> actual).zero?
-      }
-    }
+    full_message = build_message(message, "Expected <?> to match <?>", actual, expected)
+    assert((expected <=> actual).zero?, full_message)
+#     _wrap_assertion {
+#       full_message = build_message(message, "Expected <?> to match <?>", actual, expected)
+#       assert_block(full_message) {
+#         (expected <=> actual).zero?
+#       }
+#     }
   end
 
   #
@@ -53,22 +94,27 @@ module TestLongDecHelper
   # one of these is used.
   #
   def assert_equal_rounded(expected, actual, message="")
-    _wrap_assertion {
-      lhs = (expected - actual).abs()*2000
-      rhs = actual.unit.abs()*1001
-      full_message = build_message(message, "Expected <?> to match <?> (lhs=#{lhs} rhs=#{rhs})", actual, expected)
-      assert_block(full_message) {
-        #       prec = actual.scale
-        #       ed   = expected.round_to_scale(prec, LongMath::ROUND_HALF_FLOOR)
-        #       eu   = expected.round_to_scale(prec, LongMath::ROUND_HALF_CEILING)
-        #       # puts("ed=#{ed} eu=#{eu} e=#{expected} a=#{actual}")
-        #       ed <= actual && actual <= eu
+    lhs = (expected - actual).abs()*2000
+    rhs = actual.unit.abs()*1001
+    full_message = build_message(message, "Expected <?> to match <?> (lhs=#{lhs} rhs=#{rhs})", actual, expected)
+    assert(lhs < rhs, full_message)
 
-        # (expected - actual).abs < (actual.unit()/2)*(1001/1000)
-        # (expected - actual).abs()*2000 < actual.unit()*1001
-        lhs < rhs
-      }
-    }
+#     _wrap_assertion {
+#       lhs = (expected - actual).abs()*2000
+#       rhs = actual.unit.abs()*1001
+#       full_message = build_message(message, "Expected <?> to match <?> (lhs=#{lhs} rhs=#{rhs})", actual, expected)
+#       assert_block(full_message) {
+#         #       prec = actual.scale
+#         #       ed   = expected.round_to_scale(prec, LongMath::ROUND_HALF_FLOOR)
+#         #       eu   = expected.round_to_scale(prec, LongMath::ROUND_HALF_CEILING)
+#         #       # puts("ed=#{ed} eu=#{eu} e=#{expected} a=#{actual}")
+#         #       ed <= actual && actual <= eu
+
+#         # (expected - actual).abs < (actual.unit()/2)*(1001/1000)
+#         # (expected - actual).abs()*2000 < actual.unit()*1001
+#         lhs < rhs
+#       }
+#     }
   end
 
   #
@@ -77,16 +123,22 @@ module TestLongDecHelper
   # interval is a unit at most.
   #
   def assert_small_interval(yd, yu, y, message="")
-    _wrap_assertion {
-      if (yu < yd) then
-        yd, yu = yu, yd
-      end
-      full_message = build_message(message, "Expected interval [<?>, <?>] to be one unit at most and to contain <?>", yd, yu, y)
-      assert_block(full_message) {
-        prec = y.scale
-        yd <= y && y <= yu && yu - yd <= y.unit
-      }
-    }
+    if (yu < yd) then
+      yd, yu = yu, yd
+    end
+    full_message = build_message(message, "Expected interval [<?>, <?>] to be one unit at most and to contain <?>", yd, yu, y)
+    prec = y.scale
+    assert(yd <= y && y <= yu && yu - yd <= y.unit, full_message)
+#     _wrap_assertion {
+#       if (yu < yd) then
+#         yd, yu = yu, yd
+#       end
+#       full_message = build_message(message, "Expected interval [<?>, <?>] to be one unit at most and to contain <?>", yd, yu, y)
+#       assert_block(full_message) {
+#         prec = y.scale
+#         yd <= y && y <= yu && yu - yd <= y.unit
+#       }
+#     }
   end
 
   #
@@ -131,7 +183,7 @@ module TestLongDecHelper
     # compare y against z = exp(x) calculated using regular floating point arithmetic
     z = Math.exp(x.to_f)
     yf = y.to_f
-    assert((yf - z).abs <= [ y.unit, z.abs / 1e9 ].max, "y=#{yf.to_s} and z=#{z.to_s} should be almost equal x=#{x}")
+    assert((yf - z).abs <= [ y.unit, z.abs / 1e9 ].max, "y=#{yf.to_s} and z=#{z.to_s} should be almost equal x=#{x} d=#{yf - z}")
 
     # check by taking log(exp(x))
     # we have to take into account that we might not have enough
@@ -373,7 +425,7 @@ module TestLongDecHelper
     # assert_equal(yy.round_to_scale(y.scale, LongDecimal::ROUND_HALF_DOWN), y, "x=#{x} y=#{y} yy=#{yy}")
     assert_equal_rounded(yy, y, "x=#{x} y=#{y} yy=#{yy}")
 
-    # compare y against z = exp(x) calculated using regular floating
+    # compare y against z = log(x) calculated using regular floating
     # point arithmetic
     if (x <= LongMath::MAX_FLOATABLE) then
       xf = x.to_f
@@ -385,7 +437,7 @@ module TestLongDecHelper
         dl = y.unit
         # delta = [ y.unit, z.abs / divisor + summand ].max
         delta = [ df, dl ].max
-        assert((y - zl).abs <= delta, "y=#{y.to_s} (#{y.to_f}) and z=#{z.to_s} (#{zl.to_f}) should be almost equal (d=#{delta.inspect} x=#{x} y=#{y})")
+        assert((y - zl).abs <= delta, "y=#{y.to_s} (#{y.to_f}) and z=#{z.to_s} (#{zl}=#{zl.to_f}) should be almost equal (delta=#{delta.inspect} d=#{y - zl}=#{(y - zl).to_f} x=#{x} y=#{y}=#{y.to_f})")
       end
     end
 
@@ -438,7 +490,6 @@ module TestLongDecHelper
   def check_power_floated(x, y, prec)
 
     print "."
-    t0 = Time.new
     $stdout.flush
 
     # make sure x and y are LongDecimal
@@ -449,7 +500,7 @@ module TestLongDecHelper
     # calculate z = x**y
     z = LongMath.power(x, y, prec)
 
-    corr2 = (x - 1).abs*1000000000
+    corr2 = (x - 1).abs*1000000000 # 10**9
     if (z.abs < LongMath::MAX_FLOATABLE && corr2 > 1)
       # compare y against w = x**y calculated using regular floating point arithmetic
       xf = x.to_f
@@ -468,13 +519,13 @@ module TestLongDecHelper
       end
       corr = corr2 * 0.5
       if corr > 1
-        corr_f = [ corr.to_f, 2 ].min.to_f
+        corr_f = [ corr.to_f, 5.0 ].min
         delta *= corr_f
       end
       # puts "delta=#{delta} corr_f=#{corr_f} corr=#{corr}"
 
       diff  = (zf - wf).abs
-      assert(diff <= delta, "zf=#{zf.to_s} and wf=#{wf.to_s} should be almost equal x=#{x} y=#{y} delta=#{delta} l=#{l} diff=#{diff} prec=#{prec}")
+      assert_equal_float(zf, wf, delta, "z=#{z}=#{zf} and wf=#{wf.to_s} should be almost equal x=#{x}=#{xf} y=#{y}=#{yf} delta=#{delta} l=#{l} diff=#{diff} prec=#{prec} corr=#{corr}=#{corr.to_f} corr2=#{corr2}=#{corr2.to_f} corr_f=#{corr_f}")
     end
 
     # check by taking log(z) = y * log(x)
@@ -501,7 +552,7 @@ module TestLongDecHelper
       u = LongMath.log(z, lprec)
       v = LongMath.log(x, lprec+l10y)
       yv = (y*v).round_to_scale(lprec, LongDecimal::ROUND_HALF_DOWN)
-      assert((u - yv).abs <= unit, "u=#{u} and yv=y*v=#{yv} should be almost equal (unit=#{unit} x=#{x.to_s} y=#{y.to_s} z=#{z.to_s} u=#{u.to_s} v=#{v.to_s} lprec=#{lprec} prec=#{prec})")
+      assert((u - yv).abs <= unit, "u=log(z,#{lprec})=#{u} and yv=y*v=y*log(x,#{lprec+l10y})=#{yv} should be almost equal (unit=#{unit} x=#{x.to_s} y=#{y.to_s} z=#{z.to_s} u=#{u.to_s} v=#{v.to_s} lprec=#{lprec} prec=#{prec})")
     end
 
   end

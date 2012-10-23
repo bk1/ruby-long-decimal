@@ -3,8 +3,8 @@
 #
 # (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal-extra.rb,v 1.9 2009/04/21 16:56:49 bk1 Exp $
-# CVS-Label: $Name: BETA_02_01 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal-extra.rb,v 1.26 2011/01/16 18:12:50 bk1 Exp $
+# CVS-Label: $Name: RELEASE_1_00_00 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 require "complex"
@@ -15,34 +15,266 @@ require "bigdecimal"
 
 # require "bigdecimal/math"
 
-class Rational
-  alias :to_g :to_f
-
-  FLOAT_MAX_I = Float::MAX.to_i
-
-  def to_f
-    numerator   = @numerator
-    denominator = @denominator
-    sign        = numerator <=> 0
-    if (sign.zero?)
-      return 0.0
-    elsif sign < 0
-      numerator = -numerator
-    end
-    while numerator >= FLOAT_MAX_I || denominator >= FLOAT_MAX_I do
-      numerator   >>= 8
-      denominator >>= 8
-      if (denominator == 0)
-        raise ZeroDivisionError, "denominator too close to zero: #{@numerator}/{@denominator}"
-      elsif numerator == 0
-        return 0.0
-      end
-    end
-    return numerator.to_f / denominator.to_f
-  end
-end
-
 class LongDecimal
+
+  # timer for performance measurements
+  def ts(i)
+    @timer ||= []
+    @timer[i] = Time.now
+  end
+
+  def te(i)
+    @@tt ||= []
+    @@tt[i] ||= 0
+    @@tt[i] += Time.now - @timer[i]
+    @@tc ||= []
+    @@tc[i] ||= 0
+    @@tc[i] += 1
+  end
+
+  def tt(i)
+    @@tt ||= []
+    @@tt[i] ||= 0
+    @@tc ||= []
+    @@tc[i] ||= 0
+    if (@@tc[i] == 0)
+      @@tt[i]
+    else
+      @@tc[i].to_s + ":" + @@tt[i].to_s + ":" + (@@tt[i]/@@tc[i]).to_s
+    end
+  end
+
+  #
+  # create copy of self with different scale
+  # param1: new_scale  new scale for result
+  # param2: mode       rounding mode to be applied when information is
+  #                    lost.   defaults  to  ROUND_UNNECESSARY,  which
+  #                    means that  an exception is  thrown if rounding
+  #                    would actually loose any information.
+  #
+  def round_to_scale2(new_scale, mode = ROUND_UNNECESSARY)
+
+    raise TypeError, "new_scale #{new_scale.inspect} must be integer" unless new_scale.kind_of? Integer
+    raise TypeError, "new_scale #{new_scale.inspect} must be >= 0" unless new_scale >= 0
+    raise TypeError, "mode #{mode.inspect} must be legal rounding mode" unless mode.kind_of? RoundingModeClass
+    if @scale == new_scale then
+      self
+    else
+      ts 16
+      diff   = new_scale - scale
+      factor = LongMath.npower10(diff.abs)
+      te 16
+      if (diff > 0) then
+        # we become more precise, no rounding issues
+        ts 17
+        new_int_val = int_val * factor
+        te 17
+      else
+        ts 18
+        quot, rem = int_val.divmod(factor)
+        te 18
+        if (rem == 0) then
+          new_int_val = quot
+        elsif (mode == ROUND_UNNECESSARY) then
+          raise ArgumentError, "mode ROUND_UNNECESSARY not applicable, remainder #{rem.to_s} is not zero"
+        else
+          ts 19
+          sign_self = sign
+
+          if (sign_self < 0) then
+            # handle negative sign of self
+            rem -= divisor
+            quot += 1
+          end
+          sign_rem  = rem  <=> 0
+          raise Error, "signs do not match self=#{self.to_s} f=#{factor} divisor=#{divisor} rem=#{rem}" if sign_rem >= 0 && sign_self < 0
+
+          if (mode == ROUND_CEILING)
+            # ROUND_CEILING goes to the closest allowed number >= self, even
+            # for negative numbers.  Since sign is handled separately, it is
+            # more conveniant to use ROUND_UP or ROUND_DOWN depending on the
+            # sign.
+            mode = (sign_self > 0) ? ROUND_UP : ROUND_DOWN
+
+          elsif (mode == ROUND_FLOOR)
+            # ROUND_FLOOR goes to the closest allowed number <= self, even
+            # for negative numbers.  Since sign is handled separately, it is
+            # more conveniant to use ROUND_UP or ROUND_DOWN depending on the
+            # sign.
+            mode = (sign_self < 0) ? ROUND_UP : ROUND_DOWN
+          else
+            if (mode == ROUND_HALF_CEILING)
+              # ROUND_HALF_CEILING goes to the closest allowed number >= self, even
+              # for negative numbers.  Since sign is handled separately, it is
+              # more conveniant to use ROUND_HALF_UP or ROUND_HALF_DOWN depending on the
+              # sign.
+              mode = (sign_self > 0) ? ROUND_HALF_UP : ROUND_HALF_DOWN
+
+            elsif (mode == ROUND_HALF_FLOOR)
+              # ROUND_HALF_FLOOR goes to the closest allowed number <= self, even
+              # for negative numbers.  Since sign is handled separately, it is
+              # more conveniant to use ROUND_HALF_UP or ROUND_HALF_DOWN depending on the
+              # sign.
+              mode = (sign_self < 0) ? ROUND_HALF_UP : ROUND_HALF_DOWN
+
+            end
+
+            # handle the ROUND_HALF_... stuff and find the adequate ROUND_UP
+            # or ROUND_DOWN to use
+            abs_rem = rem.abs
+            half    = (abs_rem << 1) <=> denominator
+            if (mode == ROUND_HALF_UP || mode == ROUND_HALF_DOWN || mode == ROUND_HALF_EVEN) then
+              if (half < 0) then
+                mode = ROUND_DOWN
+              elsif half > 0 then
+                mode = ROUND_UP
+              else
+                # half == 0
+                if (mode == ROUND_HALF_UP) then
+                  mode = ROUND_UP
+                elsif (mode == ROUND_HALF_DOWN) then
+                  mode = ROUND_DOWN
+                else
+                  # mode == ROUND_HALF_EVEN
+                  mode = (quot[0] == 1 ? ROUND_UP : ROUND_DOWN)
+                end
+              end
+            end
+          end
+
+          if mode == ROUND_UP
+            # since the case where we can express the result exactly without
+            # loss has already been handled above, ROUND_UP can be handled
+            # correctly by adding one unit.
+            quot += sign_self
+          end
+
+          # put together result
+          new_int_val = quot
+          te 19
+        end
+      end
+      ts 20
+      y = LongDecimal(new_int_val, new_scale)
+      te 20
+      return y
+    end
+  end
+
+  #
+  # number of decimal digits before the decimal point, not counting a
+  # single 0.  negative value, if some zeros follow immediately after
+  # decimal point
+  #
+  # 0.000x -> -3
+  # 0.00x -> -2
+  # 0.0xx -> -1
+  # 0.xxx ->  0
+  # 1.xxx  -> 1
+  # 10.xxx -> 2
+  # 99.xxx -> 2
+  # 100.xxx -> 3
+  # ...
+  # second implementation
+  #
+  def sint_digits10_2
+    if zero?
+      return -scale
+    else
+      n = numerator.abs
+      d = denominator
+      i = 0
+      if (n < d)
+        i = (d.size - i.size + 1.size) * 53 / 22
+        n *= LongMath.npower10(i)
+        if (n < d)
+          raise ArgumentError, "still not working well: n=#{n} d=#{d} i=#{i} self=#{self}"
+        end
+      end
+      return LongMath.int_digits10(n/d) - i
+    end
+  end
+
+  #
+  # number of decimal digits before the decimal point, not counting a
+  # single 0.  negative value, if some zeros follow immediately after
+  # decimal point
+  #
+  # 0.000x -> -3
+  # 0.00x -> -2
+  # 0.0xx -> -1
+  # 0.xxx ->  0
+  # 1.xxx  -> 1
+  # 10.xxx -> 2
+  # 99.xxx -> 2
+  # 100.xxx -> 3
+  # ...
+  # third implementation
+  #
+  def sint_digits10_3
+    if zero?
+      return -scale
+    else
+      l = LongMath.log10(self.abs, 0, LongDecimal::ROUND_HALF_FLOOR).to_i
+      f = LongMath.npower10(l + scale)
+      if (f > int_val.abs)
+        l -= 1
+      end
+      return l.to_i + 1
+    end
+  end
+
+  #
+  # number of decimal digits before the decimal point, not counting a
+  # single 0.  negative value, if some zeros follow immediately after
+  # decimal point
+  #
+  # 0.000x -> -3
+  # 0.00x -> -2
+  # 0.0xx -> -1
+  # 0.xxx ->  0
+  # 1.xxx  -> 1
+  # 10.xxx -> 2
+  # 99.xxx -> 2
+  # 100.xxx -> 3
+  # ...
+  # forth implementation (for evaluation of algorithms only, will be removed again)
+  #
+  def sint_digits10_4
+    if zero?
+      return -scale
+    else
+      prec_limit = LongMath.prec_limit
+      LongMath.prec_limit = LongMath::MAX_PREC
+      n = numerator.abs
+      s = 0
+      imax = LongMath::POWERS_BIG_EXP_LIMIT
+      puts "imax=#{imax}"
+      fmax = LongMath.npower10(imax)
+      puts "fmax: #{fmax.size}"
+      imin = 0
+      fmin = 1
+      while n > fmax
+        n /= fmax
+        s += imax
+      end
+      # 1 <= n < 10**imax
+      while (imin + 1 < imax)
+        # 10**imin <= n < 10**imax
+        imed = (imin + imax)/2
+        fmed = LongMath.npower10(imed)
+        if (n < fmed)
+          imax = imed
+          fmax = fmed
+        else
+          imin = imed
+          fmin = fmed
+        end
+      end
+      LongMath.prec_limit = prec_limit
+      return s + imin - scale + 1
+    end
+  end
 
   #
   # convert self into Float
@@ -52,68 +284,55 @@ class LongDecimal
   # representation otherwise.
   #
   def to_g
+
+    # make sure we do not have to deal with negative sign beyond this point
+    if (self < 0) then
+      return -(-self).to_f
+    end
+
     # handle overflow: raise exception
-    if (self.abs > LongMath::MAX_FLOATABLE) then
+    if (self > LongMath::MAX_FLOATABLE) then
       raise ArgumentError, "self=#{self.inspect} cannot be expressed as Float"
     end
 
     # handle underflow: return 0.0
-    if (self.abs < LongMath::MIN_FLOATABLE) then
-      puts "-> 0.0"
+    if (self < LongMath::MIN_FLOATABLE) then
       return 0.0
-    end
-
-    if (self < 0) then
-      puts "-> negate"
-      return -(-self).to_g
     end
 
     dividend = numerator
     divisor  = denominator
 
     if (divisor == 1) then
-      puts "-> /1"
       return dividend.to_f
-    elsif dividend.abs <= LongMath::MAX_FLOATABLE then
-      puts "-> dividend <= MAX_FLOATABLE"
-      if (divisor.abs > LongMath::MAX_FLOATABLE) then
-        puts "-> divisor > MAX_FLOATABLE"
-        qe = scale - Float::MAX_10_EXP
-        q  = 10**qe
-        puts "-> q=#{q}"
+    elsif dividend <= LongMath::MAX_FLOATABLE then
+      if (divisor > LongMath::MAX_FLOATABLE) then
+        q = LongMath.npower10(scale - Float::MAX_10_EXP)
         f = (dividend / q).to_f
-        puts "-> f=#{f}"
         d = LongMath::MAX_FLOATABLE10
-        puts "-> d=#{d}"
-        y = f / d
-        puts "-> y=#{y}"
-        return y
+        return f / d
       else
-        puts "-> divisor <= MAX_FLOATABLE"
         f = dividend.to_f
         return f / divisor
       end
-    elsif dividend.abs < divisor
-      puts "-> < 1"
-      # self is between -1 and 1
-
-      # factor = dividend.abs.div(LongMath::MAX_FLOATABLE)
-      # digits = factor.to_ld.int_digits10
-      # return LongDecimal(dividend.div(10**digits), scale -digits).to_f
+    elsif dividend < divisor
+      # self is between 0 and 1 and dividend > LongMath::MAX_FLOATABLE
+      # return LongDecimal(dividend.div(LongMath.npower10(digits)), scale -digits).to_f
+      # puts "via s (1): #{self.inspect}"
       return self.to_s.to_f
     else
-      puts "-> >= 1"
       q = dividend.abs / divisor
       if (q.abs > 1000000000000000000000)
-        puts "-> > 1000000000000000000000"
         return q.to_f
       else
-        puts "-> <= 1000000000000000000000"
+        # puts "via s (2): #{self.inspect}"
         return self.to_s.to_f
       end
     end
   end
+
 end
+
 
 #
 # LongMath provides some helper functions to support LongDecimal and
@@ -123,7 +342,7 @@ end
 # LongDecimal instead of Float.
 #
 module LongMath
-
+  
   #
   # calc the base-2-exponential function of x to the given precision as
   # LongDecimal.  Only supports values of x such that the result still
@@ -152,7 +371,7 @@ module LongMath
   #
   def LongMath.log10(x, prec, mode = LongMath.standard_mode) # down?
 
-    check_is_prec(prec, "prec")
+    prec = check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
     iprec = prec + 6
     unless (x.kind_of? LongDecimal)
@@ -176,7 +395,7 @@ module LongMath
   #
   def LongMath.log2(x, prec, mode = LongMath.standard_mode)
 
-    check_is_prec(prec, "prec")
+    prec = check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
     iprec = prec + 6
     unless (x.kind_of? LongDecimal)
@@ -271,8 +490,9 @@ module LongMath
     raise TypeError, "y=#{y.inspect} must not be greater #{MAX_FLOATABLE}" unless y.abs <= MAX_FLOATABLE
     raise TypeError, "y=#{y.inspect} must not be negative if base is zero}" if y < 0 && x.zero?
     raise TypeError, "x=#{x.inspect} must not negative" unless x >= 0
-    check_is_prec(prec, "prec")
+    prec = check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
+    puts "LongMath.power(x=#{x} y=#{y} prec=#{prec} mode=#{mode})"
 
     # handle the special cases where base or exponent are 0 or 1 explicitely
     if y.zero? then
@@ -289,10 +509,10 @@ module LongMath
     # x ** y <= 10**-s/2  <=> y * log(x) <= -s log(10) - log(2)
 
     iprec, iprec_x, iprec_y, logx_y_f = calc_iprec_for_power(x, y, prec)
-    # puts "x=#{x} y=#{y} prec=#{prec} iprec=#{iprec} iprec_x=#{iprec_x} iprec_y=#{iprec_y} logx_y_f=#{logx_y_f}: checking x < 1 && y > 0 || x > 1 && y < 0=#{x < 1 && y > 0 || x > 1 && y < 0}"
+    puts "x=#{x} y=#{y} prec=#{prec} iprec=#{iprec} iprec_x=#{iprec_x} iprec_y=#{iprec_y} logx_y_f=#{logx_y_f}: checking x < 1 && y > 0 || x > 1 && y < 0=#{x < 1 && y > 0 || x > 1 && y < 0}"
     $stdout.flush
     if (x < 1 && y > 0 || x > 1 && y < 0) then
-      # puts "checking if zero logx_y_f=#{logx_y_f} <= #{- prec * LOG10 - LOG2}"
+      puts "checking if zero logx_y_f=#{logx_y_f} <= #{- prec * LOG10 - LOG2}"
       if (logx_y_f <= - prec * LOG10 - LOG2) then
         return LongDecimal.zero!(prec)
       end
@@ -342,10 +562,10 @@ module LongMath
       y = -y
       x = (1/x).round_to_scale(iprec_x*2, mode)
       iprec, iprec_x, iprec_y, logx_y_f = calc_iprec_for_power(x, y, prec)
-      # puts "x=#{x} y=#{y} prec=#{prec} iprec=#{iprec} iprec_x=#{iprec_x} iprec_y=#{iprec_y} logx_y_f=#{logx_y_f}: checking x < 1 && y > 0 || x > 1 && y < 0=#{x < 1 && y > 0 || x > 1 && y < 0}"
+      puts "x=#{x} y=#{y} prec=#{prec} iprec=#{iprec} iprec_x=#{iprec_x} iprec_y=#{iprec_y} logx_y_f=#{logx_y_f}: checking x < 1 && y > 0 || x > 1 && y < 0=#{x < 1 && y > 0 || x > 1 && y < 0}"
       $stdout.flush
       if (x < 1 && y > 0 || x > 1 && y < 0) then
-        # puts "checking if zero logx_y_f=#{logx_y_f} <= #{- prec * LOG10 - LOG2}"
+        puts "checking if zero logx_y_f=#{logx_y_f} <= #{- prec * LOG10 - LOG2}"
         if (logx_y_f <= - prec * LOG10 - LOG2) then
           return LongDecimal.zero!(prec)
         end
@@ -357,11 +577,15 @@ module LongMath
     y0 = y.round_to_scale(0, LongMath.standard_imode).to_i
     x0 = x
     point_shift = 0
+    puts "x0=#{x0} y0=#{y0}"
     while x0 > LongMath::MAX_FLOATABLE
       x0 = x0.move_point_left(100)
       point_shift += 100
     end
-    z0 = LongMath.ipower(x0, y0, 2*(iprec + point_shift), mode)
+    iprec2 = 2 * (iprec + point_shift)
+    iprec3 = [ iprec2, LongMath.prec_limit() - 24 ].min
+    puts "x0=#{x0} y0=#{y0} point_shift=#{point_shift} iprec=#{iprec} iprec2=#{iprec2} iprec3=#{iprec3}"
+    z0 = LongMath.ipower(x0, y0, iprec3, mode)
     if (point_shift > 0)
       unless z0.kind_of? LongDecimal
         z0 = z0.to_ld(2*(iprec + point_shift))
@@ -393,13 +617,14 @@ module LongMath
     raise TypeError, "exponent y=#{y} must be integer" unless y.kind_of? Integer
     raise TypeError, "base x=#{x.inspect} must not be greater MAX_FLOATABLE=#{MAX_FLOATABLE}" unless x.abs <= MAX_FLOATABLE
     raise TypeError, "exponent y=#{y.inspect} must not be greater MAX_FLOATABLE=#{MAX_FLOATABLE}" unless y.abs <= MAX_FLOATABLE
-    check_is_prec(prec, "prec")
+    prec = check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
+    puts "LongMath.ipower(x=#{x} y=#{y} prec=#{prec} mode=#{mode})"
 
     if (y.zero?)
       return 1
     elsif ! (x.kind_of? LongDecimalBase) || x.scale * y.abs <= prec
-      # puts "x=#{x} y=#{y} using **"
+      puts "x=#{x} y=#{y} using **"
       return x ** y
     elsif (y < 0)
       l = Math.log10(x.abs.to_f)
@@ -408,12 +633,12 @@ module LongMath
       end
       # return (1/LongMath.ipower(x, -y, prec + 2, mode)).round_to_scale(prec, mode)
       xi = 1/x
-      # puts "x=#{x} y=#{y} prec=#{prec} using (1/x)**y xi=#{xi}"
+      puts "x=#{x} y=#{y} prec=#{prec} using (1/x)**y xi=#{xi}"
       xr = xi.round_to_scale(prec + 6, mode)
       return LongMath.ipower(xr, -y, prec, mode)
     else
       # y > 0
-      # puts "x=#{x} y=#{y} regular"
+      puts "x=#{x} y=#{y} regular"
       cnt = 0
       z  = x
       y0 = y
@@ -439,7 +664,7 @@ module LongMath
           end
 
         end
-        z = (z*x)
+        z *= x
         if (z.kind_of? LongDecimalBase)
           z = z.round_to_scale(prec+3, mode)
           if (z.zero?)
@@ -447,7 +672,9 @@ module LongMath
           end
         end
       end
+      puts "z=#{z} rounding prec=#{prec}"
       z = z.round_to_scale(prec, mode)
+      puts "rounded -> z=#{z}"
       return z
     end
   end
@@ -464,7 +691,7 @@ module LongMath
     raise TypeError, "exponent y=#{y} must be integer" unless y.kind_of? Integer
     raise TypeError, "base x=#{x.inspect} must not be greater MAX_FLOATABLE=#{MAX_FLOATABLE}" unless x.abs <= MAX_FLOATABLE
     raise TypeError, "exponent y=#{y.inspect} must not be greater MAX_FLOATABLE=#{MAX_FLOATABLE}" unless y.abs <= MAX_FLOATABLE
-    check_is_prec(prec, "prec")
+    prec = check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
 
     if (y.zero?)
@@ -534,7 +761,7 @@ module LongMath
         raise ArgumentError, "precision must be supplied either as precision of x=#{x} or explicitely"
       end
     end
-    check_is_prec(prec, "prec")
+    prec = check_is_prec(prec, "prec")
 
     if (final_mode.nil?)
       final_mode = LongMath.standard_mode
@@ -570,6 +797,330 @@ module LongMath
 
   end # power_internal
 
+  LOGARR = [ nil, \
+           0.0, \
+           1.0, \
+           1.58496250072116, \
+           2.0, \
+           2.32192809488736, \
+           2.58496250072116, \
+           2.8073549220576, \
+           3.0, \
+           3.16992500144231, \
+           3.32192809488736, \
+           3.4594316186373, \
+           3.58496250072116, \
+           3.70043971814109, \
+           3.8073549220576, \
+           3.90689059560852, \
+           4.0, \
+           4.08746284125034, \
+           4.16992500144231, \
+           4.24792751344359, \
+           4.32192809488736, \
+           4.39231742277876, \
+           4.4594316186373, \
+           4.52356195605701, \
+           4.58496250072116, \
+           4.64385618977472, \
+           4.70043971814109, \
+           4.75488750216347, \
+           4.8073549220576, \
+           4.85798099512757, \
+           4.90689059560852, \
+           4.95419631038688, \
+           5.0, \
+           5.04439411935845, \
+           5.08746284125034, \
+           5.12928301694497, \
+           5.16992500144231, \
+           5.20945336562895, \
+           5.24792751344359, \
+           5.28540221886225, \
+           5.32192809488736, \
+           5.35755200461808, \
+           5.39231742277876, \
+           5.4262647547021, \
+           5.4594316186373, \
+           5.49185309632967, \
+           5.52356195605701, \
+           5.55458885167764, \
+           5.58496250072116, \
+           5.61470984411521, \
+           5.64385618977472, \
+           5.6724253419715, \
+           5.70043971814109, \
+           5.7279204545632, \
+           5.75488750216347, \
+           5.78135971352466, \
+           5.8073549220576, \
+           5.83289001416474, \
+           5.85798099512757, \
+           5.88264304936184, \
+           5.90689059560852, \
+           5.93073733756289, \
+           5.95419631038688, \
+           5.97727992349992, \
+           6.0, \
+           6.02236781302845, \
+           6.04439411935845, \
+           6.06608919045777, \
+           6.08746284125034, \
+           6.10852445677817, \
+           6.12928301694497, \
+           6.14974711950468, \
+           6.16992500144231, \
+           6.18982455888002, \
+           6.20945336562895, \
+           6.22881869049588, \
+           6.24792751344359, \
+           6.2667865406949, \
+           6.28540221886225, \
+           6.3037807481771, \
+           6.32192809488736, \
+           6.33985000288463, \
+           6.35755200461808, \
+           6.37503943134693, \
+           6.39231742277876, \
+           6.4093909361377, \
+           6.4262647547021, \
+           6.44294349584873, \
+           6.4594316186373, \
+           6.4757334309664, \
+           6.49185309632967, \
+           6.5077946401987, \
+           6.52356195605701, \
+           6.53915881110803, \
+           6.55458885167764, \
+           6.56985560833095, \
+           6.58496250072116, \
+           6.59991284218713, \
+           6.61470984411521, \
+           6.62935662007961, \
+           6.64385618977473, \
+           6.6582114827518, \
+           6.6724253419715, \
+           6.68650052718322, \
+           6.70043971814109, \
+           6.71424551766612, \
+           6.7279204545632, \
+           6.74146698640115, \
+           6.75488750216347, \
+           6.76818432477693, \
+           6.78135971352466, \
+           6.79441586635011, \
+           6.8073549220576, \
+           6.82017896241519, \
+           6.83289001416474, \
+           6.84549005094438, \
+           6.85798099512757, \
+           6.8703647195834, \
+           6.88264304936184, \
+           6.89481776330794, \
+           6.90689059560852, \
+           6.9188632372746, \
+           6.93073733756289, \
+           6.94251450533924, \
+           6.95419631038688, \
+           6.96578428466209, \
+           6.97727992349992, \
+           6.98868468677217, \
+           7.0, \
+           7.01122725542325, \
+           7.02236781302845, \
+           7.03342300153745, \
+           7.04439411935845, \
+           7.05528243550119, \
+           7.06608919045777, \
+           7.07681559705083, \
+           7.08746284125034, \
+           7.09803208296053, \
+           7.10852445677817, \
+           7.11894107272351, \
+           7.12928301694497, \
+           7.13955135239879, \
+           7.14974711950468, \
+           7.15987133677839, \
+           7.16992500144231, \
+           7.17990909001493, \
+           7.18982455888002, \
+           7.19967234483636, \
+           7.20945336562895, \
+           7.21916852046216, \
+           7.22881869049588, \
+           7.23840473932508, \
+           7.24792751344359, \
+           7.25738784269265, \
+           7.2667865406949, \
+           7.27612440527424, \
+           7.28540221886225, \
+           7.29462074889163, \
+           7.3037807481771, \
+           7.31288295528436, \
+           7.32192809488736, \
+           7.33091687811462, \
+           7.33985000288462, \
+           7.34872815423108, \
+           7.35755200461808, \
+           7.36632221424582, \
+           7.37503943134693, \
+           7.38370429247405, \
+           7.39231742277876, \
+           7.40087943628218, \
+           7.4093909361377, \
+           7.4178525148859, \
+           7.4262647547021, \
+           7.43462822763673, \
+           7.44294349584873, \
+           7.45121111183233, \
+           7.4594316186373, \
+           7.467605550083, \
+           7.4757334309664, \
+           7.48381577726426, \
+           7.49185309632967, \
+           7.49984588708321, \
+           7.5077946401987, \
+           7.51569983828404, \
+           7.52356195605701, \
+           7.53138146051631, \
+           7.53915881110803, \
+           7.54689445988764, \
+           7.55458885167764, \
+           7.56224242422107, \
+           7.56985560833095, \
+           7.57742882803575, \
+           7.58496250072116, \
+           7.59245703726808, \
+           7.59991284218713, \
+           7.60733031374961, \
+           7.61470984411521, \
+           7.62205181945638, \
+           7.62935662007961, \
+           7.63662462054365, \
+           7.64385618977472, \
+           7.65105169117893, \
+           7.6582114827518, \
+           7.66533591718518, \
+           7.6724253419715, \
+           7.67948009950545, \
+           7.68650052718322, \
+           7.69348695749933, \
+           7.70043971814109, \
+           7.70735913208088, \
+           7.71424551766612, \
+           7.72109918870719, \
+           7.7279204545632, \
+           7.73470962022584, \
+           7.74146698640115, \
+           7.74819284958946, \
+           7.75488750216347, \
+           7.76155123244448, \
+           7.76818432477693, \
+           7.77478705960117, \
+           7.78135971352466, \
+           7.78790255939143, \
+           7.79441586635011, \
+           7.8008998999203, \
+           7.8073549220576, \
+           7.81378119121704, \
+           7.82017896241519, \
+           7.82654848729092, \
+           7.83289001416474, \
+           7.83920378809694, \
+           7.84549005094438, \
+           7.85174904141606, \
+           7.85798099512757, \
+           7.86418614465428, \
+           7.8703647195834, \
+           7.876516946565, \
+           7.88264304936184, \
+           7.88874324889826, \
+           7.89481776330794, \
+           7.90086680798075, \
+           7.90689059560852, \
+           7.91288933622996, \
+           7.9188632372746, \
+           7.92481250360578, \
+           7.93073733756289, \
+           7.93663793900257, \
+           7.94251450533924, \
+           7.94836723158468, \
+           7.95419631038688, \
+           7.96000193206808, \
+           7.96578428466209, \
+           7.97154355395077, \
+           7.97727992349992, \
+           7.98299357469431, \
+           7.98868468677217, \
+           7.99435343685886, \
+           8.0 ]
+
+  def LongMath.log2int(x)
+    unless x.kind_of? Integer
+      raise TypeError, "x=#{x.inspect} must be Integer"
+    end
+    if (x <= 0)
+      raise ArgumentError, "x=#{x} < 0"
+    end
+    
+    s = x.size
+    l = [ 8 * s - 36 , 0 ].max
+
+    xx = x >> l
+    while xx >= 256
+      l += 1
+      xx = xx >> 1
+    end
+    yy = LOGARR[xx]
+    y = l + yy
+    y
+  end
+
+  # alternative calculations of sqrt using newtons algorithm
+  def LongMath.sqrtn(x)
+    check_is_int(x, "x")
+    s = (x <=> 0)
+    if (s == 0) then
+      return 0;
+    elsif (s == -1)
+      raise ArgumentError, "x=#{x} is negative"
+    end
+
+    y = 1
+    while (true)
+      q = x/y
+      if (q == y)
+        return y
+      end
+      yn = (y + q) >> 1
+      if (yn == y || yn == q)
+        ym = x/yn
+        y = [ yn, ym ].min
+        puts "x=#{x} ym=#{ym} yn=#{yn}" if (y != yn)
+        return y
+
+      end
+      y = yn
+    end
+  end
+
 end # LongMath
+
+# to be removed again, but needed now to investigate problems with ./usr/lib/ruby/1.8/rational.rb:547: warning: in a**b, b may be too big
+class Bignum
+
+  # Returns a Rational number if the result is in fact rational (i.e. +other+ < 0).
+  def rpower(other)
+    if other >= 0
+      self.power!(other)
+    else
+      r = Rational.new!(self, 1)
+      raise TypeError, "other=#{other} must be integer" unless other.kind_of? Integer
+      raise ArgumentError, "other=#{other} must not be too big" unless other.abs < LongMath::MAX_FLOATABLE
+      r ** other
+    end
+  end
+
+end
 
 # end of file long-decimal-extra.rb

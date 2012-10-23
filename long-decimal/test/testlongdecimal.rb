@@ -4,30 +4,35 @@
 #
 # (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.68 2009/04/21 04:27:39 bk1 Exp $
-# CVS-Label: $Name: BETA_02_01 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.86 2011/01/16 22:16:59 bk1 Exp $
+# CVS-Label: $Name: RELEASE_1_00_00 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
-require "runit/testcase"
-require "runit/cui/testrunner"
-require "runit/testsuite"
+require 'test/unit'
+
+# require "runit/testcase"
+# require "runit/cui/testrunner"
+# require "runit/testsuite"
 
 load "lib/long-decimal.rb"
 load "test/testlongdeclib.rb"
 
+LongMath.prec_overflow_handling = :warn_use_max
+
 #
 # test class for LongDecimal and LongDecimalQuot
 #
-class TestLongDecimal_class < RUNIT::TestCase
+class TestLongDecimal_class < Test::Unit::TestCase # RUNIT::TestCase
   include TestLongDecHelper
 
-  @RCS_ID='-$Id: testlongdecimal.rb,v 1.68 2009/04/21 04:27:39 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdecimal.rb,v 1.86 2011/01/16 22:16:59 bk1 Exp $-'
 
   #
   # test split_to_words and merge_from_words
   #
   def test_split_merge_words
+    print "\ntest_split_merge_words [#{Time.now}]: "
     check_split_merge_words(0, 1, 1)
     check_split_merge_words(0, 10, 1)
     check_split_merge_words(0, 100, 1)
@@ -60,6 +65,8 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test the calculation of the exponential function
   #
   def test_exp
+    print "\ntest_exp [#{Time.now}] (60 sec): "
+    $stdout.flush
     xx = LongMath.log(10.to_ld, 10)*100
     check_exp_floated(700, 10)
     check_exp_floated(100, 10)
@@ -102,6 +109,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # near zero
   #
   def test_exp_near_zero
+    print "\ntest_exp_near_zero [#{Time.now}]: "
 
     x = LongDecimal(1, 100)
     y = LongMath.log(x, 100)
@@ -118,6 +126,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test the calculation of the exponential function with precision 0
   #
   def test_exp_int
+    print "\ntest_exp_int [#{Time.now}]: "
 
     xx = LongMath.log(10, 10)*100
     pi = LongMath.pi(10)
@@ -157,6 +166,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test LongMath.exp with non-LongDecimal arguments
   #
   def test_non_ld_exp
+    print "\ntest_non_ld_exp [#{Time.now}]: "
     xi = 77
     yi = LongMath.exp(xi, 30)
     zi = LongMath.log(yi, 30)
@@ -180,6 +190,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test LongMath.log with non-LongDecimal arguments
   #
   def test_non_ld_log
+    print "\ntest_non_ld_log [#{Time.now}]: "
     xi = 77
     yi = LongMath.log(xi, 35)
     zi = LongMath.exp(yi, 30)
@@ -203,6 +214,8 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test the calculation of the logarithm function
   #
   def test_log
+    print "\ntest_log [#{Time.now}] (120 sec): "
+    $stdout.flush
 
     check_log_floated(10**2000, 10)
     check_log_floated(100, 10)
@@ -253,6 +266,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test the calculation of the base-x-logarithm of sqrt(x)
   #
   def test_log_of_sqrt
+    print "\ntest_log_of_sqrt [#{Time.now}]: "
     # n = 125
     n = 30
     m = 5
@@ -273,6 +287,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test calculation of pi
   #
   def test_pi
+    print "\ntest_pi [#{Time.now}]: "
     s  = "3.14159265358979323846264338327950288419716939937510"
     s +=   "58209749445923078164062862089986280348253421170679"
     s +=   "82148086513282306647093844609550582231725359408128"
@@ -331,6 +346,8 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test method sqrtb for calculating sqrt of short integers
   #
   def test_int_sqrtb
+    print "\ntest_int_sqrtb [#{Time.now}] (120 sec): "
+    $stdout.flush
     assert_equal(Complex(0,1), LongMath.sqrtb(-1), "sqrt(-1)=i")
     1024.times do |x|
       check_sqrtb(x, " loop x=#{x}")
@@ -369,6 +386,8 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test method sqrtb for calculating sqrt of long integers
   #
   def test_int_sqrtw
+    print "\ntest_int_sqrtw [#{Time.now}] (90 sec): "
+    $stdout.flush
     assert_equal(Complex(0,1), LongMath.sqrtw(-1), "sqrt(-1)=i")
     1024.times do |x|
       check_sqrtw(x, " loop x=#{x}")
@@ -407,6 +426,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test method sqrtb_with_remainder for calculating sqrt _with_remainderof short integers
   #
   def test_int_sqrtb_with_remainder
+    print "\ntest_int_sqrtb_with_remainder [#{Time.now}]: "
     10.times do |x|
       check_sqrtb_with_remainder(x, " loop x=#{x}")
     end
@@ -449,6 +469,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test method sqrtb_with_remainder for calculating sqrt _with_remainderof long integers
   #
   def test_int_sqrtw_with_remainder
+    print "\ntest_int_sqrtw_with_remainder [#{Time.now}]: "
     10.times do |x|
       check_sqrtw_with_remainder(x, " loop x=#{x}")
     end
@@ -491,6 +512,8 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test method cbrtb for calculating cbrt of short integers
   #
   def test_int_cbrtb
+    print "\ntest_int_cbrtb [#{Time.now}] (120 sec): "
+    $stdout.flush
     assert_equal(-1, LongMath.cbrtb(-1), "cbrt(-1)=i")
     4096.times do |x|
       check_cbrtb(x, " loop x=#{x}")
@@ -529,6 +552,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test method cbrtb_with_remainder for calculating cbrt _with_remainderof short integers
   #
   def test_int_cbrtb_with_remainder
+    print "\ntest_int_cbrtb_with_remainder [#{Time.now}]: "
     10.times do |x|
       check_cbrtb_with_remainder(x, " loop x=#{x}")
     end
@@ -571,6 +595,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test gcd_with_high_power
   #
   def test_gcd_with_high_power
+    print "\ntest_gcd_with_high_power [#{Time.now}]: "
     n = 224
     assert_equal(32, LongMath.gcd_with_high_power(n, 2), "2-part of 224 is 32")
     assert_equal(7, LongMath.gcd_with_high_power(n, 7), "7-part of 224 is 7")
@@ -581,6 +606,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test multiplicity_of_factor for integers
   #
   def test_multiplicity_of_factor
+    print "\ntest_multiplicity_of_factor [#{Time.now}]: "
     n = 224
     assert_equal(5, LongMath.multiplicity_of_factor(n, 2), "ny_2(224) is 5")
     assert_equal(1, LongMath.multiplicity_of_factor(n, 7), "ny_7(224) is 1")
@@ -588,9 +614,163 @@ class TestLongDecimal_class < RUNIT::TestCase
   end
 
   #
+  # test division of Complex, which is overriden in long-decimal.rb
+  # due to bug 1454/1455 (redmine.ruby-lang.org) mixing of BigDecimal with Rational won't work.
+  #
+  def test_complex_div
+    print "\ntest_complex_div [#{Time.now}]: "
+    twenties = [ 20, 20.0, BigDecimal("20.0"), Rational(20, 1), LongDecimal("20.0"), LongDecimalQuot(20, 1) ]
+    fifteens = [ 15, 15.0, BigDecimal("15.0"), Rational(15, 1), LongDecimal("15.0"), LongDecimalQuot(15, 1) ]
+    threes   = [ 3, 3.0, BigDecimal("3.0"), Rational(3, 1), LongDecimal("3.0"), LongDecimalQuot(3, 1) ]
+    fours    = [ 4, 4.0, BigDecimal("4.0"), Rational(4, 1), LongDecimal("4.0"), LongDecimalQuot(4, 1) ]
+    zr = Complex(Rational(24, 5),-Rational(7, 5))
+    zb = Complex(BigDecimal("4.8"),-BigDecimal("1.4"))
+    zf = Complex(4.8,-1.4)
+    zl = Complex(LongDecimal("4.8"),-LongDecimal("1.4"))
+    tw_c = 0
+    twenties.each do |xr|
+      tw_c += 1
+      fi_c = 0
+      fifteens.each do |xi|
+        fi_c += 1
+        x = Complex(xr, xi)
+        th_c = 0
+        threes.each do |yr|
+          th_c += 1
+          fo_c = 0
+          fours.each do |yi|
+            fo_c += 1
+            has_rational   = (xr.kind_of? Rational) || (xi.kind_of? Rational) || (yr.kind_of? Rational) || (yi.kind_of? Rational)
+            has_bigdecimal = (xr.kind_of? BigDecimal) || (xi.kind_of? BigDecimal) || (yr.kind_of? BigDecimal) || (yi.kind_of? BigDecimal)
+            if (has_rational && has_bigdecimal)
+              # these won't go together well
+              next
+            end
+            y = Complex(yr, yi)
+            z = x/y
+            msg = "x=#{x} y=#{y} z=#{z} xr=#{xr.inspect} (#{tw_c}) xi=#{xi.inspect} (#{fi_c}) yr=#{yr.inspect} (#{th_c}) yi=#{yi.inspect} (#{fo_c})"
+            # puts msg
+            if (xr.kind_of? Integer) && (xi.kind_of? Integer) && (yr.kind_of? Integer) && (yi.kind_of? Integer) # && ! LongDecimal::RUNNING_19
+              # ruby 1.9 creates rational result even from integers, ruby 1.8 uses integers as results.
+              zc = (x.cdiv y)
+              assert_equal_complex(zc, z, "all int zc=#{zc} " + msg)
+              next
+            end
+            unless has_bigdecimal
+              assert_equal_complex(zr, z, msg)
+            end
+            unless has_rational
+              assert_equal_complex(zb, z, msg)
+            end
+            assert_equal_complex(zf, z, msg)
+            assert_equal_complex(zl, z, msg)
+            unless (xr.kind_of? LongDecimalBase) || (xi.kind_of? LongDecimalBase) || (yr.kind_of? LongDecimalBase) || (yi.kind_of? LongDecimalBase)
+              zc = x.cdiv(y)
+              assert_equal_complex(z, zc, msg, 1.0e-15)
+            end
+          end
+        end
+      end
+    end
+  end
+
+  #
+  # test division of Complex, which is overriden in long-decimal.rb
+  # due to bug 1454/1455 (redmine.ruby-lang.org) mixing of BigDecimal with Complex won't work.
+  #
+  def test_complex_by_real_div
+    print "\ntest_complex_by_real_div [#{Time.now}]: "
+    twenties = [ 20, 20.0, BigDecimal("20.0"), Rational(20, 1), LongDecimal("20.0"), LongDecimalQuot(20, 1) ]
+    fifteens = [ 15, 15.0, BigDecimal("15.0"), Rational(15, 1), LongDecimal("15.0"), LongDecimalQuot(15, 1) ]
+    fives    = [ 5, 5.0, Rational(5, 1), LongDecimal("5.0"), LongDecimalQuot(5, 1) ]
+    zr = Complex(Rational(4,1),Rational(3,1))
+    zb = Complex(BigDecimal("4.0"),BigDecimal("3.0"))
+    zf = Complex(4.0,3.0)
+    zl = Complex(LongDecimal("4.0"),LongDecimal("3.0"))
+    twenties.each do |xr|
+      fifteens.each do |xi|
+        x = Complex(xr, xi)
+        fives.each do |y|
+          has_rational   = (xr.kind_of? Rational) || (xi.kind_of? Rational) || (y.kind_of? Rational)
+          has_bigdecimal = (xr.kind_of? BigDecimal) || (xi.kind_of? BigDecimal) || (y.kind_of? BigDecimal)
+          if (has_rational && has_bigdecimal)
+            # these won't go together well
+            next
+          end
+          z = x / y
+          msg = "x=#{x} y=#{y} z=#{z} xr=#{xr.inspect} xi=#{xi.inspect} y=#{y.inspect}"
+          if (xr.kind_of? Integer) && (xi.kind_of? Integer) && (y.kind_of? Integer)
+            assert_equal_complex((x.cdiv y), z, "all int")
+            next
+          end
+          unless has_bigdecimal
+            assert_equal_complex(zr, z, msg)
+          end
+          unless has_rational
+            assert_equal_complex(zb, z, msg)
+          end
+          assert_equal_complex(zf, z, msg)
+          assert_equal_complex(zl, z, msg)
+          unless (xr.kind_of? LongDecimalBase) || (xi.kind_of? LongDecimalBase) || (y.kind_of? LongDecimalBase)
+            zc = x.cdiv(y)
+            assert_equal_complex(z, zc, msg)
+          end
+        end
+      end
+    end
+  end
+
+  #
+  # test division of Complex, which is overriden in long-decimal.rb
+  # due to bug 1454/1455 (redmine.ruby-lang.org) mixing of BigDecimal with Rational or Complex won't work.
+  #
+  def test_real_by_complex_div
+    print "\ntest_real_by_complex_div [#{Time.now}]: "
+    twenties = [ 20, 20.0, Rational(20, 1), LongDecimal("20.0"), LongDecimalQuot(20, 1) ]
+    threes   = [ 3, 3.0, BigDecimal("3.0"), Rational(3, 1), LongDecimal("3.0"), LongDecimalQuot(3, 1) ]
+    fours    = [ 4, 4.0, BigDecimal("4.0"), Rational(4, 1), LongDecimal("4.0"), LongDecimalQuot(4, 1) ]
+    zr = Complex(Rational(24,10),Rational(-32,10))
+    zb = Complex(BigDecimal("2.4"),BigDecimal("-3.2"))
+    zf = Complex(2.4,-3.2)
+    zl = Complex(LongDecimal("2.4"),LongDecimal("-3.2"))
+    zi = Complex(2, -4)
+    twenties.each do |x|
+      threes.each do |yr|
+        fours.each do |yi|
+          has_rational   = (x.kind_of? Rational) || (yr.kind_of? Rational) || (yi.kind_of? Rational)
+          has_bigdecimal = (x.kind_of? BigDecimal) || (yr.kind_of? BigDecimal) || (yi.kind_of? BigDecimal)
+          if (has_rational && has_bigdecimal)
+            # these won't go together well
+            next
+          end
+          y = Complex(yr, yi)
+          z = x/y
+          msg = "x=#{x} y=#{y} z=#{z} yr=#{yr.inspect} yi=#{yi.inspect} x=#{x.inspect}"
+          if (x.kind_of? Integer) && (yr.kind_of? Integer) && (yi.kind_of? Integer) && LongDecimal::RUNNING_19
+            has_rational # quotients of ints within Complex are Rational in 1.9
+          end
+          if (x.kind_of? Integer) && (yr.kind_of? Integer) && (yi.kind_of? Integer) && ! LongDecimal::RUNNING_19
+            assert_equal_complex(zi, z, msg)
+            next
+          end
+          # unless has_bigdecimal
+            assert_equal_complex(zr, z, msg)
+          # end
+          # unless has_rational
+            assert_equal_complex(zb, z, msg)
+          # end
+          assert_equal_complex(zf, z, msg)
+          assert_equal_complex(zl, z, msg)
+        end
+      end
+    end
+  end
+
+  #
   # test multiplicity_of_factor for rationals
   #
   def test_rat_multiplicity_of_factor
+    print "\ntest_rat_multiplicity_of_factor [#{Time.now}]: "
     n = Rational(224, 225)
     assert_equal(5, LongMath.multiplicity_of_factor(n, 2), "ny_2(n) is 5")
     assert_equal(1, LongMath.multiplicity_of_factor(n, 7), "ny_7(n) is 1")
@@ -604,6 +784,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # denominator exceeding Float
   #
   def test_rat_long_multiplicity_of_factor
+    print "\ntest_rat_long_multiplicity_of_factor [#{Time.now}]: "
     n = Rational(224*(10**600+1), 225*(5**800))
     assert_equal(5, LongMath.multiplicity_of_factor(n, 2), "ny_2(n) is 5")
     assert_equal(1, LongMath.multiplicity_of_factor(n, 7), "ny_7(n) is 1")
@@ -616,6 +797,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test multiplicity_of_factor for LongDecimal
   #
   def test_ld_multiplicity_of_factor
+    print "\ntest_ld_multiplicity_of_factor [#{Time.now}]: "
     # 0.729
     n = LongDecimal(729, 3)
     assert_equal(-3, LongMath.multiplicity_of_factor(n, 2), "ny_2(n) is -3")
@@ -629,6 +811,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test creation of 0 with given number of digits after the decimal point
   #
   def test_zero_init
+    print "\ntest_zero_init [#{Time.now}]: "
     l = LongDecimal.zero!(224)
     assert_equal(l.to_r, 0, "to_r")
     assert_equal(l.scale, 224, "scale")
@@ -638,6 +821,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test creation of 1 with given number of digits after the decimal point
   #
   def test_one_init
+    print "\ntest_one_init [#{Time.now}]: "
     l = LongDecimal.one!(224)
     assert_equal(l.to_r, 1, "to_r")
     assert_equal(l.scale, 224, "scale")
@@ -647,6 +831,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test creation of 2 with given number of digits after the decimal point
   #
   def test_two_init
+    print "\ntest_two_init [#{Time.now}]: "
     l = LongDecimal.two!(224)
     assert_equal(l.to_r, 2, "to_r")
     assert_equal(l.scale, 224, "scale")
@@ -656,6 +841,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test creation of 10 with given number of digits after the decimal point
   #
   def test_ten_init
+    print "\ntest_ten_init [#{Time.now}]: "
     l = LongDecimal.ten!(224)
     assert_equal(l.to_r, 10, "to_r")
     assert_equal(l.scale, 224, "scale")
@@ -665,6 +851,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test creation of -1 with given number of digits after the decimal point
   #
   def test_minus_one_init
+    print "\ntest_minus_one_init [#{Time.now}]: "
     l = LongDecimal.minus_one!(224)
     assert_equal(l.to_r, -1, "to_r")
     assert_equal(l.scale, 224, "scale")
@@ -674,6 +861,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test creation of 10**e with given number of digits after the decimal point
   #
   def test_power_of_ten_init
+    print "\ntest_power_of_ten_init [#{Time.now}]: "
     20.times do |e|
       l = LongDecimal.power_of_ten!(e, 224)
       assert_equal(l.to_r, 10**e, "to_r e=#{e}")
@@ -685,6 +873,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test construction of LongDecimal from Integer
   #
   def test_int_init
+    print "\ntest_int_init [#{Time.now}]: "
     i = 224
     l = LongDecimal(i)
     assert_equal(i, l.to_i, "no loss of information for integers allowed")
@@ -707,6 +896,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test construction from Rational
   #
   def test_rat_init
+    print "\ntest_rat_init [#{Time.now}]: "
     r = Rational(227, 100)
     l = LongDecimal(r)
     assert_equal(r, l.to_r, "no loss of information for rationals with denominator power of 10 allowed l=#{l.inspect}")
@@ -724,6 +914,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test construction from Float
   #
   def test_float_init
+    print "\ntest_float_init [#{Time.now}]: "
     s = "5.32"
     l = LongDecimal(s)
     assert_equal(s, l.to_s, "l=#{l.inspect}")
@@ -746,6 +937,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test construction from BigDecimal
   #
   def test_bd_init
+    print "\ntest_bd_init [#{Time.now}]: "
     b = BigDecimal("5.32")
     l = LongDecimal(b)
     assert_equal(b, l.to_bd, "l=#{l.inspect}")
@@ -768,6 +960,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test int_digits2 of LongDecimal
   #
   def test_int_digits2
+    print "\ntest_int_digits2 [#{Time.now}]: "
     assert_equal(0, LongDecimal("0.0000").int_digits2, "0.0000")
     assert_equal(0, LongDecimal("0.9999").int_digits2, "0.9999")
     assert_equal(1, LongDecimal("1.0000").int_digits2, "1.0000")
@@ -793,6 +986,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test int_digits10 of LongDecimal
   #
   def test_int_digits10
+    print "\ntest_int_digits10 [#{Time.now}]: "
     assert_equal(0, LongDecimal("0.0000").int_digits10, "0.0000")
     assert_equal(0, LongDecimal("0.0009").int_digits10, "0.0009")
     assert_equal(0, LongDecimal("0.0099").int_digits10, "0.0099")
@@ -825,6 +1019,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test sint_digits10 of LongDecimal
   #
   def test_sint_digits10
+    print "\ntest_sint_digits10 [#{Time.now}]: "
     assert_equal(-4, LongDecimal("0.0000").sint_digits10, "0.0000")
     assert_equal(-3, LongDecimal("0.0009").sint_digits10, "0.0009")
     assert_equal(-2, LongDecimal("0.0099").sint_digits10, "0.0099")
@@ -857,6 +1052,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test int_digits10 of LongMath
   #
   def test_lm_int_digits10
+    print "\ntest_lm_int_digits10 [#{Time.now}]: "
     assert_equal(0, LongMath.int_digits10(0), "0")
     assert_equal(1, LongMath.int_digits10(1), "1")
     assert_equal(1, LongMath.int_digits10(9), "9")
@@ -874,6 +1070,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test LongMath.multiplicity_of_10(n)
   #
   def test_lm_multiplicity_of_10
+    print "\ntest_lm_multiplicity_of_10 [#{Time.now}]: "
     assert_equal(0, LongMath.multiplicity_of_10(-999), "-999")
     assert_equal(0, LongMath.multiplicity_of_10(-1), "-1")
     assert_equal(0, LongMath.multiplicity_of_10(-5), "-5")
@@ -901,6 +1098,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test round_trailing_zeros of LongDecimal
   #
   def test_round_trailing_zeros
+    print "\ntest_round_trailing_zeros [#{Time.now}]: "
     x = LongDecimal.one!(100)
     y = x.round_trailing_zeros
     z = LongDecimal.one!(0)
@@ -918,6 +1116,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding of LongDecimal with ROUND_UP
   #
   def test_round_to_scale_up
+    print "\ntest_round_to_scale_up [#{Time.now}]: "
     l = LongDecimal("2.21")
     r = l.round_to_scale(1, LongDecimal::ROUND_UP)
     assert_equal("2.3", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
@@ -943,6 +1142,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding with ROUND_DOWN
   #
   def test_round_to_scale_down
+    print "\ntest_round_to_scale_down [#{Time.now}]: "
     l = LongDecimal("2.29")
     r = l.round_to_scale(1, LongDecimal::ROUND_DOWN)
     assert_equal("2.2", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
@@ -968,6 +1168,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding with ROUND_CEILING
   #
   def test_round_to_scale_ceiling
+    print "\ntest_round_to_scale_ceiling [#{Time.now}]: "
     l = LongDecimal("2.21")
     r = l.round_to_scale(1, LongDecimal::ROUND_CEILING)
     assert_equal("2.3", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
@@ -993,6 +1194,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding with ROUND_FLOOR
   #
   def test_round_to_scale_floor
+    print "\ntest_round_to_scale_floor [#{Time.now}]: "
     l = LongDecimal("2.29")
     r = l.round_to_scale(1, LongDecimal::ROUND_FLOOR)
     assert_equal("2.2", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
@@ -1018,6 +1220,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding with ROUND_HALF_UP
   #
   def test_round_to_scale_half_up
+    print "\ntest_round_to_scale_half_up [#{Time.now}]: "
     l = LongDecimal("2.20")
     r = l.round_to_scale(1, LongDecimal::ROUND_HALF_UP)
     assert_equal("2.2", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
@@ -1059,6 +1262,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding with ROUND_HALF_DOWN
   #
   def test_round_to_scale_half_down
+    print "\ntest_round_to_scale_half_down [#{Time.now}]: "
     l = LongDecimal("2.20")
     r = l.round_to_scale(1, LongDecimal::ROUND_HALF_DOWN)
     assert_equal("2.2", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
@@ -1100,6 +1304,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding with ROUND_HALF_CEILING
   #
   def test_round_to_scale_half_up
+    print "\ntest_round_to_scale_half_up [#{Time.now}]: "
     l = LongDecimal("2.20")
     r = l.round_to_scale(1, LongDecimal::ROUND_HALF_CEILING)
     assert_equal("2.2", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
@@ -1141,6 +1346,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding with ROUND_HALF_FLOOR
   #
   def test_round_to_scale_half_down
+    print "\ntest_round_to_scale_half_down [#{Time.now}]: "
     l = LongDecimal("2.20")
     r = l.round_to_scale(1, LongDecimal::ROUND_HALF_FLOOR)
     assert_equal("2.2", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
@@ -1182,6 +1388,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding with ROUND_HALF_EVEN
   #
   def test_round_to_scale_half_even
+    print "\ntest_round_to_scale_half_even [#{Time.now}]: "
     l = LongDecimal("2.20")
     r = l.round_to_scale(1, LongDecimal::ROUND_HALF_EVEN)
     assert_equal("2.2", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
@@ -1231,6 +1438,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding with ROUND_UNNECESSARY
   #
   def test_round_to_scale_unnecessary
+    print "\ntest_round_to_scale_unnecessary [#{Time.now}]: "
     l = LongDecimal("2.24")
     r = l.round_to_scale(4, LongDecimal::ROUND_UNNECESSARY)
     assert_equal("2.2400", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
@@ -1250,11 +1458,15 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding of int to remainder set
   #
   def test_int_round_to_one_allowed_remainder
+    print "\ntest_int_round_to_one_allowed_remainder [#{Time.now}] (20min): "
+    $stdout.flush
     2.upto 20 do |modulus|
       0.upto modulus-1 do |r|
         n = 3*modulus
         (-n).upto n do |i|
           text = "i=#{i} n=#{n} m=#{modulus} r=#{r}"
+          print ":"
+          $stdout.flush
 
           i_rounded = check_round_to_one_remainder(i, r, modulus, LongDecimalRoundingMode::ROUND_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
           assert(i_rounded.abs >= i.abs, "i_r=#{i_rounded} " + text)
@@ -1315,6 +1527,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding of int to remainder set
   #
   def test_zero_round_to_one_allowed_remainder
+    print "\ntest_zero_round_to_one_allowed_remainder [#{Time.now}]: "
     2.upto 20 do |modulus|
       0.upto modulus-1 do |r|
         text = "m=#{modulus} r=#{r}"
@@ -1450,12 +1663,17 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding of int to remainder set
   #
   def test_int_round_to_allowed_remainders
-    2.upto 8 do |modulus|
+    print "\ntest_int_round_to_allowed_remainders [#{Time.now}] (45 min): "
+    $stdout.flush
+    # 2.upto 8 do |modulus|
+    2.upto 7 do |modulus|
       xx = (1<< modulus) - 1
       xx.times do |x|
         remainders = make_set(x + 1, modulus)
         text0 = "m=#{modulus} x=#{x} s=#{remainders.inspect}"
-        puts text0
+        # puts text0
+        print ":"
+        $stdout.flush
         n = 3*modulus
         (-n).upto n do |i|
           text = "i=#{i} n=#{n} " + text0
@@ -1542,12 +1760,17 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding of 0 to remainder set
   #
   def test_zero_round_to_allowed_remainders
-    2.upto 8 do |modulus|
+    print "\ntest_zero_round_to_allowed_remainders [#{Time.now}] (long): "
+    $stdout.flush
+
+    2.upto 7 do |modulus|
       xx = (1<< modulus) - 1
       xx.times do |x|
         remainders = make_set(x + 1, modulus)
         text = "m=#{modulus} x=#{x} s=#{remainders.inspect}"
-        puts text
+        # puts text
+        print "."
+        $stdout.flush
 
         # ROUND_UP and ROUND_DOWN have the same effect for 0
         zero_r1, set1, above1, below1 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
@@ -1740,6 +1963,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test conversion to String
   #
   def test_to_s
+    print "\ntest_to_s [#{Time.now}]: "
     l = LongDecimal(224, 0)
     assert_equal("224", l.to_s, "l=#{l.inspect}")
     l = LongDecimal(224, 1)
@@ -1767,6 +1991,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test conversion to String with extra parameters
   #
   def test_to_s_with_params
+    print "\ntest_to_s_with_params [#{Time.now}]: "
     l = LongDecimal(224, 0)
     s = l.to_s(5)
     assert_equal("224.00000", s, "l=#{l.inspect} 5")
@@ -1824,6 +2049,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test conversion to Rational
   #
   def test_to_r
+    print "\ntest_to_r [#{Time.now}]: "
     l = LongDecimal(224, 0)
     assert_equal(l, l.to_r.to_ld, "l=#{l.inspect}")
     l = LongDecimal(224, 1)
@@ -1836,47 +2062,13 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(l, l.to_r.to_ld, "l=#{l.inspect}")
   end
 
-  #
-  # test conversion to Float
-  #
-  def test_to_f
-    l = LongDecimal(224, 0)
-    assert((l.to_f - 224).abs < 224 * 0.000001, "l=#{l.inspect}")
-    assert(((-l).to_f + 224).abs < 224 * 0.000001, "l=#{l.inspect}")
-    l = LongDecimal(224, 1)
-    assert((l.to_f - 22.4).abs < 22.4 * 0.000001, "l=#{l.inspect}")
-    assert(((-l).to_f + 22.4).abs < 22.4 * 0.000001, "l=#{l.inspect}")
-    l = LongDecimal(224, 2)
-    assert((l.to_f - 2.24).abs < 2.24 * 0.000001, "l=#{l.inspect}")
-    assert(((-l).to_f + 2.24).abs < 2.24 * 0.000001, "l=#{l.inspect}")
-    l = LongDecimal(224, 3)
-    assert((l.to_f - 0.224).abs < 0.224 * 0.000001, "l=#{l.inspect}")
-    assert(((-l).to_f + 0.224).abs < 0.224 * 0.000001, "l=#{l.inspect}")
-    l = LongDecimal(224, 4)
-    assert((l.to_f - 0.0224).abs < 0.0224 * 0.000001, "l=#{l.inspect}")
-    assert(((-l).to_f + 0.0224).abs < 0.0224 * 0.000001, "l=#{l.inspect}")
-
-    l = LongDecimal("0." + ("0" * 30) + "1" + ("0" * 500))
-    assert((l.to_f - 1e-31).abs < 1e-32, "l=#{l.inspect}=#{l.to_s}=#{l.to_f}=#{l.to_s.to_f}")
-    assert(((-l).to_f + 1e-31).abs < 1e-32, "l=#{l.inspect}=#{l.to_s}=#{l.to_f}=#{l.to_s.to_f}")
-    l = LongDecimal("0." + ("0" * 200) + "1" + ("0" * 500))
-    assert((l.to_f - 1e-201).abs < 1e-202, "l=#{l.inspect}=#{l.to_s}=#{l.to_f}=#{l.to_s.to_f}")
-    assert(((-l).to_f + 1e-201).abs < 1e-202, "l=#{l.inspect}=#{l.to_s}=#{l.to_f}=#{l.to_s.to_f}")
-    l = LongDecimal("0." + ("0" * 280) + "1" + ("0" * 500))
-    assert((l.to_f - 1e-281).abs < 1e-282, "l=#{l.inspect}=#{l.to_s}=#{l.to_f}=#{l.to_s.to_f}")
-    assert(((-l).to_f + 1e-281).abs < 1e-282, "l=#{l.inspect}=#{l.to_s}=#{l.to_f}=#{l.to_s.to_f}")
-
-    l = LongDecimal("0.00000000000000000000000000000000000000000000000000002090000000000000000000000000332000042999999999999999934478499999999999999999999979183597303900000000000002280678889571719972270000000870125632696979999999999928587104894304210318436999963636067429710015568287618182130517226303011944557351440293760289098908449297658922618709026683663019359834144789263320")
-    delta1 = (l - LongDecimal("0.0000000000000000000000000000000000000000000000000000209"))
-    delta2 = delta1.to_f.abs
-    assert(delta2 < 1e-60, "l=#{l.inspect}=#{l.to_s} delta1=#{delta1} delta2=#{delta2}")
-    assert(((-l).to_f + 0.0000000000000000000000000000000000000000000000000000209).abs < 1e-60, "l=#{l.inspect}")
-  end
+  #test_to_f
 
   #
   # test to_ld of Numeric
   #
   def test_to_ld
+    print "\ntest_to_ld [#{Time.now}]: "
     x = LongDecimal(123, 100)
     y = x.to_ld(20, LongMath::ROUND_UP)
     z = LongDecimal(1, 20)
@@ -1898,6 +2090,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test conversion to BigDecimal
   #
   def test_to_bd
+    print "\ntest_to_bd [#{Time.now}]: "
     l = LongDecimal(224, 0)
     assert((l.to_bd - 224).abs < 224 * 0.000001, "l=#{l.inspect}")
     l = LongDecimal(224, 1)
@@ -1914,6 +2107,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test conversion to Integer
   #
   def test_to_i
+    print "\ntest_to_i [#{Time.now}]: "
     l = LongDecimal(224, 0)
     assert_equal(224, l.to_i, "l=#{l.inspect}")
     l = LongDecimal(224, 1)
@@ -1937,10 +2131,12 @@ class TestLongDecimal_class < RUNIT::TestCase
   # and subtraction
   #
   def test_equalize_scale
+    print "\ntest_equalize_scale [#{Time.now}]: "
     x = LongDecimal(1, 0)
     y = LongDecimal(10, 1)
     assert_equal(0, (x - y).sgn, "difference must be 0")
-    assert(! (x == y), "x and y have the same value, but are not equal")
+    assert(! (x.eql? y), "x and y have the same value, but are not equal")
+    assert_equal(x, y)
     u, v = x.equalize_scale(y)
     assert_equal(u, v, "u and v must be equal")
     assert_equal(y, v, "y and v must be equal")
@@ -1957,6 +2153,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test adjustment of scale which is used as preparation for division
   #
   def test_anti_equalize_scale
+    print "\ntest_anti_equalize_scale [#{Time.now}]: "
     x = LongDecimal(20, 3)
     y = LongDecimal(10, 1)
     u, v = x.anti_equalize_scale(y)
@@ -1970,6 +2167,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test unary minus operation (negation)
   #
   def test_negation
+    print "\ntest_negation [#{Time.now}]: "
     x = LongDecimal(0, 5)
     assert_equal(-x, x, "x and -x are equal for negative x=#{x.inspect}")
     x = LongDecimal(224, 2)
@@ -1983,6 +2181,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test addition of LongDecimal
   #
   def test_add
+    print "\ntest_add [#{Time.now}]: "
     x = LongDecimal(224, 2)
 
     y = LongDecimal(3, 1)
@@ -2029,21 +2228,35 @@ class TestLongDecimal_class < RUNIT::TestCase
     z = y + x
     assert_kind_of(LongDecimalQuot, z, "z=#{z.inspect}")
     assert_equal(zz, z, "z=#{z.inspect}")
+  end
+
+  #
+  # test add_complexition of LongDecimal
+  #
+  def test_add_complex
+    print "\ntest_add_complex [#{Time.now}]: "
+    x = LongDecimal(224, 2)
 
     y = Complex(5, 3)
     z = x + y
-    zz = Complex(7.24, 3)
+    # if (LongDecimalBase::RUNNING_19)
+    zz = Complex(LongDecimal(724, 2), 3)
+    # else
+    # zz = Complex(7.24, 3)
+    # end
     assert_kind_of(Complex, z, "z=#{z.inspect}")
-    assert_equal(zz, z, "z=#{z.inspect}")
+    msg = "z=#{z.inspect} zz=#{zz.inspect} x=#{x.inspect} y=#{y.inspect}"
+    assert_equal(zz, z, msg)
     z = y + x
     assert_kind_of(Complex, z, "z=#{z.inspect}")
-    assert_equal(zz, z, "z=#{z.inspect}")
+    assert_equal(zz, z, msg);
   end
 
   #
   # test subtraction of LongDecimal
   #
   def test_sub
+    print "\ntest_sub [#{Time.now}]: "
     x = LongDecimal(224, 2)
 
     y = LongDecimal(3, 1)
@@ -2095,14 +2308,27 @@ class TestLongDecimal_class < RUNIT::TestCase
     zz = LongDecimalQuot(Rational(-43, 75), 3)
     assert_kind_of(LongDecimalQuot, z, "z=#{z.inspect}")
     assert_equal(zz, z, "z=#{z.inspect}")
+  end
+
+  #
+  # test sub_complextraction of LongDecimal
+  #
+  def test_sub_complex
+    print "\ntest_sub_complex [#{Time.now}]: "
+    x = LongDecimal(224, 2)
 
     y = Complex(5, 3)
     z = x - y
-    zz = Complex(-2.76, -3)
+    #if (LongDecimalBase::RUNNING_19)
+    zz = Complex(LongDecimal(-276, 2), -3)
+    #else
+    # zz = Complex(-2.76, -3)
+    #end
     assert_kind_of(Complex, z, "z=#{z.inspect}")
     assert_equal(zz, z, "z=#{z.inspect}")
     z = y - x
-    zz = Complex(2.76, 3)
+    zz = Complex(LongDecimal(276, 2), 3)
+    # zz = Complex(2.76, 3)
     assert_kind_of(Complex, z, "z=#{z.inspect}")
     assert_equal(zz, z, "z=#{z.inspect}")
   end
@@ -2111,6 +2337,8 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test multiplication of fixnum, which is buggy in JRuby and has been fixed here.
   #
   def test_int_mul
+    print "\ntest_int_mul [#{Time.now}] (90 sec): "
+    $stdout.flush
     65.times do |i|
       x0 = (1<<i)-1
       3.times do |k|
@@ -2135,14 +2363,19 @@ class TestLongDecimal_class < RUNIT::TestCase
   end
 
   #
-  # test multiplication of fixnum, which is buggy in JRuby and has been fixed here.
+  # test multiplication which uses internally multiplication of fixnum, which is buggy in JRuby and has been fixed here.
   #
   def test_mul2
+    print "\ntest_mul2 [#{Time.now}] (25 min): "
+    $stdout.flush
+
     map = {}
-    65.times do |i|
-      x0 = (1<<i)-1
+    [0, 1, 2, 3, 4, 5, 7, 9, 11, 13, 17, 21, 25, 29, 31, 33, 34, 35].each do |i|
+      next if i > 5 && (i & 0x1) == 0
+      ii = i + 32
+      x0 = (1 << ii) - 1
       3.times do |k|
-        x1 = x0+k
+        x1 = x0 + k
         4.times do |s|
           x = LongDecimal(x1, s)
           map[x] = x1
@@ -2162,10 +2395,6 @@ class TestLongDecimal_class < RUNIT::TestCase
           assert(z.zero?)
           next
         end
-        rx = z%x
-        ry = z%y
-        assert "x=#{x} y=#{y} z=#{z} rx=#{rx}", (z%x).zero?
-        assert "x=#{x} y=#{y} z=#{z} rx=#{ry}", (z%y).zero?
         assert_equal(y, (z/x).round_to_scale(y.scale))
         assert_equal(x, (z/y).round_to_scale(x.scale))
       end
@@ -2176,6 +2405,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test multiplication of LongDecimal
   #
   def test_mul
+    print "\ntest_mul [#{Time.now}]: "
     x = LongDecimal(224, 2)
 
     y = LongDecimal(3, 1)
@@ -2222,21 +2452,31 @@ class TestLongDecimal_class < RUNIT::TestCase
     z = y * x
     assert_kind_of(LongDecimalQuot, z, "z=#{z.inspect}")
     assert_equal(zz, z, "z=#{z.inspect}")
+  end
+
+  #
+  # test mul_complextiplication of LongDecimal
+  #
+  def test_mul_complex
+    print "\ntest_mul_complex [#{Time.now}]: "
+    x = LongDecimal(224, 2)
 
     y = Complex(5, 3)
     z = x * y
-    zz = Complex(11.20, 6.72)
+    # zz = Complex(11.20, 6.72)
+    zz = Complex(LongDecimal(1120, 2), LongDecimal(672, 2))
     assert_kind_of(Complex, z, "z=#{z.inspect}")
-    assert((zz-z).abs < 1e-9, "z=#{z.inspect}")
+    assert_equal_complex(zz, z, "z=#{z.inspect}", 1e-9)
     z = y * x
     assert_kind_of(Complex, z, "z=#{z.inspect}")
-    assert((zz-z).abs < 1e-9, "z=#{z.inspect}")
+    assert_equal_complex(zz, z, "z=#{z.inspect}", 1e-9)
   end
 
   #
   # test division of LongDecimal
   #
   def test_div
+    print "\ntest_div [#{Time.now}]: "
     x = LongDecimal(224, 2) # 2.24 dx=1 sx=2
 
     y = LongDecimal(3, 1)   # 0.3  dy=0 sy=1
@@ -2389,6 +2629,14 @@ class TestLongDecimal_class < RUNIT::TestCase
     zz = LongDecimalQuot(Rational(500, 224*3), 3)
     assert_kind_of(LongDecimalQuot, z, "z=#{z.inspect}")
     assert_equal(zz, z, "z=#{z.inspect}")
+  end
+
+  #
+  # test div_complexision of LongDecimal
+  #
+  def test_div_complex
+    print "\ntest_div_complex [#{Time.now}]: "
+    x = LongDecimal(224, 2) # 2.24 dx=1 sx=2
 
     y = Complex(5, 3)
     z = x / y
@@ -2405,6 +2653,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test division of LongDecimal with Rational as result
   #
   def test_rdiv
+    print "\ntest_rdiv [#{Time.now}]: "
     x = LongDecimal(224, 2)
 
     y = LongDecimal(3, 1)
@@ -2511,6 +2760,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test division of LongDecimal
   #
   def test_divide
+    print "\ntest_divide [#{Time.now}]: "
     x = LongDecimal(224, 2) # 2.24 dx=1 sx=2
 
     y = LongDecimal(3, 1)   # 0.3  dy=0 sy=1
@@ -2759,8 +3009,17 @@ class TestLongDecimal_class < RUNIT::TestCase
     zz = Rational(500, 224*3).to_ld(0, LongMath::ROUND_UP)
     assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
     assert_equal(zz, z, "z=#{z.inspect}")
+  end
+
+  #
+  # test division of LongDecimal
+  #
+  def test_divide_complex
+    print "\ntest_divide_complex [#{Time.now}]: "
+    x = LongDecimal(224, 2) # 2.24 dx=1 sx=2
 
     y = Complex(5, 3)
+    puts("x=#{x.inspect} y=#{y.inspect}")
     z = x.divide(y, LongMath::ROUND_DOWN)
     zz = 2.24 / Complex(5, 3)
     assert_kind_of(Complex, z, "z=#{z.inspect}")
@@ -2772,6 +3031,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test division of LongDecimal
   #
   def test_divide_s
+    print "\ntest_divide_s [#{Time.now}]: "
     x = LongDecimal(224, 2) # 2.24
 
     y = LongDecimal(3, 1)   # 0.3
@@ -2990,6 +3250,14 @@ class TestLongDecimal_class < RUNIT::TestCase
     zz = Rational(1667, 2240).to_ld(224, LongMath::ROUND_UP)
     assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
     assert_equal(zz, z, "z=#{z.inspect}")
+  end
+
+  #
+  # test division of LongDecimal
+  #
+  def test_divide_s_complex
+    print "\ntest_divide_s_complex [#{Time.now}]: "
+    x = LongDecimal(224, 2) # 2.24
 
     y = Complex(5, 3)
     z = x.divide_s(y, 2, LongMath::ROUND_DOWN)
@@ -3003,6 +3271,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test square of LongDecimal
   #
   def test_square
+    print "\ntest_square [#{Time.now}]: "
     10.times do |i|
       n = (i*i+i)/2
       x = LongDecimal(n, i)
@@ -3016,6 +3285,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test cube of LongDecimal
   #
   def test_cube
+    print "\ntest_cube [#{Time.now}]: "
     10.times do |i|
       n = (i*i+i)/2
       x = LongDecimal(n, i)
@@ -3029,6 +3299,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test reciprocal of LongDecimal
   #
   def test_reciprocal
+    print "\ntest_reciprocal [#{Time.now}]: "
     10.times do |i|
       k = 2*i+1
       n = (k*k+k)/2
@@ -3043,6 +3314,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test power (**) of LongDecimal
   #
   def test_pow
+    print "\ntest_pow [#{Time.now}]: "
 
     x = LongDecimal(224, 2)
 
@@ -3105,6 +3377,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test division with remainder of LongDecimal
   #
   def test_divmod
+    print "\ntest_divmod [#{Time.now}]: "
     x = LongDecimal(224, 2)
 
     y = LongDecimal(3, 1)
@@ -3218,6 +3491,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test dec, dec!, inc and inc! of LongDecimal
   #
   def test_inc_dec
+    print "\ntest_inc_dec [#{Time.now}]: "
 
     x0 = LongDecimal(224, 1)
     x  = LongDecimal(224, 1)
@@ -3242,6 +3516,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test pred and succ of LongDecimal
   #
   def test_pred_succ
+    print "\ntest_pred_succ [#{Time.now}]: "
     x0 = LongDecimal(2245, 2)
     x  = LongDecimal(2245, 2)
     ys = x.succ
@@ -3261,6 +3536,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test of &-operator of LongDecimal
   #
   def test_logand
+    print "\ntest_logand [#{Time.now}]: "
     x = LongDecimal(224, 2) # 0x0e0 / 100
 
     y = LongDecimal(3, 1)   # 0x01e / 100
@@ -3316,6 +3592,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test of |-operator of LongDecimal
   #
   def test_logior
+    print "\ntest_logior [#{Time.now}]: "
     x = LongDecimal(224, 2) # 0x0e0 / 100
 
     y = LongDecimal(3, 1)   # 0x01e / 100
@@ -3371,6 +3648,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test of ^-operator of LongDecimal
   #
   def test_logxor
+    print "\ntest_logxor [#{Time.now}]: "
     x = LongDecimal(224, 2) # 0x0e0 / 100
 
     y = LongDecimal(3, 1)   # 0x01e / 100
@@ -3426,6 +3704,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test of ^-operator of LongDecimal
   #
   def test_lognot
+    print "\ntest_lognot [#{Time.now}]: "
     x = LongDecimal(224, 2) # 0x0e0 / 100
     y = ~x
     z = LongDecimal(-225, 2)
@@ -3442,6 +3721,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test << and >> of LongDecimal
   #
   def test_shift
+    print "\ntest_shift [#{Time.now}]: "
     n = 12345678901234567890
     x = LongDecimal(n, 9)
     y = x << 5
@@ -3462,6 +3742,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test [] access to digits
   #
   def test_bin_digit
+    print "\ntest_bin_digit [#{Time.now}]: "
     n = 12345678901234567890
     x = LongDecimal(n, 9)
     100.times do |i|
@@ -3478,6 +3759,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test move_point_left and move_point_right
   #
   def test_move_point
+    print "\ntest_move_point [#{Time.now}]: "
     n = 12345678901234567890
     x = LongDecimal(n, 9)
 
@@ -3527,6 +3809,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test moving of decimal point of LongDecimal
   #
   def test_move_point2
+    print "\ntest_move_point2 [#{Time.now}]: "
     x = LongDecimal(224, 2)
 
     y = x.move_point_left(0)
@@ -3563,6 +3846,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test sqrt of LongDecimal
   #
   def test_sqrt
+    print "\ntest_sqrt [#{Time.now}]: "
     x = LongDecimal.zero!(101)
     y = check_sqrt(x, 120, LongDecimal::ROUND_UNNECESSARY, 0, 0, "zero")
     assert(y.zero?, "sqrt(0)")
@@ -3645,6 +3929,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test sqrt_with_remainder of LongDecimal
   #
   def test_sqrt_with_remainder
+    print "\ntest_sqrt_with_remainder [#{Time.now}]: "
     x = LongDecimal.zero!(101)
     r = check_sqrt_with_remainder(x, 120, "zero")
     assert(r.zero?, "rsqrt(0)")
@@ -3677,6 +3962,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test LongMath.sqrt with non-LongDecimal arguments
   #
   def test_non_ld_sqrt
+    print "\ntest_non_ld_sqrt [#{Time.now}]: "
     xi = 77
     yi = LongMath.sqrt(xi, 31, LongMath::ROUND_HALF_EVEN)
     zi = yi.square.round_to_scale(30, LongMath::ROUND_HALF_EVEN)
@@ -3700,6 +3986,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test cbrt of LongDecimal
   #
   def test_cbrt
+    print "\ntest_cbrt [#{Time.now}]: "
     x = LongDecimal.zero!(101)
     y = check_cbrt(x, 120, LongDecimal::ROUND_UNNECESSARY, 0, 0, "zero")
     assert(y.zero?, "cbrt(0)")
@@ -3782,6 +4069,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test cbrt_with_remainder of LongDecimal
   #
   def test_cbrt_with_remainder
+    print "\ntest_cbrt_with_remainder [#{Time.now}]: "
     x = LongDecimal.zero!(101)
     r = check_cbrt_with_remainder(x, 120, "zero")
     assert(r.zero?, "rcbrt(0)")
@@ -3814,6 +4102,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test LongMath.cbrt with non-LongDecimal arguments
   #
   def test_non_ld_cbrt
+    print "\ntest_non_ld_cbrt [#{Time.now}]: "
     xi = 77
     yi = LongMath.cbrt(xi, 32, LongMath::ROUND_HALF_EVEN)
     zi = yi.cube.round_to_scale(30, LongMath::ROUND_HALF_EVEN)
@@ -3837,6 +4126,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test absolute value of LongDecimal
   #
   def test_abs
+    print "\ntest_abs [#{Time.now}]: "
     x = LongDecimal(-224, 2)
     y = x.abs
     assert_equal(-x, y, "abs of negative")
@@ -3852,6 +4142,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test ufo-operator (<=>) of LongDecimal
   #
   def test_ufo
+    print "\ntest_ufo [#{Time.now}]: "
     x = LongDecimal(224, 2)
 
     z = x <=> x
@@ -3908,6 +4199,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test is_int? of LongDecimal
   #
   def test_is_int
+    print "\ntest_is_int [#{Time.now}]: "
     assert(LongDecimal(1, 0).is_int?, "1, 0")
     assert(LongDecimal(90, 1).is_int?, "90, 1")
     assert(LongDecimal(200, 2).is_int?, "200, 2")
@@ -3924,6 +4216,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test zero? of LongDecimal
   #
   def test_zero
+    print "\ntest_zero [#{Time.now}]: "
     assert(LongDecimal(0, 1000).zero?, "0, 1000")
     assert(LongDecimal(0, 0).zero?, "0, 0")
     assert(LongDecimal.zero!(100).zero?, "0, 100")
@@ -3936,6 +4229,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test one? of LongDecimal
   #
   def test_one
+    print "\ntest_one [#{Time.now}]: "
     assert(LongDecimal(10**1000, 1000).one?, "1, 1000")
     assert(LongDecimal(1, 0).one?, "1, 0")
     assert(LongDecimal.one!(100).one?, "1, 100")
@@ -3950,6 +4244,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test sign-method of LongDecimal
   #
   def test_sgn
+    print "\ntest_sgn [#{Time.now}]: "
     x = LongDecimal(0, 5)
     s = x.sgn
     assert_equal(0, s, "must be 0")
@@ -3965,11 +4260,19 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test equality-comparison (==) of LongDecimal
   #
   def test_equal
+    print "\ntest_equal [#{Time.now}]: "
     x = LongDecimal(224, 2)
     y = LongDecimal(2240, 3)
     assert((x <=> y) == 0, "diff is zero")
-    assert(x != y, "but not equal")
-    assert(! (x == y), "but not equal")
+    assert_equal(x, y, "equal")
+    assert(x == y, "equal ==")
+    assert(x === y, "equal ===")
+    assert(! (x.eql? y), "not eql?")
+    assert((y <=> x) == 0, "diff is yero")
+    assert_equal(y, x, "equal")
+    assert(y == x, "equal ==")
+    assert(y === x, "equal ===")
+    assert(! (y.eql? x), "not eql?")
     assert_equal(x, x, "x equals x")
     assert_equal(y, y, "y equals y")
   end
@@ -3978,30 +4281,44 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test value-equality-comparison (===) of LongDecimal
   #
   def test_val_equal
+    print "\ntest_val_equal [#{Time.now}]: "
     x = LongDecimal(224, 2)
     y = LongDecimal(2240, 3)
-    assert((x === y), "value equal")
-    assert(x != y, "but not equal")
+    assert(x === y, "value equal")
+    assert(y === x, "value equal")
+    assert(x == y, "but not equal")
+    assert(y == x, "but not equal")
+    assert_val_equal(x, y)
+    assert_val_equal(y, x)
+    assert_val_equal(x, x)
+    assert_val_equal(y, y)
+    assert(! (x.eql? y), "not eql?")
+    assert(! (y.eql? x), "not eql?")
     assert(x === x, "x equals x")
     assert(y === y, "y equals y")
     x = 1.to_ld(100)
     y = 1
-    assert((x === y), "value equal")
-    assert(x != y, "but not equal")
+    assert(x === y, "value equal")
+    assert(x == y, "but not equal")
     assert(x === x, "x equals x")
     assert(y === y, "y equals y")
+    assert(! (x.eql? y), "not eql?")
+    assert(! (y.eql? x), "not eql?")
     x = LongDecimal(123456, 3)
     y = Rational(123456, 1000)
-    assert((x === y), "value equal")
-    assert(x != y, "but not equal")
+    assert(x === y, "value equal")
+    assert(x == y, "but not equal")
     assert(x === x, "x equals x")
     assert(y === y, "y equals y")
+    assert(! (x.eql? y), "not eql? x=#{x.inspect} y=#{y.inspect}")
+    assert(! (y.eql? x), "not eql? x=#{x.inspect} y=#{y.inspect}")
   end
 
   #
   # test unit() of LongDecimal
   #
   def test_unit
+    print "\ntest_unit [#{Time.now}]: "
     10.times do |i|
       x = LongDecimal.zero!(i)
       u = x.unit
@@ -4024,6 +4341,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test sunit() of LongDecimal
   #
   def test_sunit
+    print "\ntest_sunit [#{Time.now}]: "
     10.times do |i|
       x = LongDecimal.zero!(i)
       u = x.sunit
@@ -4048,6 +4366,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test denominator of LongDecimal
   #
   def test_denominator
+    print "\ntest_denominator [#{Time.now}]: "
     x = LongDecimal("-2.20")
     assert_equal(100, x.denominator, "-2.20")
     x = LongDecimal("2.20")
@@ -4075,6 +4394,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test construction of LongDecimalQuot from LongDecimal
   #
   def test_ldq_ld_init
+    print "\ntest_ldq_ld_init [#{Time.now}]: "
     x = LongDecimal(224, 2) # 2.24  dx=1 sx=2
     y = LongDecimal(225, 3) # 0.225 dy=0 sy=3
     z = LongDecimalQuot(x, y)
@@ -4092,6 +4412,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test sint_digits10 of LongDecimalQuot
   #
   def test_ldq_sint_digits10
+    print "\ntest_ldq_sint_digits10 [#{Time.now}]: "
     assert_equal(nil, LongDecimalQuot(LongDecimal("0.0000"), 1.to_ld).sint_digits10, "0.0000")
     assert_equal(-3, LongDecimalQuot(LongDecimal("0.0009"), 1.to_ld).sint_digits10, "0.0009")
     assert_equal(-2, LongDecimalQuot(LongDecimal("0.0099"), 1.to_ld).sint_digits10, "0.0099")
@@ -4135,6 +4456,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding of LongDecimalQuot with ROUND_UP
   #
   def test_ldq_round_to_scale_up
+    print "\ntest_ldq_round_to_scale_up [#{Time.now}]: "
 
     # 0.99555555555555...
     l = LongDecimalQuot(Rational(224, 225), 0)
@@ -4171,6 +4493,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding of LongDecimalQuot with ROUND_DOWN
   #
   def test_ldq_round_to_scale_down
+    print "\ntest_ldq_round_to_scale_down [#{Time.now}]: "
 
     # 0.99555555555555...
     l = LongDecimalQuot(Rational(224, 225), 0)
@@ -4207,6 +4530,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding of LongDecimalQuot with ROUND_CEILING
   #
   def test_ldq_round_to_scale_ceiling
+    print "\ntest_ldq_round_to_scale_ceiling [#{Time.now}]: "
 
     # 0.99555555555555...
     l = LongDecimalQuot(Rational(224, 225), 0)
@@ -4242,6 +4566,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding of LongDecimalQuot with ROUND_FLOOR
   #
   def test_ldq_round_to_scale_floor
+    print "\ntest_ldq_round_to_scale_floor [#{Time.now}]: "
 
     # 0.99555555555555...
     l = LongDecimalQuot(Rational(224, 225), 0)
@@ -4277,6 +4602,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding of LongDecimalQuot with ROUND_HALF_UP
   #
   def test_ldq_round_to_scale_half_up
+    print "\ntest_ldq_round_to_scale_half_up [#{Time.now}]: "
 
     # 0.99555555555555...
     l = LongDecimalQuot(Rational(224, 225), 0)
@@ -4323,6 +4649,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding of LongDecimalQuot with ROUND_HALF_DOWN
   #
   def test_ldq_round_to_scale_half_down
+    print "\ntest_ldq_round_to_scale_half_down [#{Time.now}]: "
 
     # 0.99555555555555...
     l = LongDecimalQuot(Rational(224, 225), 0)
@@ -4369,6 +4696,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding of LongDecimalQuot with ROUND_HALF_CEILING
   #
   def test_ldq_round_to_scale_half_ceiling
+    print "\ntest_ldq_round_to_scale_half_ceiling [#{Time.now}]: "
 
     # 0.99555555555555...
     l = LongDecimalQuot(Rational(224, 225), 0)
@@ -4415,6 +4743,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding of LongDecimalQuot with ROUND_HALF_FLOOR
   #
   def test_ldq_round_to_scale_half_floor
+    print "\ntest_ldq_round_to_scale_half_floor [#{Time.now}]: "
 
     # 0.99555555555555...
     l = LongDecimalQuot(Rational(224, 225), 0)
@@ -4461,6 +4790,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding of LongDecimalQuot with ROUND_HALF_EVEN
   #
   def test_ldq_round_to_scale_half_even
+    print "\ntest_ldq_round_to_scale_half_even [#{Time.now}]: "
 
     # 0.99555555555555...
     l = LongDecimalQuot(Rational(224, 225), 0)
@@ -4508,6 +4838,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test rounding of LongDecimalQuot with ROUND_UNNECESSARY
   #
   def test_ldq_round_to_scale_unnecessary
+    print "\ntest_ldq_round_to_scale_unnecessary [#{Time.now}]: "
     l = LongDecimalQuot(Rational(225, 4), 5)
     r = l.round_to_scale(2, LongDecimal::ROUND_UNNECESSARY)
     assert_equal("56.25", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
@@ -4523,6 +4854,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test conversion of LongDecimalQuot to String
   #
   def test_ldq_to_s
+    print "\ntest_ldq_to_s [#{Time.now}]: "
     l = LongDecimalQuot(Rational(224, 225), 226)
     assert_equal("224/225[226]", l.to_s, "l=#{l.inspect}")
     l = LongDecimalQuot(Rational(-224, 225), 226)
@@ -4533,6 +4865,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test conversion of LongDecimalQuot to Rational
   #
   def test_ldq_to_r
+    print "\ntest_ldq_to_r [#{Time.now}]: "
     rr = Rational(224, 225)
     l = LongDecimalQuot(rr, 22)
     r = l.to_r
@@ -4554,6 +4887,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test conversion of LongDecimalQuot to Float
   #
   def test_ldq_to_f
+    print "\ntest_ldq_to_f [#{Time.now}]: "
     rr = Rational(224, 225)
     l = LongDecimalQuot(rr, 22)
     f = l.to_f
@@ -4578,6 +4912,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test conversion to BigDecimal
   #
   def test_ldq_to_bd
+    print "\ntest_ldq_to_bd [#{Time.now}]: "
     rr = Rational(224, 225)
     l = LongDecimalQuot(rr, 22)
     b = l.to_bd
@@ -4604,6 +4939,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test to_i of LongDecimalQuot
   #
   def test_ldq_to_i
+    print "\ntest_ldq_to_i [#{Time.now}]: "
     rr = Rational(224, 225)
     l = LongDecimalQuot(rr, 22)
     i = l.to_i
@@ -4628,6 +4964,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test to_ld of LongDecimalQuot
   #
   def test_ldq_to_ld
+    print "\ntest_ldq_to_ld [#{Time.now}]: "
     x = LongDecimalQuot(1, 100)
     y = x.to_ld
     assert_kind_of(LongDecimal, y, "must be ld")
@@ -4659,6 +4996,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test negation operator (unary -) of LongDecimalQuot
   #
   def test_ldq_negation
+    print "\ntest_ldq_negation [#{Time.now}]: "
     x = LongDecimalQuot(Rational(0, 2), 3)
     assert_equal(-x, x, "x and -x are equal for negative x=#{x.inspect}")
     x = LongDecimalQuot(Rational(224, 225), 226)
@@ -4673,6 +5011,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test addition operator (binary +) of LongDecimalQuot
   #
   def test_ldq_add
+    print "\ntest_ldq_add [#{Time.now}]: "
     x = LongDecimalQuot(Rational(224, 225), 226)
 
     y = LongDecimal(3, 1)
@@ -4736,6 +5075,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test subtraction operator (binary -) of LongDecimalQuot
   #
   def test_ldq_sub
+    print "\ntest_ldq_sub [#{Time.now}]: "
     x = LongDecimalQuot(Rational(224, 225), 226)
 
     y = LongDecimal(3, 1)
@@ -4803,6 +5143,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test multiplication operator (*) of LongDecimalQuot
   #
   def test_ldq_mul
+    print "\ntest_ldq_mul [#{Time.now}]: "
     x = LongDecimalQuot(Rational(224, 225), 226)
 
     y = LongDecimal(3, 1)
@@ -4864,6 +5205,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test division operator (/) of LongDecimalQuot
   #
   def test_ldq_div
+    print "\ntest_ldq_div [#{Time.now}]: "
     x = LongDecimalQuot(Rational(224, 225), 226)
 
     y = LongDecimal(3, 1)
@@ -4931,6 +5273,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test power operator (**) of LongDecimalQuot
   #
   def test_ldq_pow
+    print "\ntest_ldq_pow [#{Time.now}]: "
 
     x = LongDecimalQuot(Rational(224, 225), 226)
 
@@ -4993,6 +5336,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test divmod of LongDecimalQuot for division with remainder
   #
   def test_ldq_divmod
+    print "\ntest_ldq_divmod [#{Time.now}]: "
     x = LongDecimalQuot(Rational(224, 225), 226)
 
     y = LongDecimal(3, 1)
@@ -5049,7 +5393,7 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_kind_of(LongDecimalQuot, r, "r must be LongDecimal")
     assert(r.abs < x.abs, "remainder must be less then divisor")
     zz = LongDecimalQuot(Rational(225*5, 224*3), 226*2)
-    assert_equal(zz, q + r / x, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_equal(zz, q + r / x, "z=q=#{q.inspect} r=#{r.inspect} x=#{x.inspect} r/x=#{(r/x).inspect}")
 
     y = LongDecimalQuot(Rational(5, 3), 3)
     q, r = x.divmod y
@@ -5078,6 +5422,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test dec, dec!, inc and inc! of LongDecimalQuot
   #
   def test_ldq_inc_dec
+    print "\ntest_ldq_inc_dec [#{Time.now}]: "
 
     x0 = LongDecimalQuot(Rational(224, 225), 1)
     x  = LongDecimalQuot(Rational(224, 225), 1)
@@ -5102,6 +5447,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test absolute value of LongDecimalQuot
   #
   def test_ldq_abs
+    print "\ntest_ldq_abs [#{Time.now}]: "
     x = LongDecimalQuot(Rational(-224, 225), 226)
     y = x.abs
     assert_equal(-x, y, "abs of negative")
@@ -5117,6 +5463,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test ufo operator (<=>) of LongDecimalQuot
   #
   def test_ldq_ufo
+    print "\ntest_ldq_ufo [#{Time.now}]: "
     x = LongDecimalQuot(Rational(224, 225), 226)
 
     z = x <=> x
@@ -5173,6 +5520,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test is_int? of LongDecimalQuot
   #
   def test_ldq_is_int
+    print "\ntest_ldq_is_int [#{Time.now}]: "
     assert(! LongDecimalQuot(Rational(1, 2), 0).is_int?, "1, 2")
     assert(! LongDecimalQuot(Rational(90, 91), 1).is_int?, "90, 91")
     assert(! LongDecimalQuot(Rational(200, 3), 2).is_int?, "200, 3")
@@ -5189,6 +5537,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test zero? of LongDecimalQuot
   #
   def test_ldq_zero
+    print "\ntest_ldq_zero [#{Time.now}]: "
     assert(LongDecimalQuot(0, 1000).zero?, "0, 1000")
     assert(LongDecimalQuot(0, 0).zero?, "0, 0")
     assert(! LongDecimalQuot(1, 1000).zero?, "1, 1000")
@@ -5199,6 +5548,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test one? of LongDecimalQuot
   #
   def test_ldq_one
+    print "\ntest_ldq_one [#{Time.now}]: "
     assert(LongDecimalQuot(1, 1000).one?, "1, 1000")
     assert(LongDecimalQuot(1, 0).one?, "1, 0")
     assert(! LongDecimalQuot(0, 1000).one?, "0, 1000")
@@ -5210,6 +5560,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test sign method of LongDecimalQuot
   #
   def test_ldq_sgn
+    print "\ntest_ldq_sgn [#{Time.now}]: "
     x = LongDecimalQuot(Rational(0, 5), 1000)
     s = x.sgn
     assert_equal(0, s, "must be 0")
@@ -5225,19 +5576,23 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test equality operator (==) of LongDecimalQuot
   #
   def test_ldq_equal
+    print "\ntest_ldq_equal [#{Time.now}]: "
     x = LongDecimalQuot(Rational(224, 225), 226)
     y = LongDecimalQuot(Rational(224, 225), 227)
     assert((x <=> y) == 0, "diff is zero")
-    assert(x != y, "but not equal")
-    assert(! (x == y), "but not equal")
+    assert(x == y, "but not equal")
+    assert(x === y, "but not equal")
     assert_equal(x, x, "x equals x")
     assert_equal(y, y, "y equals y")
+    assert(! (x.eql? y), "! #{x.inspect} eql? #{y.inspect}")
+    assert(! (y.eql? x), "! #{y.inspect} eql? #{x.inspect}")
   end
 
   #
   # test mul minverse of RoundingMode
   #
   def test_rm_minverse
+    print "\ntest_rm_minverse [#{Time.now}]: "
     assert_equal(LongMath::ROUND_UP,           LongMath::ROUND_DOWN.minverse)
     assert_equal(LongMath::ROUND_DOWN,         LongMath::ROUND_UP.minverse)
     assert_equal(LongMath::ROUND_CEILING,      LongMath::ROUND_FLOOR.minverse)
@@ -5254,6 +5609,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   # test ainverse of RoundingMode
   #
   def test_rm_ainverse
+    print "\ntest_rm_ainverse [#{Time.now}]: "
     assert_equal(LongMath::ROUND_UP,           LongMath::ROUND_UP.ainverse)
     assert_equal(LongMath::ROUND_DOWN,         LongMath::ROUND_DOWN.ainverse)
     assert_equal(LongMath::ROUND_CEILING,      LongMath::ROUND_FLOOR.ainverse)
@@ -5267,7 +5623,83 @@ class TestLongDecimal_class < RUNIT::TestCase
   end
 
 
+  #
+  # helper method for test_npower10
+  #
+  def check_npower10(x, z = nil)
+    y = LongMath.npower10(x)
+    if (z.nil?) then
+      @powers_of_10 ||= []
+      z = @powers_of_10[x]
+      if (z.nil?)
+        z = 10**x
+        @powers_of_10[x] = z
+      end
+    elsif (z & 0xff == 0)
+      zz = @powers_of_10[x]
+      if (zz.nil?)
+        zz = 10**x
+        @powers_of_10[x] = zz
+      end
+      assert_equal(z, zz)
+      puts("exp=" + x.to_s)
+      $stdout.flush
+    else
+      @powers_of_10[x] ||= z
+    end
+    assert_equal(z, y, "x=#{x}")
+  end
+
+  #
+  # test LongMath.npower10
+  #
+  def test_npower10
+    print "\ntest_npower10 [#{Time.now}] (240 min): "
+    $stdout.flush
+
+    prec = LongMath.prec_limit
+    LongMath.prec_limit=LongMath::MAX_PREC
+
+    12.times do |i|
+      check_npower10(3**i)
+      puts(3**i)
+    end
+
+    12.times do |i|
+      check_npower10(3**i)
+      puts(3**i)
+    end
+
+    y = 1
+    1024.times do |i|
+      check_npower10(i, y)
+      y *= 10
+    end
+    y = 1
+    y0 = 1
+    xs = 4096
+    yf = 10**xs
+    x0 = 2046
+    y0 = 10**x0
+    60.times do |i|
+      puts "i=" + i.to_s
+      $stdout.flush
+      y = y0
+      x = x0
+      5.times do |j|
+        check_npower10(x, y)
+        x += 1
+        y *= 10
+      end
+      x0 += xs
+      y0 *= yf
+    end
+
+    LongMath.prec_limit = prec
+  end
+
   def test_scale_equal
+    print "\ntest_scale_equal [#{Time.now}]: "
     x = LongDecimal(3, 9)
     y = LongDecimal(4, 9)
     z = LongDecimal(4, 8)
@@ -5288,6 +5720,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   end
 
   def test_scale_ufo
+    print "\ntest_scale_ufo [#{Time.now}]: "
     x = LongDecimal(3, 9)
     y = LongDecimal(4, 9)
     z = LongDecimal(4, 7)
@@ -5311,6 +5744,6 @@ class TestLongDecimal_class < RUNIT::TestCase
 
 end
 
-RUNIT::CUI::TestRunner.run(TestLongDecimal_class.suite)
+# RUNIT::CUI::TestRunner.run(TestLongDecimal_class.suite)
 
 # end of file testlongdecimal.rb

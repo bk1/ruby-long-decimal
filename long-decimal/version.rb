@@ -5,8 +5,8 @@
 #
 # (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/version.rb,v 1.8 2009/04/18 05:51:14 bk1 Exp $
-# CVS-Label: $Name: BETA_02_01 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/version.rb,v 1.9 2011/01/22 12:34:39 bk1 Exp $
+# CVS-Label: $Name: RELEASE_1_00_00 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -27,6 +27,8 @@ ARGV.each do |file|
   str = ""
   if name =~ /(PRE_ALPHA|ALPHA|BETA)_(\d+)_(\d+)/ then
     str = sprintf("0.%02d.%02d", $2.to_i, $3.to_i)
+  elsif name =~ /RELEASE_(\d+)_(\d+)_(\d+)/
+    str = sprintf("%d.%02d.%02d", $1.to_i, $2.to_i, $3.to_i)
   else
     str = version
   end
