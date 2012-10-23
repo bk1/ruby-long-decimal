@@ -2,8 +2,8 @@
 #
 # testlongdecimal.rb -- runit test for longdecimal.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.5 2006/03/04 21:49:00 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_09 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.6 2006/03/10 20:10:45 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_10 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -18,7 +18,7 @@ load "lib/longdecimal.rb"
 #
 class TestLongDecimal_class < RUNIT::TestCase
 
-  @RCS_ID='-$Id: testlongdecimal.rb,v 1.5 2006/03/04 21:49:00 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdecimal.rb,v 1.6 2006/03/10 20:10:45 bk1 Exp $-'
 
   def check_split_merge_words(x, l, wl)
     w = LongMath.split_to_words(x, l)
@@ -62,23 +62,39 @@ class TestLongDecimal_class < RUNIT::TestCase
 
   #
   # helper method for test_exp
+  # tests if exp(x) with precision prec is calculated correctly
   #
   def check_exp_floated(x, prec)
+
+    # make sure x is LongDecimal
     x0 = x
     x = x.to_ld
+    # calculate y = exp(x)
     y = LongMath.exp(x, prec)
+
+    # compare y against z = exp(x) calculated using regular floating point arithmetic
     z = Math.exp(x.to_f)
     yf = y.to_f
     assert((yf - z) / [yf.abs, z.abs, Float::MIN].max < 1e-9, "y=#{yf.to_s} and z=#{z.to_s} should be almost equal x=#{x}")
+
+    # check by taking log(exp(x))
+    # we have to take into account that we might not have enough
+    # significant digits, so we have to go down with the precision
+    if (y > 0) then
+      lprec = prec
+      if (y < 1) then
+        l10 = (Math.log(y.to_f) / Math.log(10)).round
+        lprec += l10
+      end
+      z = LongMath.log(y, lprec)
+      assert((x - z).abs <= z.unit, "x=#{x.to_s} and z=#{z.to_s} should be almost equal (y=#{y.to_s} lprec=#{lprec} prec=#{prec})")
+    end
+
+    # check by doing calculation with different internal rounding modes.  They should not differ.
     yd = LongMath.exp_internal(x, prec, nil, nil, nil, nil, LongDecimal::ROUND_DOWN)
     yu = LongMath.exp_internal(x, prec, nil, nil, nil, nil, LongDecimal::ROUND_UP)
-    #    if (x >= 0)
     assert_equal(yd, yu, "the result yd/yu should not depend on the internal rounding mode x0=#{x0} x=#{x} p=#{prec} d=#{(yd-yu).to_f.to_s}")
     assert_equal(y,  yu, "the result y/yu  should not depend on the internal rounding mode x0=#{x0} x=#{x} p=#{prec} d=#{(y -yu).to_f.to_s}")
-    #   else
-    #      assert((yu - yd).abs <= y.unit, "the difference should not be too much x=#{x} d=#{(yd-yu).to_f.to_s}")
-    #      assert((yu - y ).abs <= y.unit, "the difference should not be too much x=#{x} d=#{(y -yu).to_f.to_s}")
-    #    end
   end
 
   #
@@ -106,6 +122,80 @@ class TestLongDecimal_class < RUNIT::TestCase
     check_exp_floated(-1, 100)
     check_exp_floated(-100, 100)
     check_exp_floated(-700, 100)
+  end
+
+  #
+  # helper method for test_log
+  # tests if exp(x) with precision prec is calculated correctly
+  #
+  def check_log_floated(x, prec)
+
+    # make sure x is LongDecimal
+    x0 = x
+    x = x.to_ld
+    # calculate y = log(x)
+    y = LongMath.log(x, prec)
+
+    # compare y against z = exp(x) calculated using regular floating
+    # point arithmetic
+    if (x <= LongMath::MAX_FLOATABLE) then
+      xf = x.to_f
+      if (xf > 0) then
+        z = Math.log(x.to_f)
+        yf = y.to_f
+        assert((yf - z) / [yf.abs, z.abs, Float::MIN].max < 1e-9, "y=#{yf.to_s} and z=#{z.to_s} should be almost equal x=#{x}")
+      end
+    end
+
+    # check by taking exp(log(x))
+    # we have to take into account that we might not have enough
+    # significant digits, so we have to go down with the precision
+    if (y <= LongMath::MAX_EXP_ABLE) then
+      eprec = prec
+      if (y > 1) then
+	lx = 0
+	if (x > LongMath::MAX_FLOATABLE) then
+	  puts("unusual x=#{x} y=#{y}\n")
+	  lx = LongMath::MAX_EXP_ABLE
+	else
+	  lx = Math.log(x.to_f)
+	end
+        l10 = (lx / Math.log(10)).ceil
+        eprec -= l10
+      end
+
+      z = LongMath.exp(y, eprec)
+      assert((x - z).abs <= z.unit, "x=#{x.to_s} and z=#{z.to_s} should be almost equal (y=#{y.to_s} eprec=#{eprec} prec=#{prec})")
+    end
+
+    # check by doing calculation with different internal rounding modes.  They should not differ.
+    yd = LongMath.log_internal(x, prec, nil, nil, LongDecimal::ROUND_DOWN)
+    yu = LongMath.log_internal(x, prec, nil, nil, LongDecimal::ROUND_UP)
+    assert_equal(yd, yu, "the result yd/yu should not depend on the internal rounding mode x0=#{x0} x=#{x} p=#{prec} d=#{(yd-yu).to_f.to_s}")
+    assert_equal(y,  yu, "the result y/yu  should not depend on the internal rounding mode x0=#{x0} x=#{x} p=#{prec} d=#{(y -yu).to_f.to_s}")
+  end
+
+  #
+  # test the calculation of the exponential function
+  #
+  def test_log
+    check_log_floated(10**2000, 10)
+    check_log_floated(100, 10)
+    check_log_floated(1, 10)
+    check_log_floated(0.01, 10)
+    check_log_floated(1e-10, 10)
+    check_log_floated(1e-90, 10)
+    check_log_floated(1e-300, 10)
+    check_log_floated(LongDecimal(1, 2000), 10)
+
+    check_log_floated(10**2000, 100)
+    check_log_floated(100, 100)
+    check_log_floated(1, 100)
+    check_log_floated(0.01, 100)
+    check_log_floated(1e-10, 100)
+    check_log_floated(1e-90, 100)
+    check_log_floated(1e-300, 100)
+    check_log_floated(LongDecimal(1, 2000), 100)
   end
 
   #
