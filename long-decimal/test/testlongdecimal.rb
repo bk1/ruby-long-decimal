@@ -1,9 +1,9 @@
 #!/usr/bin/env ruby
 #
-# testlongdecimal.rb -- runit test for longdecimal.rb
+# testlong-decimal.rb -- runit test for long-decimal.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.7 2006/03/18 06:03:58 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_12 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.8 2006/03/18 08:32:02 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_13 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -11,14 +11,14 @@ require "runit/testcase"
 require "runit/cui/testrunner"
 require "runit/testsuite"
 
-load "lib/longdecimal.rb"
+load "lib/long-decimal.rb"
 
 #
 # test class for LongDecimal and LongDecimalQuot
 #
 class TestLongDecimal_class < RUNIT::TestCase
 
-  @RCS_ID='-$Id: testlongdecimal.rb,v 1.7 2006/03/18 06:03:58 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdecimal.rb,v 1.8 2006/03/18 08:32:02 bk1 Exp $-'
 
   def check_split_merge_words(x, l, wl)
     w = LongMath.split_to_words(x, l)
@@ -2366,5 +2366,5 @@ end
 
 RUNIT::CUI::TestRunner.run(TestLongDecimal_class.suite)
 
-# end of file testlongdecimal.rb
+# end of file testlong-decimal.rb
 

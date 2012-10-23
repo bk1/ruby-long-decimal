@@ -2,5 +2,5 @@
 
 $outdir = 'doc/'
 puts "Creating documentation in '#$outdir'."
-system "rdoc -d -o #$outdir lib/longdecimal.rb"
+system "rdoc -d -o #$outdir lib/long-decimal.rb"
     # vim: set et sw=4 ts=4:

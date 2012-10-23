@@ -6,7 +6,7 @@ include FileUtils::Verbose
 
 include Config
 
-file = 'lib/longdecimal.rb'
+file = 'lib/long-decimal.rb'
 dest = CONFIG["sitelibdir"]
 install(file, dest)
     # vim: set et sw=4 ts=4:

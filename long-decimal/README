@@ -1,27 +1,78 @@
-Usage
------
+Version
+-------
 
-Just put longdecimal.rb in your site-ruby-directory and add
-require "longdecimal"
-to your ruby-file
-or put it into the directory where you are running your ruby-programm and add
-load "longdecimal.rb"
-to your ruby-file.
+This version ($Name: PRE_ALPHA_0_13 $) is functionally identically with the previous
+pre-alpha-0.12, but the ruby-file longdecimal.rb has been renamed to
+long-decimal.rb, in order to make usage as ruby-gem easier.
 
-To test on Linux/Unix:
-go into a directory long-decimal, put longdecimal.rb into a
-sub-directory lib and testlongdecimal.rb into a sub-directory test.
-This is the directory structure you get when unpacking the tar.gz
-archive.  Then:
+There are no known bugs and this version can be considered complete in
+terms of functionality.  This version is still a pre-alpha-version,
+but it is expected to move it to alpha within the next weeks, after
+having added some more tests and having fixed potential bugs that
+these tests might reveal.
 
-chmod +x test/testlongdecimal.rb
+Please observe that this is still a pre-alpha-version which is
+intended for experimental use.
 
-and run it:
+Install
+-------
 
-./test/testlongdecimal.rb
+1. Using ruby-gems (preferred)
+- download the newest gem-file from long-decimal project at rubyforge
+  which can be found by 
+  http://rubyforge.org/projects/long-decimal/ -> Files
+  ( http://rubyforge.org/frs/?group_id=1334 )
+- open a shell window
+  cd to the directory where you have downloaded the gem-file
+  (on some systems you need to become root before installing:)
+  su
+  gem install long-decimal
+  [remark: currently rubyforge does not publish long-decimal directly
+           as gem, so you can't use gem to download, but you have to
+           download the gem-file manually first and then use gem only
+           to install it] 
 
-You should not get any error nor any failure.  The tests will take a
-few minutes or so, depending on the power of your machine.
+- Usage from your ruby-programs:
+  require "rubygems"
+  require_gem "long-decimal"
+
+- documentation will be found in HTML-format in the directory
+  $RUBY_DIR/gems/$RUBY_VERSION/doc/long-decimal-$LONG_DECIMAL_VERSION/rdoc/index.html
+  where $RUBY_DIR is the directory containing your ruby-installation,
+                  usually /usr/lib/ruby or /usr/local/lib/ruby on
+                  Linux/Unix-systems. 
+        $RUBY_VERSION is the major version of your Ruby, like 1.8
+        $LONG_DECIMAL_VERSION is the version of long-decimal that you
+                              have installed, like 0.00.13
+  on my machine that would be
+  /usr/local/lib/ruby/gems/1.8/doc/long-decimal-0.00.12/rdoc/index.html
+
+2. Installing from the sources (it is preferred to use the gem-installation)
+- download the newest source-tar.gz-file from long-decimal project at rubyforge
+  which can be found by 
+  http://rubyforge.org/projects/long-decimal/ -> Files
+  ( http://rubyforge.org/frs/?group_id=1334 )
+- open a shell window
+  cd to the directory where you have downloaded the gem-file
+  unpack the file using tar
+  tar xfzvv long-decimal-pre-alpha-0_13.tar.gz
+  cd long-decimal
+- now you can use rake for several operations
+  - rake test
+      runs runit tests.  All tests should succeed.
+  - rake doc
+      creates the documentation
+  - rake gem creates the gem-file in a sub-directory pkg
+      recommended for installation, proceed as in 1
+  - rake install installs directly into the site-ruby-directory.
+      it is preferred to use
+      rake gem
+      cd pkg
+      gem install long-decimal
+
+3. The documentation can be created from the sources.  It is contained
+in the gem-file.  But it can also be downloaded separately as
+tar.gz-file.
 
 License
 -------
