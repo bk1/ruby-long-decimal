@@ -1,8 +1,8 @@
 #
 # long-decimal.rb -- Arbitrary precision decimals with fixed decimal point
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal.rb,v 1.9 2006/03/24 17:42:07 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_16 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal.rb,v 1.14 2006/03/27 22:19:18 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_17 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 require "complex"
@@ -56,13 +56,13 @@ end # LongDecimalRoundingMode
 # common base class for LongDecimal and LongDecimalQuot
 #
 class LongDecimalBase < Numeric
-  @RCS_ID='-$Id: long-decimal.rb,v 1.9 2006/03/24 17:42:07 bk1 Exp $-'
+  @RCS_ID='-$Id: long-decimal.rb,v 1.14 2006/03/27 22:19:18 bk1 Exp $-'
 
   include LongDecimalRoundingMode
 
   #
   # convert self into Rational
-  # this works quite straitforward.  
+  # this works quite straitforward.
   # in case of LongDecimal use int_val as numerator and a power of 10
   # as denominator, which happens to be the way numerator and
   # denominator are defined
@@ -151,7 +151,7 @@ class LongDecimalBase < Numeric
     scale_ufo(other).zero?
   end
 
-end
+end # class LongDecimalBase
 
 #
 # class for holding fixed point long decimal numbers
@@ -159,7 +159,7 @@ end
 # digits and the other one the position of the decimal point.
 #
 class LongDecimal < LongDecimalBase
-  @RCS_ID='-$Id: long-decimal.rb,v 1.9 2006/03/24 17:42:07 bk1 Exp $-'
+  @RCS_ID='-$Id: long-decimal.rb,v 1.14 2006/03/27 22:19:18 bk1 Exp $-'
 
   #  MINUS_ONE = LongDecimal(-1)
   #  ZERO      = LongDecimal(0)
@@ -276,7 +276,6 @@ class LongDecimal < LongDecimalBase
       denom /= 5 ** mul_5
       iscale2 = Math.log10(denom).ceil
       scale += iscale2
-      # int_val = (x * 10 ** scale).to_i
       int_val = (x * 10 ** (iscale2+iscale)).to_i
 
     else
@@ -321,6 +320,8 @@ class LongDecimal < LongDecimalBase
         num_frac = ""
       end
 
+      # handle optional e-part of floating point number represented as
+      # string
       if num_exp.nil? || num_exp.empty? then
         num_exp = "0"
       end
@@ -332,7 +333,7 @@ class LongDecimal < LongDecimalBase
         int_val = -int_val
       end
     end
-    @scale  = scale
+    @scale   = scale
     @int_val = int_val
 
   end # initialize
@@ -405,7 +406,7 @@ class LongDecimal < LongDecimalBase
   #
   # convert self into String, which is the decimal representation.
   # Use trailing zeros, if int_val has them.
-
+  #
   # optional parameter shown_scale is the number of digits after the
   # decimal point.  Defaults to the scale of self.
   # optional parameter mode ist the rounding mode to be applied.
@@ -428,9 +429,7 @@ class LongDecimal < LongDecimalBase
         raise TypeError, "base must be integer between 2 and 36"
       end
       quot    = (self.move_point_right(scale) * base ** shown_scale) / 10 ** scale
-      # p(quot)
       rounded = quot.round_to_scale(0, mode)
-      # p(rounded)
       rounded.to_s_internal(base, shown_scale)
     end
   end
@@ -507,9 +506,15 @@ class LongDecimal < LongDecimalBase
 
   #
   # convert self into LongDecimal (returns self)
+  # optional first argument gives the precision for the desired result
+  # optional second argument gives the rouding mode
   #
-  def to_ld
-    self
+  def to_ld(prec = nil, mode = LongDecimal::ROUND_HALF_UP)
+    if (prec.nil?)
+      return self
+    else
+      return round_to_scale(prec, mode)
+    end
   end
 
   #
@@ -1054,34 +1059,60 @@ class LongDecimal < LongDecimalBase
   # arithmetic operations.
   #
   def coerce(other)
+
     if other.kind_of? LongDecimal then
+      # if other is LongDecimal as well, nothing to do
       return other, self
+
     elsif other.kind_of? LongDecimalQuot then
+      # if other is LongDecimalQuot, convert self to LongDecimalQuot
+      # as well
       return other, LongDecimalQuot(self.to_r, scale)
+
     elsif other.kind_of? Rational then
+      # if other is Rational, convert self and other to
+      # LongDecimalQuot.  This is well adapted to cover both.
       sc = scale
       o  = LongDecimalQuot(other, sc)
       s  = LongDecimalQuot(self.to_r, sc)
       return o, s
+
+      # we could use BigDecimal as common type for combining Float and
+      # LongDecimal, but this needs a lot of consideration.  For the
+      # time being we assume that we live well enough with converting
+      # Float into LongDecimal
+      # elsif (other.kind_of? Float) && size > 8 then
+      #  return coerce(BigDecimal(other.to_s))
+
     elsif (other.kind_of? Integer) || (other.kind_of? Float) then
+      # if other is Integer or Float, convert it to LongDecimal
       other = LongDecimal(other)
       if (other.scale > scale) then
         other = other.round_to_scale(scale, ROUND_HALF_UP)
       end
       return other, self
+
     elsif other.kind_of? BigDecimal then
+      # if other is BigDecimal convert self to BigDecimal
       s, o = other.coerce(self.to_bd)
       return o, s
+
     elsif other.kind_of? Complex then
-      # s, o = other.coerce(Complex(self.to_bd, 0))
+      # if other is Complex, convert self to Float and then to
+      # Complex.  It need to be observed that this will fail if self
+      # has too many digits before the decimal point to be expressed
+      # as Float.
       s, o = other.coerce(Complex(self.to_f, 0))
       return o, s
-    elsif (other.kind_of? Float) && size > 8 then
-      return coerce(BigDecimal(other.to_s))
+
     elsif other.kind_of? Numeric then
+      # all other go by expressing self as Float and seeing how it
+      # combines with other.
       s, o = other.coerce(self.to_f)
       return o, s
+
     else
+      # non-numeric types do not work here
       raise TypeError, "unsupported type #{other.inspect} for coerce of LongDecimal"
     end
   end
@@ -1164,7 +1195,7 @@ end # LongDecimal
 #
 class LongDecimalQuot < LongDecimalBase
 
-  @RCS_ID='-$Id: long-decimal.rb,v 1.9 2006/03/24 17:42:07 bk1 Exp $-'
+  @RCS_ID='-$Id: long-decimal.rb,v 1.14 2006/03/27 22:19:18 bk1 Exp $-'
 
   #
   # constructor
@@ -1241,7 +1272,7 @@ class LongDecimalQuot < LongDecimalBase
     to_r.to_f
   end
 
-  # 
+  #
   # conversion to BigDecimal
   #
   def to_bd
@@ -1257,9 +1288,11 @@ class LongDecimalQuot < LongDecimalBase
 
   #
   # conversion to LongDecimal using the internal scale
+  # optional first argument gives the precision for the desired result
+  # optional second argument gives the rouding mode
   #
-  def to_ld
-    round_to_scale(scale, ROUND_HALF_UP)
+  def to_ld(prec = scale, mode = LongDecimal::ROUND_HALF_UP)
+    round_to_scale(prec, mode)
   end
 
   #
@@ -1421,20 +1454,31 @@ class LongDecimalQuot < LongDecimalBase
     raise TypeError, "new_scale #{new_scale.inspect} must be >= 0" unless new_scale >= 0
     raise TypeError, "mode #{mode.inspect} must be legal rounding mode" unless mode.kind_of? RoundingModeClass
 
-    factor    = 10**new_scale
     sign_quot = numerator <=> 0
     if sign_quot == 0 then
+      # finish zero without long calculations at once
       return LongDecimal(0, new_scale)
     end
+
+    factor    = 10**new_scale
     prod      = numerator * factor
     divisor   = denominator
     quot, rem = prod.divmod(divisor)
     sign_rem  = rem  <=> 0
     if (sign_rem == 0)
+      # if self can be expressed without loss as LongDecimal with
+      # new_scale digits after the decimal point, just do it.
       return LongDecimal(quot, new_scale)
     end
+
+    # we do not expect negative signs of remainder.  To make sure that
+    # this does not cause problems in further code, we just throw an
+    # exception.  This should never happen (and did not happen during
+    # testing).
     raise Error, "signs do not match self=#{self.to_s} f=#{factor} prod=#{prod} divisor=#{divisor} quot=#{quot} rem=#{rem}" if sign_rem <= 0
+
     if (sign_quot < 0) then
+      # handle negative sign of self
       rem -= divisor
       quot += 1
       sign_rem = rem <=> 0
@@ -1442,14 +1486,30 @@ class LongDecimalQuot < LongDecimalBase
     end
 
     if mode == ROUND_UNNECESSARY then
+      # this mode means that rounding should not be necessary.  But
+      # the case that no rounding is needed, has already been covered
+      # above, so it is an error, if this mode is required and the
+      # result could not be returned above.
       raise ArgumentError, "mode ROUND_UNNECESSARY not applicable, remainder #{rem.to_s} is not zero"
     end
 
     if (mode == ROUND_CEILING)
+      # ROUND_CEILING goes to the closest allowed number >= self, even
+      # for negative numbers.  Since sign is handled separately, it is
+      # more conveniant to use ROUND_UP or ROUND_DOWN depending on the
+      # sign.
       mode = (sign_quot > 0) ? ROUND_UP : ROUND_DOWN
+
     elsif (mode == ROUND_FLOOR)
+      # ROUND_FLOOR goes to the closest allowed number <= self, even
+      # for negative numbers.  Since sign is handled separately, it is
+      # more conveniant to use ROUND_UP or ROUND_DOWN depending on the
+      # sign.
       mode = (sign_quot < 0) ? ROUND_UP : ROUND_DOWN
+
     else
+      # handle the ROUND_HALF_... stuff and find the adequate ROUND_UP
+      # or ROUND_DOWN to use
       abs_rem = rem.abs
       half    = (abs_rem << 1) <=> denominator
       if (mode == ROUND_HALF_UP || mode == ROUND_HALF_DOWN || mode == ROUND_HALF_EVEN) then
@@ -1472,11 +1532,17 @@ class LongDecimalQuot < LongDecimalBase
     end
 
     if mode == ROUND_UP
+      # since the case where we can express the result exactly without
+      # loss has already been handled above, ROUND_UP can be handled
+      # correctly by adding one unit.
       quot += sign_quot
     end
+
+    # put together result
     new_int_val = quot
     LongDecimal(new_int_val, new_scale)
-  end
+
+  end # round_to_scale
 
   #
   # prepare binary operation of other with LongDecimalQuot
@@ -1488,26 +1554,42 @@ class LongDecimalQuot < LongDecimalBase
   # to BigDecimal or Float.
   #
   def coerce(other)
+
     if other.kind_of? LongDecimal then
+      # convert LongDecimal to LongDecimalQuot
       return LongDecimalQuot(other.to_r, other.scale), self
+
     elsif other.kind_of? LongDecimalQuot then
+      # nothing to convert, if both are already LongDecimalQuot
       return other, self
-    elsif other.kind_of? Rational then
+
+    elsif (other.kind_of? Rational) || (other.kind_of? Integer) then
+      # convert Rational or Integer to LongDecimalQuot.  The only
+      # missing part, scale, is just taken from self
       s = scale
       return LongDecimalQuot(other, s), self
-    elsif (other.kind_of? Integer) then
-      return LongDecimalQuot(other.to_r, scale), self
+
     elsif other.kind_of? Float then
+      # convert Float to LongDecimalQuot via LongDecimal
       return LongDecimalQuot(other.to_ld.to_r, scale), self
+
     elsif other.kind_of? BigDecimal then
+      # for BigDecimal, convert self to BigDecimal as well
       s, o = other.coerce(self.to_bd)
+
     elsif other.kind_of? Numeric then
+      # for all other numeric types convert self to Float.  This may
+      # not work, if numerator and denominator have too many digits to
+      # be expressed as Float and it may cause loss of information.
       s, o = other.coerce(self.to_f)
       return o, s
+
     else
+      # non-numeric types do not work at all
       raise TypeError, "unsupported type #{other.inspect} for coerce of LongDecimalQuot"
     end
-  end
+
+  end # coerce
 
   #
   # compare two numbers for equality.
@@ -1597,12 +1679,39 @@ class Numeric
 
   #
   # convert self to LongDecimal
+  # optional first argument gives the precision for the desired result
+  # optional second argument gives the rouding mode
   #
-  def to_ld
-    LongDecimal(self)
+  def to_ld(prec = nil, mode = LongDecimal::ROUND_HALF_UP)
+    l = LongDecimal(self)
+    if (prec.nil?)
+      return l
+    else
+      return l.round_to_scale(prec, mode)
+    end
   end
 
 end # Numeric
+
+class Rational
+
+  #
+  # convert self to LongDecimal.
+  # Special handling of Rational to avoid loosing information in the
+  # first step that would be needed for the second step
+  # optional first argument gives the precision for the desired result
+  # optional second argument gives the rouding mode
+  #
+  def to_ld(prec = nil, mode = LongDecimal::ROUND_HALF_UP)
+    if (prec.nil?) 
+      return LongDecimal(self)
+    else
+      l = LongDecimalQuot(self, prec)
+      return l.round_to_scale(prec, mode)
+    end
+  end
+
+end # Rational
 
 #
 # LongMath provides some helper functions to support LongDecimal and
@@ -1706,7 +1815,6 @@ module LongMath
   end
 
   #
-
   # calculate the square root of an integer x using bitwise algorithm
   # the result is rounded to an integer y such that
   # y**2 <= x < (y+1)**2
@@ -2065,6 +2173,16 @@ module LongMath
     end
     y = y_k.round_to_scale(prec, final_mode)
     y
+  end
+
+  #
+  # calculate approximation of sqrt of a LongDecimal.
+  #
+  def LongMath.sqrt(x, prec, rounding_mode)
+    check_is_ld(x, "x")
+    check_is_prec(prec, "prec")
+    check_is_mode(mode, "mode")
+    x.sqrt(prec, mode)
   end
 
   #

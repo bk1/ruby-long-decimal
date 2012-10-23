@@ -2,8 +2,8 @@
 #
 # testlongdecimal.rb -- runit test for long-decimal.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.15 2006/03/24 17:42:07 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_16 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.19 2006/03/27 21:54:46 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_17 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -18,7 +18,7 @@ load "lib/long-decimal.rb"
 #
 class TestLongDecimal_class < RUNIT::TestCase
 
-  @RCS_ID='-$Id: testlongdecimal.rb,v 1.15 2006/03/24 17:42:07 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdecimal.rb,v 1.19 2006/03/27 21:54:46 bk1 Exp $-'
 
   #
   # helper method for test_split_merge_words
@@ -425,6 +425,7 @@ class TestLongDecimal_class < RUNIT::TestCase
     check_log2_exact(2**1, 1, 30)
     check_log2_exact(2**10, 10, 30)
   end
+
 
   #
   # helper method for test_int_sqrtb
@@ -2592,10 +2593,62 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(ff, f, "must be equal")
   end
 
+  #
+  # test to_i of LongDecimalQuot
+  #
+  def test_ldq_to_i
+    rr = Rational(224, 225)
+    l = LongDecimalQuot(rr, 22)
+    i = l.to_i
+    ii = rr.to_i
+    assert_kind_of(Integer, i, "must be integer")
+    assert_equal(ii, i, "must be equal")
+    rr = Rational(-224, 225)
+    l = LongDecimalQuot(rr, 22)
+    i = l.to_i
+    ii = rr.to_i
+    assert_kind_of(Integer, i, "must be integer")
+    assert_equal(ii, i, "must be equal")
+    rr = Rational(0, 225)
+    l = LongDecimalQuot(rr, 22)
+    i = l.to_i
+    ii = rr.to_i
+    assert_kind_of(Integer, i, "must be integer")
+    assert_equal(ii, i, "must be equal")
+  end
+
+  #
+  # test to_ld of LongDecimalQuot
+  #
+  def test_ldq_to_ld
+    x = LongDecimalQuot(1, 100)
+    y = x.to_ld
+    assert((y.kind_of? LongDecimal), "must be ld")
+    assert_equal(100, y.scale, "scale is 100")
+    assert(y.one?, "must be one")
+    x = LongDecimalQuot(Rational(13, 9), 10)
+    y = x.to_ld
+    assert((y.kind_of? LongDecimal), "must be ld")
+    assert_equal(10, y.scale, "scale is 10")
+    assert_equal(LongDecimal("1.4444444444"), y, "1.44...")
+    x = LongDecimalQuot(Rational(14, 9), 10)
+    y = x.to_ld
+    assert((y.kind_of? LongDecimal), "must be ld")
+    assert_equal(10, y.scale, "scale is 10")
+    assert_equal(LongDecimal("1.5555555556"), y, "1.55...")
+    x = LongDecimalQuot(Rational(7, 20), 1)
+    y = x.to_ld
+    assert((y.kind_of? LongDecimal), "must be ld")
+    assert_equal(1, y.scale, "scale is 1")
+    assert_equal(LongDecimal("0.4"), y, "0.4")
+    x = LongDecimalQuot(Rational(7, 2), 1)
+    y = x.to_ld
+    assert((y.kind_of? LongDecimal), "must be ld")
+    assert_equal(1, y.scale, "scale is 1")
+    assert_equal(LongDecimal("3.5"), y, "3.5")
+  end
 
   # TODO
-  # test_to_i: to_i not tested, goes via to_r anyway
-  # def test_to_ld
   # def test_to_bd
 
   #
