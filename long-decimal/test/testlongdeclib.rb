@@ -2,8 +2,8 @@
 #
 # library for testlongdecimal.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdeclib.rb,v 1.15 2006/05/01 12:22:12 bk1 Exp $
-# CVS-Label: $Name: ALPHA_01_01 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdeclib.rb,v 1.18 2007/06/19 01:36:23 bk1 Exp $
+# CVS-Label: $Name: ALPHA_01_02 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -14,7 +14,7 @@ load "lib/long-decimal.rb"
 #
 module TestLongDecHelper
 
-  @RCS_ID='-$Id: testlongdeclib.rb,v 1.15 2006/05/01 12:22:12 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdeclib.rb,v 1.18 2007/06/19 01:36:23 bk1 Exp $-'
 
 
   #
@@ -146,6 +146,7 @@ module TestLongDecHelper
     # assert_equal(yd, yu, "the result yd/yu should not depend on the internal rounding mode x0=#{x0} x=#{x} p=#{prec} d=#{(yd-yu).to_f.to_s}")
     # assert_equal(y,  yu, "the result y/yu  should not depend on the internal rounding mode x0=#{x0} x=#{x} p=#{prec} d=#{(y -yu).to_f.to_s}")
     assert_small_interval(yd, yu, y, "the result y/yu  should not depend on the internal rounding mode x0=#{x0} x=#{x} p=#{prec} d=#{(yd-yu).to_f.to_s}")
+    y
   end
 
   #
@@ -216,6 +217,7 @@ module TestLongDecHelper
       delta = z.unit * df
       assert((x - z).abs <= delta, "x=#{x.to_s} and z=#{z.to_s} should be almost equal (#{(x-z).abs.inspect} < d=#{delta.inspect} y=#{y.to_s} lprec=#{lprec} prec=#{prec})")
     end
+    y
 
   end
 
@@ -264,6 +266,7 @@ module TestLongDecHelper
       delta = z.unit * df
       assert((x - z).abs <= delta, "x=#{x.to_s} and z=#{z.to_s} should be almost equal (#{(x-z).abs.inspect} < d=#{delta.inspect} y=#{y.to_s} lprec=#{lprec} prec=#{prec})")
     end
+    y
 
   end
 
@@ -303,6 +306,31 @@ module TestLongDecHelper
 
     z  = LongMath.power(x, y, prec, LongMath::ROUND_HALF_UP)
     zz = (x ** yi).round_to_scale(prec, LongMath::ROUND_HALF_UP)
+    assert_equal(z, zz, "power with ** or power-method x=#{x} y=#{y} z=#{z} zz=#{zz}")
+    zz = LongMath.power_internal(x, y, prec)
+    assert((zz - z).abs <= z.unit, "power with and without optimizations x=#{x} y=#{y} z=#{z} zz=#{zz}")
+
+    zz = (x.to_f) ** (y.to_f)
+    zf = z.to_f
+    # assert((zf - zz).abs / [zf.abs, zz.abs, Float::MIN].max < 1e-9, "z=#{zf.to_s} and zz=#{zz.to_s} should be almost equal x=#{x} y=#{y} z=#{z} zz=#{zz}")
+    assert((zf - zz).abs < [ z.unit.to_f, zf.abs / 1e9 ].max, "zf=#{zf.to_s} and zz=#{zz.to_s} should be almost equal x=#{x} y=#{y} z=#{z} zz=#{zz}")
+  end
+
+  #
+  # helper method for test_lm_power_yint
+  # tests if exp(x) with precision prec is calculated correctly
+  #
+  def check_power_yhalfint(x, y2, prec)
+
+    print "."
+    $stdout.flush
+
+    y2i = y2.to_i
+    x = x.to_ld
+    y = LongDecimal("0.5") * y2i
+
+    z  = LongMath.power(x, y, prec, LongMath::ROUND_HALF_UP)
+    zz = LongMath.sqrt(x ** y2i, prec, LongMath::ROUND_HALF_UP)
     assert_equal(z, zz, "power with ** or power-method x=#{x} y=#{y} z=#{z} zz=#{zz}")
     zz = LongMath.power_internal(x, y, prec)
     assert((zz - z).abs <= z.unit, "power with and without optimizations x=#{x} y=#{y} z=#{z} zz=#{zz}")
@@ -399,8 +427,8 @@ module TestLongDecHelper
   def check_power_floated(x, y, prec)
 
     print "."
-    # print("\nstart: check_power_floated: x=#{x} y=#{y} prec=#{prec}")
-    # t0 = Time.new
+    t0 = Time.new
+    # print("\nstart: check_power_floated: x=#{x} y=#{y} prec=#{prec} t0=#{t0} ")
     $stdout.flush
 
     # make sure x and y are LongDecimal
@@ -410,13 +438,26 @@ module TestLongDecHelper
     y = y.to_ld
     # calculate z = x**y
     z = LongMath.power(x, y, prec)
+    # puts("z=#{z}")
 
-    if (z.abs < LongMath::MAX_FLOATABLE)
+    if (z.abs < LongMath::MAX_FLOATABLE && (x - 1).abs*1000000000 > 1)
       # compare y against w = x**y calculated using regular floating point arithmetic
-      w = (x.to_f) ** (y.to_f)
+      xf = x.to_f
+      yf = y.to_f
+      wf = (xf) ** (yf)
       zf = z.to_f
-      # assert((zf - w).abs / [zf.abs, w.abs, Float::MIN].max < 1e-9, "z=#{zf.to_s} and w=#{w.to_s} should be almost equal x=#{x} y=#{y}")
-      assert((zf - w).abs <= [ z.unit, zf.abs / 1e9 ].max, "z=#{zf.to_s} and w=#{w.to_s} should be almost equal x=#{x} y=#{y}")
+      # puts("zf=#{zf} w=#{w}")
+      # assert((zf - w).abs / [zf.abs, w.abs, Float::MIN].max < 1e-9, "z=#{zf.to_s} and w=#{w.to_s} should be almost equal x=#{x} y=#{y} prec=#{prec}")
+      qf = 1e9
+      delta = [ z.unit, zf.abs / qf ].max
+      if (yf.abs > 1) 
+	l = Math.log(yf.abs)
+	if (l > 1)
+	  delta *= l
+        end
+      end
+      diff  = (zf - wf).abs
+      assert(diff <= delta, "zf=#{zf.to_s} and wf=#{wf.to_s} should be almost equal x=#{x} y=#{y} delta=#{delta} l=#{l} diff=#{diff} prec=#{prec}")
     end
 
     # check by taking log(z) = y * log(x)
@@ -445,7 +486,6 @@ module TestLongDecHelper
       yv = (y*v).round_to_scale(lprec, LongDecimal::ROUND_HALF_DOWN)
       assert((u - yv).abs <= unit, "u=#{u} and yv=y*v=#{yv} should be almost equal (unit=#{unit} x=#{x.to_s} y=#{y.to_s} z=#{z.to_s} u=#{u.to_s} v=#{v.to_s} lprec=#{lprec} prec=#{prec})")
     end
-    # puts("ok check_power_floated: x=#{x} y=#{y} prec=#{prec} t=#{Time.new - t0}\n")
 
   end
 
@@ -510,7 +550,7 @@ module TestLongDecHelper
       assert((x - z).abs <= delta, "x=#{x.to_s} and z=#{z.to_s} should be almost equal (y=#{y.to_s} eprec=#{eprec} prec=#{prec} delta=#{delta})")
       # assert((x - z).abs <= z.unit, "x=#{x.to_s} and z=#{z.to_s} should be almost equal (y=#{y.to_s} eprec=#{eprec} prec=#{prec})")
     end
-    
+
     return y
 
   end

@@ -2,8 +2,8 @@
 #
 # testlongdecimal.rb -- runit test for long-decimal.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.54 2006/05/01 12:22:12 bk1 Exp $
-# CVS-Label: $Name: ALPHA_01_01 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.62 2007/07/11 21:22:21 bk1 Exp $
+# CVS-Label: $Name: ALPHA_01_02 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -20,7 +20,7 @@ load "test/testlongdeclib.rb"
 class TestLongDecimal_class < RUNIT::TestCase
   include TestLongDecHelper
 
-  @RCS_ID='-$Id: testlongdecimal.rb,v 1.54 2006/05/01 12:22:12 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdecimal.rb,v 1.62 2007/07/11 21:22:21 bk1 Exp $-'
 
   #
   # test split_to_words and merge_from_words
@@ -96,6 +96,23 @@ class TestLongDecimal_class < RUNIT::TestCase
   end
 
   #
+  # test the calculation of the exponential function where result is
+  # near zero
+  #
+  def test_exp_near_zero
+
+    x = LongDecimal(1, 100)
+    y = LongMath.log(x, 100)
+    z = check_exp_floated(y, 100)
+    assert_equal(x, z, "must be equal")
+    z = check_exp_floated(y, 99)
+    assert(z.zero?, "must be zero")
+    z = check_exp_floated(y * 100, 99)
+    assert(z.zero?, "must be zero")
+
+  end
+
+  #
   # test the calculation of the exponential function with precision 0
   #
   def test_exp_int
@@ -156,6 +173,23 @@ class TestLongDecimal_class < RUNIT::TestCase
   end
 
   #
+  # test the calculation of the exponential function where result is
+  # near zero
+  #
+  def test_exp2_near_zero
+
+    x = LongDecimal(1, 100)
+    y = LongMath.log2(x, 100)
+    z = check_exp2_floated(y, 100)
+    assert_equal(x, z, "must be equal")
+    z = check_exp2_floated(y, 99)
+    assert(z.zero?, "must be zero")
+    z = check_exp2_floated(y * 100, 99)
+    assert(z.zero?, "must be zero")
+
+  end
+
+  #
   # test exp10 of LongMath
   #
   def test_exp10
@@ -170,6 +204,23 @@ class TestLongDecimal_class < RUNIT::TestCase
       z  = LongMath.power(10, x, n)
       assert_equal(z, y, "exp10 x=#{x} y=#{y} z=#{z} i=#{i} n=#{n}")
     end
+  end
+
+  #
+  # test the calculation of the exponential function where result is
+  # near zero
+  #
+  def test_exp10_near_zero
+
+    x = LongDecimal(1, 100)
+    y = LongMath.log10(x, 100)
+    z = check_exp10_floated(y, 100)
+    assert_equal(x, z, "must be equal")
+    z = check_exp10_floated(y, 99)
+    assert(z.zero?, "must be zero")
+    z = check_exp10_floated(y * 100, 99)
+    assert(z.zero?, "must be zero")
+
   end
 
   #
@@ -351,6 +402,77 @@ class TestLongDecimal_class < RUNIT::TestCase
   end
 
   #
+  # test LongMath.power for bases that can be expressed as integer
+  #
+  def test_lm_power_yhalfint
+
+    xx = LongMath.log(3, 40)
+    pi = LongMath.pi(40)
+    sq = LongMath.sqrt(5, 40)
+
+    check_power_yhalfint(xx, 801, 10)
+    check_power_yhalfint(xx, 799, 10)
+    check_power_yhalfint(xx, 201, 10)
+    check_power_yhalfint(xx, 3, 10)
+    check_power_yhalfint(xx, 1, 10)
+    check_power_yhalfint(xx, -1, 10)
+    check_power_yhalfint(xx, -201, 10)
+    check_power_yhalfint(xx, -799, 10)
+    check_power_yhalfint(xx, -801, 10)
+
+    check_power_yhalfint(pi, 801, 10)
+    check_power_yhalfint(pi, 799, 10)
+    check_power_yhalfint(pi, 201, 10)
+    check_power_yhalfint(pi, 3, 10)
+    check_power_yhalfint(pi, 1, 10)
+    check_power_yhalfint(pi, -1, 10)
+    check_power_yhalfint(pi, -201, 10)
+    check_power_yhalfint(pi, -799, 10)
+    check_power_yhalfint(pi, -801, 10)
+
+    check_power_yhalfint(sq, 801, 10)
+    check_power_yhalfint(sq, 799, 10)
+    check_power_yhalfint(sq, 201, 10)
+    check_power_yhalfint(sq, 3, 10)
+    check_power_yhalfint(sq, 1, 10)
+    check_power_yhalfint(sq, -1, 10)
+    check_power_yhalfint(sq, -201, 10)
+    check_power_yhalfint(sq, -799, 10)
+    check_power_yhalfint(sq, -801, 10)
+
+    check_power_yhalfint(xx, 801, 40)
+    check_power_yhalfint(xx, 799, 40)
+    check_power_yhalfint(xx, 201, 40)
+    check_power_yhalfint(xx, 3, 40)
+    check_power_yhalfint(xx, 1, 40)
+    check_power_yhalfint(xx, -1, 40)
+    check_power_yhalfint(xx, -201, 40)
+    check_power_yhalfint(xx, -799, 40)
+    check_power_yhalfint(xx, -801, 40)
+
+    check_power_yhalfint(pi, 801, 40)
+    check_power_yhalfint(pi, 799, 40)
+    check_power_yhalfint(pi, 201, 40)
+    check_power_yhalfint(pi, 3, 40)
+    check_power_yhalfint(pi, 1, 40)
+    check_power_yhalfint(pi, -1, 40)
+    check_power_yhalfint(pi, -201, 40)
+    check_power_yhalfint(pi, -799, 40)
+    check_power_yhalfint(pi, -801, 40)
+
+    check_power_yhalfint(sq, 801, 40)
+    check_power_yhalfint(sq, 799, 40)
+    check_power_yhalfint(sq, 201, 40)
+    check_power_yhalfint(sq, 3, 40)
+    check_power_yhalfint(sq, 1, 40)
+    check_power_yhalfint(sq, -1, 40)
+    check_power_yhalfint(sq, -201, 40)
+    check_power_yhalfint(sq, -799, 40)
+    check_power_yhalfint(sq, -801, 40)
+
+  end
+
+  #
   # test LongMath.exp with non-LongDecimal arguments
   #
   def test_non_ld_exp
@@ -490,6 +612,7 @@ class TestLongDecimal_class < RUNIT::TestCase
     check_power_floated(1.01, 1e-20, 20)
     check_power_floated(1e-20, 1.01, 21)
     check_power_floated(1.01, 1e-20, 21)
+    puts "done (1.01, 1e-20, 21)"
 
     check_power_floated(1.001, -1.001, 10)
     check_power_floated(1.001, -2.001, 10)
@@ -503,95 +626,152 @@ class TestLongDecimal_class < RUNIT::TestCase
     check_power_floated(1.01, -1e-20, 20)
     check_power_floated(1e-20, -1.01, 21)
     check_power_floated(1.01, -1e-20, 21)
+    puts "done (1.01, -1e-20, 21)"
 
     # random tests that have failed
+    check_power_floated(LongDecimal("0.000000000077517987624900000000000000000000000000000000000000000000000000000000000000000000000000000014809051260000000000000000000000000000000000000000000000000000000000000000000000000000000000707281"),
+                        LongDecimal("26.627053911388694974442854299008649887946027550330988420533923061901183724914978160564862753777080769340"),
+                        29)
+    puts "a"
     check_power_floated(LongDecimal("1.000000000000000151000000000000000000000000000000000000000000000000000000000000057800000000205"),
                         LongDecimal("-680.0000000000000000000013100000000000000000000000000000000000000165000000000000000000234"),
                         26)
+    puts "b"
     check_power_floated(LongDecimal("1.0000000000000000000000000000000000000000000068000000000853000000000926"),
                         LongDecimal("-536.000000000086100000000000000000000000000019200000000000000000000000000000000000000000000000166"),
                         49)
+    puts "c"
     check_power_floated(LongDecimal("1.0000000000000000049000000000002090000000000447"),
                         LongDecimal("-328.00000000000000000000000000000000567000000000000000026600000000000000000000000679"),
                         24)
+    puts "d"
     check_power_floated(LongDecimal("1.0000000000000000000003580000000000000000000000376238"),
                         LongDecimal("-359.0000000003910721000000000000000000000000000000000000000000000000000000000000000000000000479"),
                         39)
+    puts "e"
     check_power_floated(LongDecimal("1.000000000000000000000032000000001500000000000000000000439"),
                         LongDecimal("-252.00000000000000025500000000000176907"),
                         39)
+    puts "f"
     check_power_floated(LongDecimal("1.0000000000000008590000521000000000000621"),
                         LongDecimal("-135.0000000000000000000000000000000000000000000000000000000074400000000000000000000000000321"),
                         50)
+    puts "g"
     check_power_floated(LongDecimal("1.000000000000000151000000000000000000000000000000000000000000000000000000000000057800000000205"),
                         LongDecimal("-680.0000000000000000000013100000000000000000000000000000000000000165000000000000000000234"),
                         26)
+    puts "h"
     check_power_floated(LongDecimal("1.02350000000000000000000356000000000000000000000000000000000000000000000000000000000104"),
                         LongDecimal("-971.0000000000000000055400000000000000000000000000000000000000000000000000040900000000000000000000000603"),
                         45)
+    puts "i"
     check_power_floated(LongDecimal("1.0023800000000000000000000000000000000000000000000000000000000000265000000000000000000000000000000453"),
                         LongDecimal("-277.000000000000000000000000000000000000000000000000000000000000113000000000000000000041400000294"),
                         22)
+    puts "j"
     check_power_floated(LongDecimal("0.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003422250001093950095910422515315300670761"),
                         LongDecimal("-0.99999999999999999999999999999999999999999999999999997909999999999999999999999999667999957000000000000000065521500000000000000000000020816402696099999999999997719321110428280027729999999129874367303020000000000071412895105695789681563000036363932570289984431712381817869482773696988055442648559706239710901091550702341077381290973316336980640165855210736680"),
                         46)
+    puts "k"
     check_power_floated(LongDecimal("0.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000049273899694369"),
                         LongDecimal("-0.99999999999999999999999999999999999999988899963450000000000000000000000000000001847988671170038537499999999999999999999658146648184996349480690906250000000000066400422857493760370353798820585648437488207957808220483456569835670219978619056054192244103752969215743872596800486621906638928959243058783356441503226136251748249991020724187893339868"),
                         40)
+    puts "l"
     check_power_floated(LongDecimal("0.0000000000000000000000000000003868840000000000000000000328416000000000000000000006969600000000000000000000000000000059338800000000000000000002518560000000000000000000000000000000000000000000000000000000227529"),
                         LongDecimal("-0.999999999999999999999999999999999999999999999999999998264999999999999999999999999999616741000000000000000004515337500000000000000000000001994863094999999999999986943149282831191620999999999993077825060350000000000033980453035745280148525000000024019946927993617107497210600671335038418031107762499920991889855598841096454678838495791189026426859181655270271342"),
                         31)
+    puts "m"
     check_power_floated(LongDecimal("0.0000000000000000000000000000000000000000000000435600000000000000000000000000000000000000000000000006204000000075240000000000000000000000000000000000000022090000000535800000003249"),
                         LongDecimal("-4.50377349099168904759987513420506734335755704389619751192197520413005925604849718759451665302464588879636922713303481423460050066204079523260315868192642742903330525895063299416"),
                         20)
+    puts "n"
     check_power_floated(LongDecimal("0.0000000000000000000000000000700720943029391693947940220429504569709269190190365416713568"),
                         LongDecimal("-6.633249580710799698229865473341373367854177091179010213018664944871230"),
                         7)
+    puts "o"
     check_power_floated(LongDecimal("0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000816700000697"),
                         LongDecimal("-0.58685446009389671361502347417840375586854460093896713614906034406753510106019528753113359342280707917300359276157963863070992095386428055722936293804476401957909668625460628698383384886591034139"),
                         36)
+    puts "p"
     check_power_floated(LongDecimal("0.000000000000000000000000000000000000046500000000000015087"),
                         LongDecimal("-1.0000000037300000000000000000000000000000000000000000003924"),
                         3)
+    puts "q"
     check_power_floated(LongDecimal("0.0000000000000000000000000000000000000000000000000000000000000000002450257484405715360000000000000000097614149083200000000000000000000000972196"),
                         LongDecimal("-1.00000008600000184900000000000000000000000000000000000000012640000543520000000000000000000013300000571900000000000000399424000000000000000000000000000840560000000000000000000000000000442225"),
                         3)
+    puts "r"
     check_power_floated(LongDecimal("0.00000000000000000000000000000000000000000000000000000000000000000000367236000000000000000093202800000000000000005914074196000000000000000058905400000000000000000000146689"),
                         LongDecimal("-1.000000000008800000000019360000000062800000000276320250000000001100000985960000000000007850000000000000015625"),
                         4)
+    puts "s"
     check_power_floated(LongDecimal("0.000000000000000000000000000000000000000000000000000000000000000000002777290000000006513720000000003819240000000000000000000000000000100340800000000117667200000000000000000000000000000000000000000000906304"),
                         LongDecimal("-0.5773502691896257645091447198050641552797247036332110311421498194545129249630222981047763195372146430879281215100223411775138874331819083544781222838698051829302865547075365868655847179043571799566074987574406310154782766513220296853158689786573196010629608653145605201822170964422894732870490642190250948498852022304300879727510280657218553"),
                         23)
+    puts "s"
     check_power_floated(LongDecimal("0.000000000000000000000000000000000000000000007350000295000915"),
                         LongDecimal("-1.000002193000861"),
                         2)
+    puts "u"
     check_power_floated(LongDecimal("0.0000000086862400000000000000015172960006039360000000662596000527472000104976"),
                         LongDecimal("-0.999999999999999999999999999999999999999999999999999999999997169999999999996784999999999687000000000000000000000000000012013350000000027295350000002672874337500003018885000000146896669625999999845508318999984783776699499965759759873248317316431267825611053489338193758007138415641516991908731376997678345955102618540146326218008264916981179817214058767402196571"),
                         11)
+    puts "v"
     check_power_floated(LongDecimal("0.00000000000000000000000000624000383000000000000000000000000000000000000000000000358"),
                         LongDecimal("-1.0000004600000000000000000000000000000004210"),
                         3)
+    puts "w"
     check_power_floated(LongDecimal("0.00000000006236994468492015585972291475115698519825552824875948893004062366348813472156776148562881057978611940708477498267201430163921921918813918304834563518614088250202460271818014152969"),
                         LongDecimal("-21.81742422927144044215775880732087497227530694228658299334049542576403906256739064739549866577137008231569804502022381108724983114382624747999460445291671084230968250529511708947428208082234"),
                         6)
+    puts "x"
     check_power_floated(LongDecimal("0.0000000000000000000000000000000000000000000000000000000000000000000035600000000928000000000000000450"),
                         LongDecimal("-0.70821529745042492917661444999959874487397062785764977666003279651340417551441776107007487983685090756343178115766012078677210548592741818458068450268168492334992979756923"),
                         13)
+    puts "y"
     check_power_floated(LongDecimal("0.0000000000000000000000000000025900000000000000000000000000000000000000000022100000000000000000032"),
                         LongDecimal("-0.999943403203378688766215832183174473300891276419706031790088430934495839737458766990116492"),
                         4)
+    puts "z"
     check_power_floated(LongDecimal("0.002658925294303146195800785280451092866235470739838791730450519159432915"),
                         LongDecimal("-87.0000000000000008330000000000000000000000000000000000000000000000000000000000000000000000000092046"),
                         90)
+    puts "a"
     check_power_floated(LongDecimal("0.0014814814814814814812905349794238683127818125285779606767229367555739725854802645575188374989810195213530274617178142875856830586369415448003164084698537116523550097"),
                         LongDecimal("-52.0000000000000000000000000000000000000000683000000000000000000238000000000228"),
                         25)
+    puts "b"
     check_power_floated(LongDecimal("0.00000000000000000000047400000000000000000084700000892"),
                         LongDecimal("-17.000000001310000000000000000000000000000000000000000000000000002800000000000000217"),
                         56)
+    puts "c"
     check_power_floated(LongDecimal("0.00000000000000000000005110000000000000000004800000000000000000000000000000163"),
                         LongDecimal("-37.000000009170000000000000000000000000000000000000000000000000000000000000055800048"),
                         21)
+    puts "d"
+    check_power_floated(LongDecimal("0.0000000000000000000000000000000000000000000000000000000000000000002450257484405715360000000000000000097614149083200000000000000000000000972196"),
+                        LongDecimal("-1.00000008600000184900000000000000000000000000000000000000012640000543520000000000000000000013300000571900000000000000399424000000000000000000000000000840560000000000000000000000000000442225"),
+                        3)
+    puts "e"
+    check_power_floated(LongDecimal("0.999999999999983820000000000052544300000001372125483999980457478288050051600649560171986452284020178492146835403829341250837967306416835643061512149984415283328897050537606939603101940467080257495289168053434691062993302374332577706782680685214083677104079828206433042861334386773091111658939537092356816922764138900649581031721453211835260155666851398044388924204855221543729490461274063089475188763279119570"),
+                        LongDecimal("80321932.89024988628926432624765785135567744505377819122460049392916097399960142838065367057138986526363804"),
+                        40)
+    puts "f"
+    check_power_floated(LongDecimal("0.999999999999999999999999999999998351999999999999983020000000000002036927999998210041974559999999997978335404004424810825925120045592892314014072707890311225042124730264194167337496376801852022987153782535008598977724682635285958668331865904517437818865287190004735483899633845078360662820274644903126498781970492928578903950"),
+                        LongDecimal("24449877750611246943765281173.594132029339853300733454400081300326994697544849684064538112517261374573394648075725881734888526076256999828217542217625441301525934675012853453406806380262764050867999"),
+                        5)
+    puts "g"
+    check_power_floated(LongDecimal("0.999999999999999862599981980000014159073713922242243328677707050386499779178242565766291900177208859765599761583988066205590104341111429059119646260524293805643133602429678974677397380813589741657940554009198199034562447106122960905140273768835224006261013069576237942279008951360618433986"),
+                        LongDecimal("10266940451745.37987679671457905534956086166404546967839388790271998098584221166751699838745542116653920000125768690393028114699714286512441385099525"),
+                        14)
+    puts "h"
+    check_power_floated(LongDecimal("0.999999999999999981500000000000000256687499999999996834187500000000036604706930449997823687754750325053502286291757658419972795166437108241085949094447949893401640711985948839881287077716265593625727522425306777978451009970778400655052736724232660803755458234164496101454557290134193942433026948513566480800350007916601440691706219670728270104113540"),
+                        LongDecimal("41380294430118397.455148144857963343847598908617723236165122243380531570432704458595232182042029429597565318650987561380534985825811466980798564531839364855305381553585381037046185516421336524897364607404185776449463"),
+                        26)
+    puts "i"
+    check_power_floated(LongDecimal("0.000000000000000000000000000000000000046500000000000015087"),
+                        LongDecimal("-1.0000000037300000000000000000000000000000000000000000003924"),
+                        23)
 
   end
 
@@ -742,6 +922,8 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(l.round_to_scale(199, LongMath::ROUND_HALF_EVEN), pi, "199 digits")
     pi = LongMath.pi 201
     assert_equal(l.round_to_scale(201, LongMath::ROUND_HALF_EVEN), pi, "201 digits")
+    pi = LongMath.pi 1000
+    assert_equal(l.round_to_scale(1000, LongMath::ROUND_HALF_EVEN), pi, "1000 digits")
   end
 
   #
@@ -1224,12 +1406,12 @@ class TestLongDecimal_class < RUNIT::TestCase
     10.times do |i|
       n = i*i+i+1
       while (n % 10) == 0 do
-	n /= 10
+        n /= 10
       end
       10.times do |j|
-	m = j*j
-	x = n * 10**m
-	assert_equal(m, LongMath.multiplicity_of_10(x), "x=#{x} i=#{i} j=#{j} n=#{n} m=#{m}")
+        m = j*j
+        x = n * 10**m
+        assert_equal(m, LongMath.multiplicity_of_10(x), "x=#{x} i=#{i} j=#{j} n=#{n} m=#{m}")
       end
     end
   end
@@ -1584,6 +1766,497 @@ class TestLongDecimal_class < RUNIT::TestCase
   end
 
   #
+  # test rounding of int to remainder set
+  #
+  def test_int_round_to_one_allowed_remainder
+    2.upto 20 do |modulus|
+      0.upto modulus-1 do |r|
+        n = 3*modulus
+        (-n).upto n do |i|
+          text = "i=#{i} n=#{n} m=#{modulus} r=#{r}"
+
+          i_rounded = check_round_to_one_remainder(i, r, modulus, LongDecimalRoundingMode::ROUND_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          assert(i_rounded.abs >= i.abs, "i_r=#{i_rounded} " + text)
+          if (i == 0) then
+            assert(i_rounded >= 0, "i_r=#{i_rounded} " + text)
+          end
+
+          i_rounded = check_round_to_one_remainder(i, r, modulus, LongDecimalRoundingMode::ROUND_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          if (i > 0)
+            assert(i_rounded <= i, "i_r=#{i_rounded} " + text)
+          elsif (i < 0)
+            assert(i_rounded >= i, "i_r=#{i_rounded} " + text)
+          elsif (i == 0) then
+            assert(i_rounded >= 0, "i_r=#{i_rounded} " + text)
+          else
+            raise("i=#{i} i_r=#{i_rounded}")
+          end
+
+          i_rounded = check_round_to_one_remainder(i, r, modulus, LongDecimalRoundingMode::ROUND_CEILING, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          assert(i_rounded >= i, "i_r=#{i_rounded} " + text)
+
+          i_rounded = check_round_to_one_remainder(i, r, modulus, LongDecimalRoundingMode::ROUND_FLOOR, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          assert(i_rounded <= i, "i_r=#{i_rounded} " + text)
+
+          i_rounded = check_round_to_one_remainder(i, r, modulus, LongDecimalRoundingMode::ROUND_HALF_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          dd = 2*(i_rounded - i).abs
+          assert(dd <= modulus, "i_r=#{i_rounded} " + text)
+          if (i_rounded.abs < i.abs || i_rounded.sgn == - i.sgn)
+            assert(dd < modulus, "i_r=#{i_rounded} " + text)
+          end
+
+          i_rounded = check_round_to_one_remainder(i, r, modulus, LongDecimalRoundingMode::ROUND_HALF_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          dd = 2*(i_rounded - i).abs
+          assert(dd <= modulus, "i_r=#{i_rounded} " + text)
+          if (i_rounded.abs > i.abs && i_rounded.sgn == i.sgn)
+            assert(dd < modulus, "i_r=#{i_rounded} " + text)
+          end
+
+          i_rounded = check_round_to_one_remainder(i, r, modulus, LongDecimalRoundingMode::ROUND_HALF_CEILING, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          dd = 2*(i_rounded - i).abs
+          assert(dd <= modulus, "i_r=#{i_rounded} " + text)
+          if (i_rounded < i)
+            assert(dd < modulus, "i_r=#{i_rounded} " + text)
+          end
+
+          i_rounded = check_round_to_one_remainder(i, r, modulus, LongDecimalRoundingMode::ROUND_HALF_FLOOR, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          dd = 2*(i_rounded - i).abs
+          assert(dd <= modulus, "i_r=#{i_rounded} " + text)
+          if (i_rounded > i && i != 0)
+            assert(dd < modulus, "i_r=#{i_rounded} " + text)
+          end
+        end
+      end
+    end
+  end
+
+  #
+  # test rounding of int to remainder set
+  #
+  def test_zero_round_to_one_allowed_remainder
+    2.upto 20 do |modulus|
+      0.upto modulus-1 do |r|
+        text = "m=#{modulus} r=#{r}"
+
+        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+        assert(zero_r >= 0, "0_r=#{zero_r} " + text)
+        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
+        assert(zero_r <= 0, "0_r=#{zero_r} " + text)
+        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
+        dd = 2*zero_r.abs
+        assert(dd <= modulus, "0_r=#{zero_r} " + text)
+        if (zero_r < 0)
+          assert(dd < modulus, "0_r=#{zero_r} " + text)
+        end
+        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS)
+        dd = 2*zero_r.abs
+        assert(dd <= modulus, "0_r=#{zero_r} " + text)
+        if (zero_r > 0)
+          assert(dd < modulus, "0_r=#{zero_r} " + text)
+        end
+
+        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+        assert(zero_r >= 0, "0_r=#{zero_r} " + text)
+        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
+        assert(zero_r <= 0, "0_r=#{zero_r} " + text)
+        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
+        dd = 2*zero_r.abs
+        assert(dd <= modulus, "0_r=#{zero_r} " + text)
+        if (zero_r < 0)
+          assert(dd < modulus, "0_r=#{zero_r} " + text)
+        end
+        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS)
+        dd = 2*zero_r.abs
+        assert(dd <= modulus, "0_r=#{zero_r} " + text)
+        if (zero_r > 0)
+          assert(dd < modulus, "0_r=#{zero_r} " + text)
+        end
+
+        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_CEILING, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
+        assert(zero_r >= 0, "0_r=#{zero_r} " + text)
+
+        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_FLOOR, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
+        assert(zero_r <= 0, "0_r=#{zero_r} " + text)
+
+        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_HALF_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+        dd = 2*zero_r.abs
+        assert(dd <= modulus, "0_r=#{zero_r} " + text)
+        if (zero_r < 0)
+          assert(dd < modulus, "0_r=#{zero_r} " + text)
+        end
+        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_HALF_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
+        dd = 2*zero_r.abs
+        assert(dd <= modulus, "0_r=#{zero_r} " + text)
+        if (zero_r < 0)
+          assert(dd < modulus, "0_r=#{zero_r} " + text)
+        end
+        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_HALF_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
+        dd = 2*zero_r.abs
+        assert(dd <= modulus, "0_r=#{zero_r} " + text)
+        if (zero_r > 0)
+          assert(dd < modulus, "0_r=#{zero_r} " + text)
+        end
+        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_HALF_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS)
+        dd = 2*zero_r.abs
+        assert(dd <= modulus, "0_r=#{zero_r} " + text)
+        if (zero_r > 0)
+          assert(dd < modulus, "0_r=#{zero_r} " + text)
+        end
+
+        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_HALF_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+        dd = 2*zero_r.abs
+        assert(dd <= modulus, "0_r=#{zero_r} " + text)
+        if (zero_r < 0)
+          assert(dd < modulus, "0_r=#{zero_r} " + text)
+        end
+        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_HALF_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
+        dd = 2*zero_r.abs
+        assert(dd <= modulus, "0_r=#{zero_r} " + text)
+        if (zero_r < 0)
+          assert(dd < modulus, "0_r=#{zero_r} " + text)
+        end
+        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_HALF_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
+        dd = 2*zero_r.abs
+        assert(dd <= modulus, "0_r=#{zero_r} " + text)
+        if (zero_r > 0)
+          assert(dd < modulus, "0_r=#{zero_r} " + text)
+        end
+        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_HALF_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS)
+        dd = 2*zero_r.abs
+        assert(dd <= modulus, "0_r=#{zero_r} " + text)
+        if (zero_r > 0)
+          assert(dd < modulus, "0_r=#{zero_r} " + text)
+        end
+
+        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_HALF_CEILING, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
+        dd = 2*zero_r.abs
+        assert(dd <= modulus, "0_r=#{zero_r} " + text)
+        if (zero_r < 0)
+          assert(dd < modulus, "0_r=#{zero_r} " + text)
+        end
+
+        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_HALF_FLOOR, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
+        dd = 2*zero_r.abs
+        assert(dd <= modulus, "0_r=#{zero_r} " + text)
+        if (zero_r > 0)
+          assert(dd < modulus, "0_r=#{zero_r} " + text)
+        end
+      end
+    end
+  end
+
+  def check_round_to_one_remainder(i, r, modulus, rounding_mode, zero_rounding_mode)
+
+    # puts("i=#{i} r=#{r} m=#{modulus}")
+    zero_modes = [ LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS,\
+      LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS,\
+      LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS,\
+      LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS,\
+      LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY ];
+    remainders = [ r ]
+    i_rounded = i.round_to_allowed_remainders(remainders, modulus, rounding_mode, zero_rounding_mode)
+    if (i != 0 || zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
+      zero_modes.each do |zm|
+        assert_equal(i_rounded, i.round_to_allowed_remainders(remainders, modulus, rounding_mode, zm), "i=#{i} i_r=#{i_rounded} m=#{modulus} zm=#{zm} r=#{r}")
+      end
+    end
+    assert_equal(0, (i_rounded - r) % modulus)
+    assert(i - modulus < i_rounded)
+    assert(i_rounded < i + modulus)
+    i_rounded
+  end
+
+  #
+  # test rounding of int to remainder set
+  #
+  def test_int_round_to_allowed_remainders
+    2.upto 8 do |modulus|
+      xx = (1<< modulus) - 1
+      xx.times do |x|
+        remainders = make_set(x + 1, modulus)
+        text0 = "m=#{modulus} x=#{x} s=#{remainders.inspect}"
+        puts text0
+        n = 3*modulus
+        (-n).upto n do |i|
+          text = "i=#{i} n=#{n} " + text0
+          i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          assert(i_rounded.abs >= i.abs, "i_r=#{i_rounded} " + text)
+          if (i == 0) then
+            assert(i_rounded >= 0, "i_r=#{i_rounded} " + text)
+            assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
+          elsif (i > 0) then
+            # rounded away from 0, so for positive i to value >= i
+            assert_equal(above.length, 0, text)
+            assert(i_rounded >= i, "i_r=#{i_rounded} " + text)
+          else
+            # i < 0
+            # rounded away from 0, so for positive i to value <= i
+            assert_equal(below.length, 0, text)
+            assert(i_rounded <= i, "i_r=#{i_rounded} " + text)
+          end
+
+          i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          if (i > 0)
+            assert(i_rounded <= i, "i_r=#{i_rounded} " + text)
+            assert_equal(below.length, 0, "i_r=#{i_rounded} " + text)
+          elsif (i < 0)
+            assert(i_rounded >= i, "i_r=#{i_rounded} " + text)
+            assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
+          elsif (i == 0) then
+            assert(i_rounded >= 0, "i_r=#{i_rounded} " + text)
+            assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
+          else
+            raise("i=#{i} i_r=#{i_rounded}")
+          end
+
+          i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_CEILING, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          assert(i_rounded >= i, "i_r=#{i_rounded} " + text)
+          assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
+
+          i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_FLOOR, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          assert(i_rounded <= i, "i_r=#{i_rounded} " + text)
+          assert_equal(below.length, 0, "i_r=#{i_rounded} " + text)
+
+          i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          dd = 2*(i_rounded - i).abs
+          assert(dd <= modulus, "i_r=#{i_rounded} " + text)
+          if (i_rounded.abs < i.abs || i_rounded.sgn == - i.sgn)
+            assert(dd < modulus, "i_r=#{i_rounded} " + text)
+          end
+          assert_equal(below.length, 0, "i_r=#{i_rounded} " + text)
+          assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
+
+          i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          dd = 2*(i_rounded - i).abs
+          assert(dd <= modulus, "i_r=#{i_rounded} " + text)
+          if (i_rounded.abs > i.abs && i_rounded.sgn == i.sgn)
+            assert(dd < modulus, "i_r=#{i_rounded} " + text)
+          end
+          assert_equal(below.length, 0, "i_r=#{i_rounded} " + text)
+          assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
+
+          i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_CEILING, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          dd = 2*(i_rounded - i).abs
+          assert(dd <= modulus, "i_r=#{i_rounded} " + text)
+          if (i_rounded < i)
+            assert(dd < modulus, "i_r=#{i_rounded} " + text)
+          end
+          assert_equal(below.length, 0, "i_r=#{i_rounded} " + text)
+          assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
+
+          i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_FLOOR, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          dd = 2*(i_rounded - i).abs
+          assert(dd <= modulus, "i_r=#{i_rounded} " + text)
+          if (i_rounded > i && i != 0)
+            assert(dd < modulus, "i_r=#{i_rounded} " + text)
+          end
+          assert_equal(below.length, 0, "i_r=#{i_rounded} " + text)
+          assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
+
+        end
+      end
+    end
+  end
+
+  #
+  # test rounding of 0 to remainder set
+  #
+  def test_zero_round_to_allowed_remainders
+    2.upto 8 do |modulus|
+      xx = (1<< modulus) - 1
+      xx.times do |x|
+        remainders = make_set(x + 1, modulus)
+        text = "m=#{modulus} x=#{x} s=#{remainders.inspect}"
+        puts text
+
+        # ROUND_UP and ROUND_DOWN have the same effect for 0
+        zero_r1, set1, above1, below1 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+        zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+        assert_equal(zero_r1, zero_r2, text)
+        assert_equal(above1, above2, text)
+        assert_equal(below1, below2, text)
+        assert(zero_r1 >= 0, "0_r=#{zero_r1} " + text)
+        assert_equal(above1.length, 0, text)
+
+        zero_r1, set1, above1, below1 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
+        zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
+        assert_equal(zero_r1, zero_r2, text)
+        assert_equal(above1, above2, text)
+        assert_equal(below1, below2, text)
+        assert(zero_r1 <= 0, "0_r=#{zero_r1} " + text)
+        assert_equal(below1.length, 0, text)
+
+        zero_r1, set1, above1, below1 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
+        zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
+        assert_equal(zero_r1, zero_r2, text)
+        assert_equal(above1, above2, text)
+        assert_equal(below1, below2, text)
+        dd = 2*zero_r1.abs
+        assert(dd <= modulus, "0_r=#{zero_r1} dd=#{dd} " + text)
+        if (zero_r1 < 0)
+          assert(dd < modulus, "0_r=#{zero_r1} dd=#{dd} " + text)
+        end
+        if (below1.length > 0)
+          assert(below1.max.abs >= zero_r1.abs, text)
+        end
+        if (above1.length > 0)
+          assert(above1.min.abs >= zero_r1.abs, text)
+        end
+
+        zero_r1, set1, above1, below1 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS)
+        zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS)
+        assert_equal(zero_r1, zero_r2, text)
+        assert_equal(above1, above2, text)
+        assert_equal(below1, below2, text)
+        dd = 2*zero_r1.abs
+        assert(dd <= modulus, "0_r=#{zero_r1} dd=#{dd} " + text)
+        if (zero_r1 > 0)
+          assert(dd < modulus, "0_r=#{zero_r1} dd=#{dd} " + text)
+        end
+        if (below1.length > 0)
+          assert(below1.max.abs >= zero_r1.abs, text)
+        end
+        assert_equal(above1.length, 0, text)
+
+        zero_r0, set0, above0, below0 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_CEILING, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
+        assert(zero_r0 >= 0, "0_r=#{zero_r0} " + text)
+        assert_equal(above0.length, 0, text)
+
+        zero_r0, set0, above0, below0 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_FLOOR, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
+        assert(zero_r0 <= 0, "0_r=#{zero_r0} " + text)
+        assert_equal(below0.length, 0, text)
+
+        zero_r1, set1, above1, below1 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+        zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+        assert_equal(zero_r1, zero_r2, text)
+        assert_equal(above1, above2, text)
+        assert_equal(below1, below2, text)
+        zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
+        assert_equal(zero_r1, zero_r2, text)
+        assert_equal(above1, above2, text)
+        assert_equal(below1, below2, text)
+        zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
+        assert_equal(zero_r1, zero_r2, text)
+        assert_equal(above1, above2, text)
+        assert_equal(below1, below2, text)
+        dd = 2*zero_r1.abs
+        assert(dd <= modulus, "0_r=#{zero_r1} dd=#{dd} " + text)
+        if (zero_r1 < 0)
+          assert(dd < modulus, "0_r=#{zero_r1} dd=#{dd} " + text)
+        end
+        assert_equal(below1.length, 0, text)
+        assert_equal(above1.length, 0, text)
+
+        zero_r1, set1, above1, below1 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
+        zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
+        assert_equal(zero_r1, zero_r2, text)
+        assert_equal(above1, above2, text)
+        assert_equal(below1, below2, text)
+        zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS)
+        assert_equal(zero_r1, zero_r2, text)
+        assert_equal(above1, above2, text)
+        assert_equal(below1, below2, text)
+        zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS)
+        assert_equal(zero_r1, zero_r2, text)
+        assert_equal(above1, above2, text)
+        assert_equal(below1, below2, text)
+        dd = 2*zero_r1.abs
+        assert(dd <= modulus, "0_r=#{zero_r1} dd=#{dd} " + text)
+        if (zero_r1 > 0)
+          assert(dd < modulus, "0_r=#{zero_r1} dd=#{dd} " + text)
+        end
+        assert_equal(below1.length, 0, text)
+        assert_equal(above1.length, 0, text)
+
+        zero_r0, set0, above0, below0 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_CEILING, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
+        dd = 2*zero_r0.abs
+        assert(dd <= modulus, "0_r=#{zero_r0} dd=#{dd} " + text)
+        if (zero_r0 < 0)
+          assert(dd < modulus, "0_r=#{zero_r0} dd=#{dd} " + text)
+        end
+        assert_equal(below0.length, 0, text)
+        assert_equal(above0.length, 0, text)
+
+        zero_r0, set0, above0, below0 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_FLOOR, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
+        dd = 2*zero_r0.abs
+        assert(dd <= modulus, "0_r=#{zero_r0} " + text)
+        if (zero_r0 > 0)
+          assert(dd < modulus, "0_r=#{zero_r0} " + text)
+        end
+        assert_equal(below0.length, 0, text)
+        assert_equal(above0.length, 0, text)
+
+      end
+    end
+  end
+
+  def make_set(x, m)
+    s = []
+    b = 1
+    m.times do |i|
+      if (b & x) == b
+        s = s.push(i)
+      end
+      b = 2*b
+    end
+    s
+  end
+
+  def check_round_to_remainders(i, remainders, modulus, rounding_mode, zero_rounding_mode)
+
+    zero_modes = [ LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS,\
+      LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS,\
+      LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS,\
+      LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS,\
+      LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY ];
+
+    i_rounded = i.round_to_allowed_remainders(remainders, modulus, rounding_mode, zero_rounding_mode)
+    if (i != 0 || zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
+      zero_modes.each do |zm|
+        assert_equal(i_rounded, i.round_to_allowed_remainders(remainders, modulus, rounding_mode, zm), "i=#{i} i_r=#{i_rounded} m=#{modulus} zm=#{zm}")
+      end
+    end
+    one_remainder = remainders.select do |r|
+      (i_rounded - r) % modulus == 0
+    end
+    assert_equal(1, one_remainder.length, "i_r=#{i_rounded} i=#{i} m=#{modulus} r=#{remainders} or=#{one_remainder.to_s}")
+    assert(i - modulus < i_rounded)
+    assert(i_rounded < i + modulus)
+    set = remainders.map do |r|
+      check_round_to_one_remainder(i, r, modulus, rounding_mode, zero_rounding_mode)
+    end
+    closer_above = []
+    closer_below = []
+    found = false
+    set.each do |i_r|
+      if (i_r == i_rounded)
+        found = true
+      else
+        assert(i != i_r, "i=#{i} i_r=#{i_r} i_rounded=#{i_rounded}")
+        closer = ((i_r - i).abs < (i_rounded -i).abs)
+        if (i < i_r)
+          assert(i_rounded < i_r)
+          if closer
+            closer_above.push(i_r)
+          end
+        else
+          # i_r < i
+          assert(i_r < i_rounded)
+          if closer
+            closer_below.push(i_r)
+          end
+        end
+      end
+    end
+    return i_rounded, set, closer_above, closer_below
+
+  end # check_round_to_remainders
+
+  # any subset of 0..m-1 with rounding of 0
+  #
+  # ROUND_UNNECESSARY/ROUND_HALF_EVEN
+
+  #
   # test conversion to String
   #
   def test_to_s
@@ -1689,24 +2362,33 @@ class TestLongDecimal_class < RUNIT::TestCase
   def test_to_f
     l = LongDecimal(224, 0)
     assert((l.to_f - 224).abs < 224 * 0.000001, "l=#{l.inspect}")
+    assert(((-l).to_f + 224).abs < 224 * 0.000001, "l=#{l.inspect}")
     l = LongDecimal(224, 1)
     assert((l.to_f - 22.4).abs < 22.4 * 0.000001, "l=#{l.inspect}")
+    assert(((-l).to_f + 22.4).abs < 22.4 * 0.000001, "l=#{l.inspect}")
     l = LongDecimal(224, 2)
     assert((l.to_f - 2.24).abs < 2.24 * 0.000001, "l=#{l.inspect}")
+    assert(((-l).to_f + 2.24).abs < 2.24 * 0.000001, "l=#{l.inspect}")
     l = LongDecimal(224, 3)
     assert((l.to_f - 0.224).abs < 0.224 * 0.000001, "l=#{l.inspect}")
+    assert(((-l).to_f + 0.224).abs < 0.224 * 0.000001, "l=#{l.inspect}")
     l = LongDecimal(224, 4)
     assert((l.to_f - 0.0224).abs < 0.0224 * 0.000001, "l=#{l.inspect}")
+    assert(((-l).to_f + 0.0224).abs < 0.0224 * 0.000001, "l=#{l.inspect}")
 
     l = LongDecimal("0." + ("0" * 30) + "1" + ("0" * 500))
     assert((l.to_f - 1e-31).abs < 1e-32, "l=#{l.inspect}=#{l.to_s}=#{l.to_f}=#{l.to_s.to_f}")
+    assert(((-l).to_f + 1e-31).abs < 1e-32, "l=#{l.inspect}=#{l.to_s}=#{l.to_f}=#{l.to_s.to_f}")
     l = LongDecimal("0." + ("0" * 200) + "1" + ("0" * 500))
     assert((l.to_f - 1e-201).abs < 1e-202, "l=#{l.inspect}=#{l.to_s}=#{l.to_f}=#{l.to_s.to_f}")
+    assert(((-l).to_f + 1e-201).abs < 1e-202, "l=#{l.inspect}=#{l.to_s}=#{l.to_f}=#{l.to_s.to_f}")
     l = LongDecimal("0." + ("0" * 280) + "1" + ("0" * 500))
     assert((l.to_f - 1e-281).abs < 1e-282, "l=#{l.inspect}=#{l.to_s}=#{l.to_f}=#{l.to_s.to_f}")
+    assert(((-l).to_f + 1e-281).abs < 1e-282, "l=#{l.inspect}=#{l.to_s}=#{l.to_f}=#{l.to_s.to_f}")
 
     l = LongDecimal("0.00000000000000000000000000000000000000000000000000002090000000000000000000000000332000042999999999999999934478499999999999999999999979183597303900000000000002280678889571719972270000000870125632696979999999999928587104894304210318436999963636067429710015568287618182130517226303011944557351440293760289098908449297658922618709026683663019359834144789263320")
     assert((l.to_f - 0.0000000000000000000000000000000000000000000000000000209).abs < 1e-60, "l=#{l.inspect}")
+    assert(((-l).to_f + 0.0000000000000000000000000000000000000000000000000000209).abs < 1e-60, "l=#{l.inspect}")
   end
 
   #
