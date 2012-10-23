@@ -1,8 +1,8 @@
 #
 # longdecimal.rb -- Arbitrary precision decimals with fixed decimal point
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/longdecimal.rb,v 1.11 2006/02/21 00:37:10 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_04 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/longdecimal.rb,v 1.12 2006/02/21 22:30:41 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_05 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 require "complex"
@@ -55,12 +55,12 @@ class Integer
     power = gcd_with_high_power(prime_number)
     if (power.abs < MAX_FLOATABLE) then
       result = (Math.log(power) / Math.log(prime_number)).round
-    else 
+    else
       e = (Math.log(MAX_FLOATABLE) / Math.log(prime_number)).floor
       result = 0
       partial = prime_number ** e
       while (power > partial) do
-	power /= partial
+        power /= partial
         result += e
       end
       result += (Math.log(power) / Math.log(prime_number)).round
@@ -134,7 +134,7 @@ end
 # digits and the other one the position of the decimal point.
 #
 class LongDecimal < Numeric
-  @RCS_ID='-$Id: longdecimal.rb,v 1.11 2006/02/21 00:37:10 bk1 Exp $-'
+  @RCS_ID='-$Id: longdecimal.rb,v 1.12 2006/02/21 22:30:41 bk1 Exp $-'
 
   include LongDecimalRoundingMode
 
@@ -162,7 +162,7 @@ class LongDecimal < Numeric
   def LongDecimal.zero!(s = 0)
     new(0, s)
   end
- 
+
 
   #
   # creates a LongDecimal representing one with the given number of
@@ -171,7 +171,7 @@ class LongDecimal < Numeric
   def LongDecimal.one!(s = 0)
     new(1, s)
   end
- 
+
 
   #
   # creates a LongDecimal representing two with the given number of
@@ -180,7 +180,7 @@ class LongDecimal < Numeric
   def LongDecimal.two!(s = 0)
     new(2, s)
   end
- 
+
 
   #
   # creates a LongDecimal representing ten with the given number of
@@ -189,7 +189,7 @@ class LongDecimal < Numeric
   def LongDecimal.ten!(s = 0)
     new(10, s)
   end
- 
+
 
   #
   # creates a LongDecimal representing minus one with the given number of
@@ -198,17 +198,17 @@ class LongDecimal < Numeric
   def LongDecimal.minus_one!(s = 0)
     new(-1, s)
   end
- 
+
 
   #
   # creates a LongDecimal representing a power of ten with the given
   # exponent e and with the given number of digits after the decimal
-  # point (scale=s) 
+  # point (scale=s)
   #
   def LongDecimal.power_of_ten!(e, s = 0)
     new(10**e, s)
   end
- 
+
 
   #
   # initialization
@@ -384,22 +384,22 @@ class LongDecimal < Numeric
     end
   end
 
-  # 
+  #
   # convert self into String, which is the decimal representation.
   # Use trailing zeros, if int_val has them.
   #
   def to_s(shown_scale = @scale, mode = ROUND_UNNECESSARY, base = 10)
     if (base == 10) then
       if (shown_scale == @scale)
-	to_s_10
+        to_s_10
       else
-	s = self.round_to_scale(shown_scale, mode)
-	s.to_s_10
+        s = self.round_to_scale(shown_scale, mode)
+        s.to_s_10
       end
     else
       # base is not 10
       unless (base.kind_of? Integer) && 2 <= base && base <= 36 then
-	raise TypeError, "base must be integer between 2 and 36"
+        raise TypeError, "base must be integer between 2 and 36"
       end
       quot    = (self.move_point_right(scale) * base ** shown_scale) / 10 ** scale
       p(quot)
@@ -408,7 +408,7 @@ class LongDecimal < Numeric
       rounded.to_s_internal(base, shown_scale)
     end
   end
-    
+
   def to_s_10
     to_s_internal(10, scale)
   end
@@ -428,10 +428,10 @@ class LongDecimal < Numeric
     str
   end
 
-  protected :to_s_10 
+  protected :to_s_10
   protected :to_s_internal
 
-  # 
+  #
   # convert self into Rational
   # this works quite straitforward.  use int_val as numerator and a
   # power of 10 as denominator
@@ -449,7 +449,7 @@ class LongDecimal < Numeric
     int_val.to_f / 10**scale
   end
 
-  # 
+  #
   # convert self into Integer
   # This may loose information.  In most cases it is preferred to
   # control this by calling round_to_scale first and then applying
@@ -465,6 +465,21 @@ class LongDecimal < Numeric
   def to_ld
     self
   end
+
+  #
+  # LongDecimals can be seen as a fraction with a power of 10 as
+  # denominator for compatibility with other numeric classes this
+  # method is included, returning 10**scale
+  #
+  def denominator
+    10**scale
+  end
+
+  #
+  # LongDecimals can be seen as a fraction with its int_val as its
+  # numerator
+  #
+  alias numerator int_val
 
   #
   # before adding or subtracting two LongDecimal numbers
@@ -512,6 +527,8 @@ class LongDecimal < Numeric
   def succ
     LongDecimal(int_val + 1, scale)
   end
+
+  alias next succ
 
   #
   # predecessor
@@ -613,13 +630,31 @@ class LongDecimal < Numeric
   end
 
   def divide(other, rounding_mode)
-    q = self / other
-    q.round_to_scale(q.scale, rounding_mode)
+    divide_s(other, nil, rounding_mode)
   end
 
   def divide_s(other, new_scale, rounding_mode)
     q = self / other
-    q.round_to_scale(new_scale, rounding_mode)
+    if (q.kind_of? Float) then
+      q = LongDecimal(q)
+    end
+    if (q.kind_of? LongDecimal) || (q.kind_of? LongDecimalQuot) then
+      if (new_scale.nil?) then
+	new_scale = q.scale
+      end
+      q.round_to_scale(new_scale, rounding_mode)
+    else
+      q
+    end
+  end
+
+  def rdiv(other)
+    q = self / other
+    if (q.kind_of? LongDecimalQuot) || (q.kind_of? LongDecimalQuot) then
+      r.to_r
+    else
+      q
+    end
   end
 
   def /(other)
@@ -657,6 +692,20 @@ class LongDecimal < Numeric
     end
     q = (self / other).to_i
     return q, self - other * q
+  end
+
+  #
+  # find the exponent of the highest power of prime number p that divides
+  # self.  Only works for prime numbers
+  # works even for numbers that exceed the range of Float
+  #
+  def multiplicity_of_factor(prime_number)
+    m1 = numerator.multiplicity_of_factor(prime_number)
+    if (prime_number == 2 || prime_number == 5) then
+      m1 - scale
+    else
+      m1
+    end
   end
 
   def %(other)
@@ -726,7 +775,7 @@ class LongDecimal < Numeric
     end
     LongDecimal(s.int_val >> other, s.scale)
   end
-  
+
   #
   # gets binary digit
   #
@@ -901,7 +950,7 @@ end
 #
 class LongDecimalQuot < Numeric
 
-  @RCS_ID='-$Id: longdecimal.rb,v 1.11 2006/02/21 00:37:10 bk1 Exp $-'
+  @RCS_ID='-$Id: longdecimal.rb,v 1.12 2006/02/21 22:30:41 bk1 Exp $-'
 
   include LongDecimalRoundingMode
 
@@ -938,7 +987,7 @@ class LongDecimalQuot < Numeric
   def numerator
     rat.numerator
   end
-  
+
   def denominator
     rat.denominator
   end
@@ -1026,17 +1075,17 @@ class LongDecimalQuot < Numeric
   def **(other)
     if (other.kind_of? LongDecimal) || (other.kind_of? LongDecimalQuot) then
       if other.is_int? then
-	other = other.to_i
+        other = other.to_i
       else
-	other = other.to_r
+        other = other.to_r
       end
     end
     rat_result = rat ** other
     if (rat_result.kind_of? Rational) then
       if (other.kind_of? Integer) && other >= 0 then
-	new_scale = scale * other
+        new_scale = scale * other
       else
-	new_scale = scale
+        new_scale = scale
       end
       LongDecimalQuot(rat_result, new_scale)
     else
@@ -1065,6 +1114,15 @@ class LongDecimalQuot < Numeric
 #       s % o
 #     end
 #   end
+
+  #
+  # find the exponent of the highest power of prime number p that divides
+  # self.  Only works for prime numbers
+  # works even for numbers that exceed the range of Float
+  #
+  def multiplicity_of_factor(prime_number)
+    rat.multiplicity_of_factor(prime_number)
+  end
 
   def square
     self * self
