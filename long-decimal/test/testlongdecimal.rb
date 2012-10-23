@@ -2,8 +2,8 @@
 #
 # testlongdecimal.rb -- runit test for long-decimal.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.11 2006/03/20 21:38:32 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_15 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.15 2006/03/24 17:42:07 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_16 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -18,7 +18,7 @@ load "lib/long-decimal.rb"
 #
 class TestLongDecimal_class < RUNIT::TestCase
 
-  @RCS_ID='-$Id: testlongdecimal.rb,v 1.11 2006/03/20 21:38:32 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdecimal.rb,v 1.15 2006/03/24 17:42:07 bk1 Exp $-'
 
   #
   # helper method for test_split_merge_words
@@ -1989,24 +1989,78 @@ class TestLongDecimal_class < RUNIT::TestCase
     x = LongDecimal.zero!(101)
     y = check_sqrt(x, 120, LongDecimal::ROUND_UNNECESSARY, 0, 0, "zero")
     assert(y.zero?, "sqrt(0)")
-   
+
     x = LongDecimal.one!(101)
     y = check_sqrt(x, 120, LongDecimal::ROUND_UNNECESSARY, 0, 0, "one")
     assert(y.one?, "sqrt(1)")
-    
+
     x = LongDecimal.two!(101)
     y0 = check_sqrt(x, 120, LongDecimal::ROUND_DOWN, 0, 1, "two")
+    assert(y0.square < x, "y0*y0")
+    assert(y0.succ.square > x, "(y0.succ).square")
     y1 = check_sqrt(x, 120, LongDecimal::ROUND_HALF_EVEN, -1, 1, "two")
     y2 = check_sqrt(x, 120, LongDecimal::ROUND_UP, -1, 0, "two")
+    assert(y2.pred.square < x, "y2.pred.squre")
+    assert(y2.square > x, "y2*y2")
     assert(y0 <= y1, "y0 y1")
     assert(y1 <= y2, "y1 y2")
-    
+
+    x = 3.to_ld
+    y0 = check_sqrt(x, 120, LongDecimal::ROUND_DOWN, 0, 1, "three")
+    assert(y0.square < x, "y0*y0")
+    assert(y0.succ.square > x, "(y0.succ).square")
+    y1 = check_sqrt(x, 120, LongDecimal::ROUND_HALF_EVEN, -1, 1, "three")
+    y2 = check_sqrt(x, 120, LongDecimal::ROUND_UP, -1, 0, "three")
+    assert(y2.pred.square < x, "y2.pred.squre")
+    assert(y2.square > x, "y2*y2")
+    assert(y0 <= y1, "y0 y1")
+    assert(y1 <= y2, "y1 y2")
+
     x  = 4.to_ld.round_to_scale(101)
     y0 = check_sqrt(x, 120, LongDecimal::ROUND_DOWN, 0, 0, "four")
     y1 = check_sqrt(x, 120, LongDecimal::ROUND_HALF_EVEN, 0, 0, "four")
     y2 = check_sqrt(x, 120, LongDecimal::ROUND_UP, 0, 0, "four")
     assert_equal(y0, y1, "y0 y1")
     assert_equal(y1, y2, "y1 y2")
+  end
+
+  #
+  # helper method of test_sqrt_with_remainder
+  #
+  def check_sqrt_with_remainder(x, scale, str)
+    y, r = x.sqrt_with_remainder(scale)
+    z0 = y.square
+    z1 = y.succ.square
+    assert(0 <= y.sign, "sqrt must be >= 0" + str)
+    assert(z0 <= x && x < z1, "y=#{y}=sqrt(#{x}) and x in [#{z0}, #{z1})" + str)
+    assert((x - z0 - r).zero?, "x=y*y+r")
+    r
+  end
+
+  #
+  # test sqrt_with_remainder of LongDecimal
+  #
+  def test_sqrt_with_remainder
+    x = LongDecimal.zero!(101)
+    r = check_sqrt_with_remainder(x, 120, "zero")
+    assert(r.zero?, "rsqrt(0)")
+
+    x = LongDecimal.one!(101)
+    r = check_sqrt_with_remainder(x, 120, "one")
+    assert(r.zero?, "rsqrt(1)")
+
+    x = LongDecimal.two!(101)
+    check_sqrt_with_remainder(x, 120, "two")
+
+    x = 3.to_ld
+    check_sqrt_with_remainder(x, 120, "three")
+
+    x  = 4.to_ld.round_to_scale(101)
+    r = check_sqrt_with_remainder(x, 120, "four")
+    assert(r.zero?, "rsqrt(4)")
+
+    x = 5.to_ld
+    check_sqrt_with_remainder(x, 120, "five")
   end
 
   #
@@ -2116,10 +2170,47 @@ class TestLongDecimal_class < RUNIT::TestCase
 
   end
 
-  # TODO
-  # def test_is_int
-  # def test_zero
-  # def test_one
+  #
+  # test is_int? of LongDecimal
+  #
+  def test_is_int
+    assert(LongDecimal(1, 0).is_int?, "1, 0")
+    assert(LongDecimal(90, 1).is_int?, "90, 1")
+    assert(LongDecimal(200, 2).is_int?, "200, 2")
+    assert(LongDecimal(1000000, 6).is_int?, "1000000, 6")
+
+    assert(! LongDecimal(1, 1).is_int?, "1, 1")
+    assert(! LongDecimal(99, 2).is_int?, "99, 2")
+    assert(! LongDecimal(200, 3).is_int?, "200, 3")
+    assert(! LongDecimal(1000001, 6).is_int?, "1000001, 6")
+    assert(! LongDecimal(1000000, 7).is_int?, "1000000, 7")
+  end
+
+  #
+  # test zero? of LongDecimal
+  #
+  def test_zero
+    assert(LongDecimal(0, 1000).zero?, "0, 1000")
+    assert(LongDecimal(0, 0).zero?, "0, 0")
+    assert(LongDecimal.zero!(100).zero?, "0, 100")
+    assert(! LongDecimal(1, 1000).zero?, "1, 1000")
+    assert(! LongDecimal(1, 0).zero?, "1, 0")
+    assert(! LongDecimal.one!(100).zero?, "1, 0")
+  end
+
+  #
+  # test one? of LongDecimal
+  #
+  def test_one
+    assert(LongDecimal(10**1000, 1000).one?, "1, 1000")
+    assert(LongDecimal(1, 0).one?, "1, 0")
+    assert(LongDecimal.one!(100).one?, "1, 100")
+    assert(! LongDecimal(0, 1000).one?, "0, 1000")
+    assert(! LongDecimal(2, 1000).one?, "2, 1000")
+    assert(! LongDecimal(0, 0).one?, "0, 0")
+    assert(! LongDecimal.zero!(100).one?, "0, 0")
+    assert(! LongDecimal.two!(100).one?, "2, 0")
+  end
 
   #
   # test sign-method of LongDecimal
@@ -2501,10 +2592,11 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(ff, f, "must be equal")
   end
 
-  # test_to_i: to_i not tested, goes via to_r anyway
 
   # TODO
+  # test_to_i: to_i not tested, goes via to_r anyway
   # def test_to_ld
+  # def test_to_bd
 
   #
   # test negation operator (unary -) of LongDecimalQuot
@@ -2994,6 +3086,43 @@ class TestLongDecimal_class < RUNIT::TestCase
     zz = 1
     assert_equal(zz, z, "z=#{z.inspect}")
 
+  end
+
+  #
+  # test is_int? of LongDecimalQuot
+  #
+  def test_ldq_is_int
+    assert(! LongDecimalQuot(Rational(1, 2), 0).is_int?, "1, 2")
+    assert(! LongDecimalQuot(Rational(90, 91), 1).is_int?, "90, 91")
+    assert(! LongDecimalQuot(Rational(200, 3), 2).is_int?, "200, 3")
+    assert(! LongDecimalQuot(Rational(3333333, 1000000), 6).is_int?, "3333333, 1000000")
+
+    assert(LongDecimalQuot(1, 1).is_int?, "1, 1")
+    assert(LongDecimalQuot(99, 2).is_int?, "99, 2")
+    assert(LongDecimalQuot(200, 3).is_int?, "200, 3")
+    assert(LongDecimalQuot(1000001, 6).is_int?, "1000001, 6")
+    assert(LongDecimalQuot(1000000, 7).is_int?, "1000000, 7")
+  end
+
+  #
+  # test zero? of LongDecimalQuot
+  #
+  def test_ldq_zero
+    assert(LongDecimalQuot(0, 1000).zero?, "0, 1000")
+    assert(LongDecimalQuot(0, 0).zero?, "0, 0")
+    assert(! LongDecimalQuot(1, 1000).zero?, "1, 1000")
+    assert(! LongDecimalQuot(1, 0).zero?, "1, 0")
+  end
+
+  #
+  # test one? of LongDecimalQuot
+  #
+  def test_ldq_one
+    assert(LongDecimalQuot(1, 1000).one?, "1, 1000")
+    assert(LongDecimalQuot(1, 0).one?, "1, 0")
+    assert(! LongDecimalQuot(0, 1000).one?, "0, 1000")
+    assert(! LongDecimalQuot(2, 1000).one?, "2, 1000")
+    assert(! LongDecimalQuot(0, 0).one?, "0, 0")
   end
 
   #

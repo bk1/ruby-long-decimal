@@ -1,8 +1,8 @@
 #
 # long-decimal.rb -- Arbitrary precision decimals with fixed decimal point
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal.rb,v 1.6 2006/03/20 21:38:32 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_15 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal.rb,v 1.9 2006/03/24 17:42:07 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_16 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 require "complex"
@@ -53,14 +53,113 @@ module LongDecimalRoundingMode
 end # LongDecimalRoundingMode
 
 #
+# common base class for LongDecimal and LongDecimalQuot
+#
+class LongDecimalBase < Numeric
+  @RCS_ID='-$Id: long-decimal.rb,v 1.9 2006/03/24 17:42:07 bk1 Exp $-'
+
+  include LongDecimalRoundingMode
+
+  #
+  # convert self into Rational
+  # this works quite straitforward.  
+  # in case of LongDecimal use int_val as numerator and a power of 10
+  # as denominator, which happens to be the way numerator and
+  # denominator are defined
+  #
+  def to_r
+    Rational(numerator, denominator)
+  end
+
+  #
+  # self + 1
+  #
+  def inc
+    self + 1
+  end
+
+  #
+  # self - 1
+  #
+  def dec
+    self - 1
+  end
+
+  #
+  # unary plus returns self
+  #
+  def +@
+    self
+  end
+
+  #
+  # calculate the square of self
+  #
+  def square
+    self * self
+  end
+
+  #
+  # calculate the multiplicative inverse
+  #
+  def reciprocal
+    1 / self
+  end
+
+  alias inverse reciprocal
+
+  #
+  # square of absolute value
+  # happens to be the square
+  #
+  alias abs2 square
+
+  #
+  # Compares the two numbers.
+  # returns -1 if self < other
+  #          0 if self-other = 0
+  #         +1 if self > other
+  # it needs to be observed, that
+  # x == y implies (x <=> y) == 0
+  # but not
+  # (x <=> y) == 0 implies x == y
+  # because == also takes the scale into account and considers two
+  # numbers only equal, if they have the same number of potentially
+  # zero digits after the decimal point.
+  #
+  def <=> (other)
+    diff = (self - other)
+    if (diff.kind_of? LongDecimalBase) then
+      diff.sgn
+    else
+      diff <=> 0
+    end
+  end
+
+  #
+  # <=>-comparison for the scales
+  #
+  def scale_ufo(other)
+    raise TypeError, "only works for LongDecimal or LongDecimalQuot" unless (other.kind_of? LongDecimalBase)
+    self.scale <=> other.scale
+  end
+
+  #
+  # ==-comparison for the scales
+  #
+  def scale_equal(other)
+    scale_ufo(other).zero?
+  end
+
+end
+
+#
 # class for holding fixed point long decimal numbers
 # these can be considered as a pair of two integer.  One contains the
 # digits and the other one the position of the decimal point.
 #
-class LongDecimal < Numeric
-  @RCS_ID='-$Id: long-decimal.rb,v 1.6 2006/03/20 21:38:32 bk1 Exp $-'
-
-  include LongDecimalRoundingMode
+class LongDecimal < LongDecimalBase
+  @RCS_ID='-$Id: long-decimal.rb,v 1.9 2006/03/24 17:42:07 bk1 Exp $-'
 
   #  MINUS_ONE = LongDecimal(-1)
   #  ZERO      = LongDecimal(0)
@@ -366,15 +465,6 @@ class LongDecimal < Numeric
   protected :to_s_internal
 
   #
-  # convert self into Rational
-  # this works quite straitforward.  use int_val as numerator and a
-  # power of 10 as denominator
-  #
-  def to_r
-    Rational(numerator, denominator)
-  end
-
-  #
   # convert self into Float
   # this works straitforward by dividing int_val by power of 10 in
   # float-arithmetic, in all cases where numerator and denominator are
@@ -507,7 +597,6 @@ class LongDecimal < Numeric
       idx -= 1
       expon = 1 << idx
       power = powers[idx]
-      # puts("i=#{int_part} p=#{power}\n")
       while int_part >= power
         id += expon
         int_part = (int_part / power).to_i
@@ -577,20 +666,6 @@ class LongDecimal < Numeric
   end
 
   #
-  # self + 1
-  #
-  def inc
-    self + 1
-  end
-
-  #
-  # self - 1
-  #
-  def dec
-    self - 1
-  end
-
-  #
   # self += 1
   #
   def inc!
@@ -609,14 +684,6 @@ class LongDecimal < Numeric
   #
   def unit
     LongDecimal(1, scale)
-  end
-
-  #
-  # apply unary +
-  # (returns self)
-  #
-  def +@
-    self
   end
 
   #
@@ -699,7 +766,7 @@ class LongDecimal < Numeric
     if (q.kind_of? Float) then
       q = LongDecimal(q)
     end
-    if (q.kind_of? LongDecimal) || (q.kind_of? LongDecimalQuot) then
+    if (q.kind_of? LongDecimalBase) then
       if (new_scale.nil?) then
         new_scale = q.scale
       end
@@ -753,7 +820,7 @@ class LongDecimal < Numeric
   # applying power, usually resulting in a Float as power.
   #
   def **(other)
-    if ((other.kind_of? LongDecimal) || (other.kind_of? LongDecimalQuot)) && other.is_int? then
+    if (other.kind_of? LongDecimalBase) && other.is_int? then
       other = other.to_i
     end
     if other.kind_of? Integer then
@@ -765,7 +832,7 @@ class LongDecimal < Numeric
         LongDecimalQuot(Rational(10 ** new_scale, int_val ** abs_other), new_scale)
       end
     else
-      if (other.kind_of? LongDecimal) || (other.kind_of? LongDecimalQuot) then
+      if (other.kind_of? LongDecimalBase) then
         other = other.to_r
       end
       self.to_r ** other
@@ -965,7 +1032,7 @@ class LongDecimal < Numeric
       return [ y, r ]
     else
       if ((rounding_mode == ROUND_HALF_EVEN || rounding_mode == ROUND_HALF_DOWN) && rem > 0) then
-	rounding_mode = ROUND_HALF_UP
+        rounding_mode = ROUND_HALF_UP
       end
       y = y.round_to_scale(new_scale, rounding_mode)
       return y
@@ -975,62 +1042,10 @@ class LongDecimal < Numeric
   private :sqrt_internal
 
   #
-  # calculate the multiplicative inverse
-  #
-  def reciprocal
-    1 / self
-  end
-
-  alias inverse reciprocal
-
-  #
   # Absolute value
   #
   def abs
     LongDecimal(int_val.abs, scale)
-  end
-
-  #
-  # square of absolute value
-  # happens to be the square
-  #
-  alias abs2 square
-
-  #
-  # Compares the two numbers.
-  # returns -1 if self < other
-  #          0 if self-other = 0
-  #         +1 if self > other
-  # it needs to be observed, that
-  # x == y implies (x <=> y) == 0
-  # but not
-  # (x <=> y) == 0 implies x == y
-  # because == also takes the scale into account and considers two
-  # numbers only equal, if they have the same number of potentially
-  # zero digits after the decimal point.
-  #
-  def <=> (other)
-    diff = (self - other)
-    if (diff.kind_of? LongDecimal) || (diff.kind_of? LongDecimalQuot) then
-      diff.sgn
-    else
-      diff <=> 0
-    end
-  end
-
-  #
-  # <=>-comparison for the scales
-  #
-  def scale_ufo(other)
-    raise TypeError, "only works for LongDecimal and LongDecimalQuot" unless (other.kind_of? LongDecimal) || (other.kind_of? LongDecimalQuot)
-    self.scale <=> other.scale
-  end
-
-  #
-  # ==-comparison for the scales
-  #
-  def scale_equal(other)
-    scale_ufo(other).zero?
   end
 
   #
@@ -1102,6 +1117,15 @@ class LongDecimal < Numeric
   end
 
   #
+  # comparison of self with other for equality
+  # takes into account the values expressed by self and other and the
+  # equality of the number of digits.
+  #
+  def ===(other)
+    (other.kind_of? LongDecimal) && self.int_val == other.int_val
+  end
+
+  #
   # check if the number expressed by self is 0 (zero)
   # with any number of 0s after the decimal point.
   #
@@ -1138,11 +1162,9 @@ end # LongDecimal
 # performed a division.  The division cannot be completed without
 # providing additional information on how to round the result.
 #
-class LongDecimalQuot < Numeric
+class LongDecimalQuot < LongDecimalBase
 
-  @RCS_ID='-$Id: long-decimal.rb,v 1.6 2006/03/20 21:38:32 bk1 Exp $-'
-
-  include LongDecimalRoundingMode
+  @RCS_ID='-$Id: long-decimal.rb,v 1.9 2006/03/24 17:42:07 bk1 Exp $-'
 
   #
   # constructor
@@ -1213,17 +1235,17 @@ class LongDecimalQuot < Numeric
   end
 
   #
-  # conversion to rational
-  #
-  def to_r
-    Rational(numerator, denominator)
-  end
-
-  #
   # convert into Float
   #
   def to_f
     to_r.to_f
+  end
+
+  # 
+  # conversion to BigDecimal
+  #
+  def to_bd
+    to_ld.to_bd
   end
 
   #
@@ -1241,10 +1263,17 @@ class LongDecimalQuot < Numeric
   end
 
   #
-  # unary plus returns self
+  # self += 1
   #
-  def +@
-    self
+  def inc!
+    @rat += 1
+  end
+
+  #
+  # self -= 1
+  #
+  def dec!
+    @rat -= 1
   end
 
   #
@@ -1326,7 +1355,7 @@ class LongDecimalQuot < Numeric
   # otherwise result will be Float, BigDecimal or Complex
   #
   def **(other)
-    if (other.kind_of? LongDecimal) || (other.kind_of? LongDecimalQuot) then
+    if (other.kind_of? LongDecimalBase) then
       if other.is_int? then
         other = other.to_i
       else
@@ -1348,9 +1377,9 @@ class LongDecimalQuot < Numeric
 
   #
   # division with remainder
-  # calculate q and r such that 
+  # calculate q and r such that
   # q is an integer and r is non-negative and less or equal the
-  # divisor. 
+  # divisor.
   #
   def divmod(other)
     if (other.kind_of? Complex) then
@@ -1359,7 +1388,7 @@ class LongDecimalQuot < Numeric
     q = (self / other).to_i
     return q, self - other * q
   end
-  
+
   #
   # division with remainder
   # only return the remainder
@@ -1367,20 +1396,6 @@ class LongDecimalQuot < Numeric
   def %(other)
     q, r = divmod other
     r
-  end
-
-  #
-  # calculate the square of self
-  #
-  def square
-    self * self
-  end
-
-  #
-  # calculate the multiplicative inverse
-  #
-  def reciprocal
-    1 / self
   end
 
   #
@@ -1392,10 +1407,9 @@ class LongDecimalQuot < Numeric
 
   #
   # square of absolute value
+  # happens to be the square
   #
-  def abs2
-    self.abs.square
-  end
+  alias abs2 square
 
   #
   # convert LongDecimalQuot to LongDecimal with the given precision
@@ -1510,30 +1524,19 @@ class LongDecimalQuot < Numeric
   end
 
   #
-  # Compares the two numbers for < and > etc.
+  # check if the number expressed by self is 0 (zero)
+  # with any number of 0s after the decimal point.
   #
-  def <=> (other)
-    diff = (self - other)
-    if (diff.kind_of? LongDecimal) || (diff.kind_of? LongDecimalQuot) then
-      diff.sgn
-    else
-      diff <=> 0
-    end
+  def zero?
+    @rat.zero?
   end
 
   #
-  # compare scales with <=>
+  # check if the number expressed by self is 1 (one)
+  # with any number of 0s after the decimal point.
   #
-  def scale_ufo(other)
-    raise TypeError, "only works for LongDecimal and LongDecimalQuot" unless (other.kind_of? LongDecimal) || (other.kind_of? LongDecimalQuot)
-    self.scale <=> other.scale
-  end
-
-  #
-  # check if scales are equal
-  #
-  def scale_equal(other)
-    scale_ufo(other).zero?
+  def one?
+    (@rat == 1)
   end
 
   #
@@ -1791,7 +1794,6 @@ module LongMath
       return sqrtb_with_remainder(xwords[0])
     end
 
-    # puts(xwords.inspect + "\n")
     xi = (xwords[0] << n2) + xwords[1]
     a  = sqrtb_with_remainder(xi)
     yi = a[0]
@@ -1811,7 +1813,6 @@ module LongMath
         d = d0 + q
         r = xi - (q * d)
         break if (0 <= r && (r < d || was_negative))
-        # puts("i=#{i} j=#{j} q=#{q} d0=#{d0} d=#{d} r=#{r} yi=#{yi} xi=#{xi}\n")
         if (r < 0) then
           was_negative = true
           q = q-1
@@ -1820,7 +1821,6 @@ module LongMath
         end
         j += 1
         if (j > 10) then
-          # puts("i=#{i} j=#{j} q=#{q} q0=#{q0} d0=#{d0} d=#{d} r=#{r} yi=#{yi} xi=#{xi}\n")
           break
         end
       end
@@ -1831,7 +1831,6 @@ module LongMath
   end
 
   #
-
   # find the gcd of an Integer x with b**n0 where n0 is a sufficiently
   # high exponent
   # such that gcd(x, b**m) = gcd(x, b**n) for all m, n >= n0
@@ -1940,7 +1939,6 @@ module LongMath
       last_diff = diff
       k += 1
       pow_k = pow_k << 1
-      # puts("k=#{k} pi=#{pi.to_s}\nd=#{diff}\n\n")
     end
     pi.round_to_scale(prec, final_mode)
   end
@@ -1975,7 +1973,6 @@ module LongMath
     if (iprec < prec) then
       iprec = prec
     end
-    # puts("calc_iprec_for_exp: x=#{x} prec=#{prec} iprec=#{iprec} iprec_extra=#{iprec_extra}\n")
     iprec
   end
 
@@ -2032,7 +2029,6 @@ module LongMath
       iprec = calc_iprec_for_exp(x, prec)
     end
     check_is_prec(iprec, "iprec")
-    # puts("exp_internal: x=#{x} prec=#{prec} iprec=#{iprec}\n")
 
     dprec = [ iprec, (prec + 1) << 1 ].min
 
@@ -2062,13 +2058,10 @@ module LongMath
       if (i > 0) then
         x_i = (x_i * x_k).round_to_scale(iprec, mode)
       end
-      # puts("y_k=#{y_k}\ni=#{i} j=#{j} k=#{k} x=#{x}\nx_k=#{x_k}\nx_j=#{x_j}\nx_i=#{x_i}\ns[i]=#{s[i]}\n\n")
       y_k += (s[i] * x_i).round_to_scale(iprec, mode)
     end
-    # puts("y_k = #{y_k}\n")
     k.times do |i|
       y_k = y_k.square.round_to_scale(iprec, mode)
-      # puts("i=#{i} y_k = #{y_k}\n")
     end
     y = y_k.round_to_scale(prec, final_mode)
     y
@@ -2231,7 +2224,7 @@ module LongMath
     # puts("y=#{y} s=#{s} f=#{factor} sum=#{sum}\n")
     return y.round_to_scale(prec, final_mode)
 
-  end
+  end # log_internal
 
   #
   # calc the power of x with exponent y to the given precision as
@@ -2281,7 +2274,8 @@ module LongMath
     xy = exp_internal(logx_y, prec + 1, mode)
     # puts("power_internal: x=#{x} logx=#{logx} y=#{y} logx_y=#{logx_y} xy=#{xy} iprec=#{iprec} prec=#{prec}\n")
     xy.round_to_scale(prec, final_mode)
-  end
+
+  end # power_internal
 
 end # LongMath
 

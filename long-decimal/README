@@ -1,10 +1,12 @@
 Version
 -------
 
-This version ($Name: PRE_ALPHA_0_15 $) is functionally almost identical with the
-previous pre-alpha-0.14, but some tests have been added and some minor
-bugs have been fixed and some missing rdoc-comments have been
-supplied.
+This version ($Name: PRE_ALPHA_0_16 $) is functionally almost identical with the
+previous pre-alpha-0.15.  A common base class LongDecimalBase for
+LongDecimal and LongDecimalQuot has been added and some methods which
+happen to be identical have been moved to this class.  Some tests have
+been added, but no bugs have been detected.  Some comments have been
+provided or improved.
 
 It could be observed that gem-installation, as described below, fails
 on Windows 2000 with ruby 1.8.2, but works on Linux with ruby 1.8.4
@@ -16,7 +18,8 @@ Beyond this restriction there are no known bugs and this version can
 be considered complete in terms of functionality.  This version is
 still a pre-alpha-version, but it is expected to move it to alpha
 within the next weeks, after having added some more tests and having
-fixed potential bugs that these tests might reveal.
+fixed potential bugs that these tests might reveal.  I do not expect
+the first alpha version to be much different from this version.
 
 Install
 -------
