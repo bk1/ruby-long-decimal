@@ -1,0 +1,88 @@
+#
+# Rakefile for long-decimal project
+#
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/Rakefile,v 1.1 2006/02/25 19:52:11 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_06 $
+# Author:    $Author: bk1 $ (Karl Brodowsky)
+#
+
+require 'rake/gempackagetask'
+require 'rbconfig'
+
+include Config
+
+PKG_NAME    = 'long-decimal'
+PKG_VERSION = File.read('VERSION').chomp
+PKG_FILES   = Dir.glob("**/*").delete_if { |item|
+  item.include?("CVS") || item.include?("RCS") || item.include?("pkg") || item.include?("~") || item.include?("#")
+}
+
+desc "Creating VERSION file"
+task :version do
+  ruby 'version.rb lib/longdecimal.rb > VERSION'
+end
+
+desc "Installing library"
+task :install  do
+  ruby 'install.rb'
+end
+
+desc "Creating documentation"
+task :doc do
+  ruby 'make_doc.rb'
+end
+
+desc "Testing library"
+task :test  do
+  ruby %{test/testlongdecimal.rb}
+end
+
+spec = Gem::Specification.new do |s|
+
+  #### Basic information.
+
+  s.name = 'long-decimal'
+  s.version = PKG_VERSION
+  s.summary = 'LongDecimal for numbers with fixed point'
+  s.description = ""
+
+  #### Dependencies and requirements.
+
+  s.files = PKG_FILES
+
+  #### C code extensions.
+
+  #### Load-time details: library and application (you will need one or both).
+
+  s.require_path = 'lib' # 'lib'                         # Use these for libraries.
+  s.autorequire = 'long-decimal'
+
+  #s.bindir = "bin"                              # Use these for applications.
+  #s.executables = ["bla.rb"]
+  #s.default_executable = "bla.rb"
+
+  #### Documentation and testing.
+
+  s.has_rdoc = true
+  #s.extra_rdoc_files = rd.rdoc_files.reject { |fn| fn =~ /\.rb$/ }.to_a
+  #s.rdoc_options <<
+  #  '--title' <<  'Rake -- Ruby Make' <<
+  #  '--main' << 'README' <<
+  #  '--line-numbers'
+  s.test_files << 'test/testlongdecimal.rb'
+
+  #### Author and project details.
+
+  s.author = "Karl Brodowsky"
+  s.email = "http://www.velofahren.de/mail.html"
+  s.homepage = "http://long-decimal.rubyforge.org/"
+  s.rubyforge_project = "long-decimal"
+end
+
+Rake::GemPackageTask.new(spec) do |pkg|
+  pkg.need_tar = true
+  pkg.package_files += PKG_FILES
+end
+
+# end of file Rakefile
+
