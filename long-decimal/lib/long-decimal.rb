@@ -7,8 +7,8 @@
 # additional functionality, mostly transcendental functions,
 # may be found in long-decimal-extra.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal.rb,v 1.85 2011/01/16 18:39:22 bk1 Exp $
-# CVS-Label: $Name: RELEASE_1_00_00 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal.rb,v 1.86 2011/01/23 20:55:32 bk1 Exp $
+# CVS-Label: $Name: RELEASE_1_00_01 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -353,7 +353,7 @@ end
 # common base class for LongDecimal and LongDecimalQuot
 #
 class LongDecimalBase < Numeric
-  @@RCS_ID='-$Id: long-decimal.rb,v 1.85 2011/01/16 18:39:22 bk1 Exp $-'
+  @@RCS_ID='-$Id: long-decimal.rb,v 1.86 2011/01/23 20:55:32 bk1 Exp $-'
 
   # allow easy check if running with version 1.9
   RUNNING_19 = RUBY_VERSION.match /^1\.9/
@@ -583,7 +583,7 @@ end # class LongDecimalBase
 # digits and the other one the position of the decimal point.
 #
 class LongDecimal < LongDecimalBase
-  @@RCS_ID='-$Id: long-decimal.rb,v 1.85 2011/01/16 18:39:22 bk1 Exp $-'
+  @@RCS_ID='-$Id: long-decimal.rb,v 1.86 2011/01/23 20:55:32 bk1 Exp $-'
 
   #  MINUS_ONE = LongDecimal(-1)
   #  ZERO      = LongDecimal(0)
@@ -1880,7 +1880,7 @@ end # LongDecimal
 #
 class LongDecimalQuot < LongDecimalBase
 
-  @@RCS_ID='-$Id: long-decimal.rb,v 1.85 2011/01/16 18:39:22 bk1 Exp $-'
+  @@RCS_ID='-$Id: long-decimal.rb,v 1.86 2011/01/23 20:55:32 bk1 Exp $-'
 
   #
   # constructor
@@ -2912,7 +2912,7 @@ module LongMath
   #
   # calculate the square root of an integer x using bitwise algorithm
   # the result is rounded to an integer y such that
-  # y**2 <= x < (y+1)**2
+  # y**2&nbsp;<=&nbsp;x&nbsp;<&nbsp;(y+1)**2
   #
   def LongMath.sqrtb(x)
     a = sqrtb_with_remainder(x)
@@ -2920,8 +2920,8 @@ module LongMath
   end
 
   #
-  # calculate an integer s >= 0 and a remainder r >= 0 such that
-  # x = s**2 + r and s**2 <= x < (s+1)**2
+  # calculate an integer s&nbsp;>=&nbsp;0 and a remainder r&nbsp;>=&nbsp;0 such that
+  # x&nbsp;=&nbsp;s**2&nbsp;+&nbsp;r and s**2&nbsp;<=&nbsp;x&nbsp;<&nbsp;(s+1)**2
   # the bitwise algorithm is used, which works well for relatively
   # small values of x.
   #
@@ -2961,7 +2961,7 @@ module LongMath
   # 32 bit systems, because internally parts of the double size are
   # used.
   # the result is rounded to an integer y such that
-  # y**2 <= x < (y+1)**2
+  # y**2&nbsp;<=&nbsp;x&nbsp;<&nbsp;(y+1)**2
   #
   def LongMath.sqrtw(x, n = 16)
     a = sqrtw_with_remainder(x, n)
@@ -2970,7 +2970,7 @@ module LongMath
 
   #
   # calculate the an integer s >= 0 and a remainder r >= 0 such that
-  # x = s**2 + r and s**2 <= x < (s+1)**2
+  # x&nbsp;=&nbsp;s**2&nbsp;+&nbsp;r and s**2&nbsp;<=&nbsp;x&nbsp;<&nbsp;(s+1)**2
   # the wordwise algorithm is used, which works well for relatively
   # large values of x.  n defines the word size to be used for the
   # algorithm.  It is good to use half of the machine word, but the
@@ -3036,7 +3036,7 @@ module LongMath
   #
   # calculate the cubic root of an integer x using bitwise algorithm
   # the result is rounded to an integer y such that
-  # y**3 <= x < (y+1)**3
+  # y**3&nbsp;<=&nbsp;x&nbsp;<&nbsp;(y+1)**3
   #
   def LongMath.cbrtb(x)
     a = cbrtb_with_remainder(x)
@@ -3044,8 +3044,8 @@ module LongMath
   end
 
   #
-  # calculate an integer s >= 0 and a remainder r >= 0 such that
-  # x = s**3 + r and s**3 <= x < (s+1)**3
+  # calculate an integer s&nbsp;>=&nbsp;0 and a remainder r&nbsp;>=&nbsp;0 such that
+  # x&nbsp;=&nbsp;s**3&nbsp;+&nbsp;r and s**3&nbsp;<=&nbsp;x&nbsp;<&nbsp;(s+1)**3
   # for negative numbers x return negative remainder and result.
   # the bitwise algorithm is used, which works well for relatively
   # small values of x.
