@@ -1,8 +1,8 @@
 #
 # long-decimal.rb -- Arbitrary precision decimals with fixed decimal point
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal.rb,v 1.20 2006/04/02 15:52:27 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_20 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal.rb,v 1.24 2006/04/05 21:15:52 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_21 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 require "complex"
@@ -61,7 +61,7 @@ end # LongDecimalRoundingMode
 # common base class for LongDecimal and LongDecimalQuot
 #
 class LongDecimalBase < Numeric
-  @RCS_ID='-$Id: long-decimal.rb,v 1.20 2006/04/02 15:52:27 bk1 Exp $-'
+  @RCS_ID='-$Id: long-decimal.rb,v 1.24 2006/04/05 21:15:52 bk1 Exp $-'
 
   include LongDecimalRoundingMode
 
@@ -164,7 +164,7 @@ end # class LongDecimalBase
 # digits and the other one the position of the decimal point.
 #
 class LongDecimal < LongDecimalBase
-  @RCS_ID='-$Id: long-decimal.rb,v 1.20 2006/04/02 15:52:27 bk1 Exp $-'
+  @RCS_ID='-$Id: long-decimal.rb,v 1.24 2006/04/05 21:15:52 bk1 Exp $-'
 
   #  MINUS_ONE = LongDecimal(-1)
   #  ZERO      = LongDecimal(0)
@@ -1034,7 +1034,7 @@ class LongDecimal < LongDecimalBase
   # use rounding_mode if the result is not exact
   #
   def sqrt(new_scale, rounding_mode)
-    sqrt_internal(new_scale, rounding_mode, false)
+    LongMath.sqrt(self, new_scale, rounding_mode)
   end
 
   #
@@ -1044,39 +1044,8 @@ class LongDecimal < LongDecimalBase
   # new_scale of digits after the decimal point
   #
   def sqrt_with_remainder(new_scale)
-    sqrt_internal(new_scale, ROUND_DOWN, true)
+    LongMath.sqrt_with_remainder(self, new_scale)
   end
-
-
-  #
-  # internal helper method for calculationg sqrt and sqrt_with_remainder
-  #
-  def sqrt_internal(new_scale, rounding_mode, with_rem)
-    raise TypeError, "new_scale #{new_scale.inspect} must be integer" unless new_scale.kind_of? Integer
-    raise TypeError, "new_scale #{new_scale.inspect} must be >= 0" unless new_scale >= 0
-    raise TypeError, "mode #{mode.inspect} must be legal rounding mode" unless rounding_mode.kind_of? RoundingModeClass
-
-    new_scale1 = new_scale
-    unless (with_rem) then
-      new_scale1 += 1
-    end
-    old_scale  = (new_scale1 << 1)
-    x = round_to_scale(old_scale, rounding_mode)
-    root, rem = LongMath.sqrtw_with_remainder(x.int_val)
-    y = LongDecimal(root, new_scale1)
-    if (with_rem) then
-      r = LongDecimal(rem, old_scale)
-      return [ y, r ]
-    else
-      if ((rounding_mode == ROUND_HALF_EVEN || rounding_mode == ROUND_HALF_DOWN) && rem > 0) then
-        rounding_mode = ROUND_HALF_UP
-      end
-      y = y.round_to_scale(new_scale, rounding_mode)
-      return y
-    end
-  end
-
-  private :sqrt_internal
 
   #
   # Absolute value
@@ -1228,7 +1197,7 @@ end # LongDecimal
 #
 class LongDecimalQuot < LongDecimalBase
 
-  @RCS_ID='-$Id: long-decimal.rb,v 1.20 2006/04/02 15:52:27 bk1 Exp $-'
+  @RCS_ID='-$Id: long-decimal.rb,v 1.24 2006/04/05 21:15:52 bk1 Exp $-'
 
   #
   # constructor
@@ -1741,6 +1710,13 @@ class Numeric
     end
   end
 
+  #
+  # test if 1 (like zero?)
+  #
+  def one?
+    (self - 1).zero?
+  end
+
 end # Numeric
 
 class Rational
@@ -1853,6 +1829,14 @@ module LongMath
   end
 
   #
+  # helper method for the check of type
+  #
+  def LongMath.check_cacheable(x, s="x")
+    raise TypeError, "#{s}=#{x} must be LongDecimal or Array of LongDecimal" unless (x.kind_of? LongDecimal) || (x.kind_of? Array) && (x[0].kind_of? LongDecimal)
+  end
+    
+
+  #
   # store new value in cache, if it provides an improvement of
   # precision
   #
@@ -1861,9 +1845,9 @@ module LongMath
       oval = @@cache[key]
       # puts("set key=#{key}\noval=#{oval}\nval=#{val}\n")
       unless (oval.nil?)
-        raise TypeError, "must be LongDecimal" unless (val.kind_of? LongDecimal) && (oval.kind_of? LongDecimal)
-        r = val.scale_ufo(oval)
-        if (r <= 0)
+	check_cacheable(val, "val")
+	check_cacheable(oval, "oval")
+        if (val.scale <= oval.scale)
           return
         end
       end
@@ -2029,6 +2013,7 @@ module LongMath
   def LongMath.sqrtw_with_remainder(x, n = 16)
     check_is_int(x, "x")
     check_is_int(n, "n")
+
     n2 = n<<1
     n1 = n+1
     check_word_len(n2, "2*n")
@@ -2337,7 +2322,7 @@ module LongMath
   # not work correctly
   #
   def LongMath.exp_internal(x, prec = nil, final_mode = LongDecimal::ROUND_HALF_DOWN, j = nil, k = nil, iprec = nil, mode = LongDecimal::ROUND_HALF_DOWN, cache_result = true)
-    # check_is_ld(x, "x")
+
     if (prec == nil) then
       if (x.kind_of? LongDecimalBase)
         prec = x.scale
@@ -2386,7 +2371,7 @@ module LongMath
     check_is_prec(iprec, "iprec")
 
     # we only cache exp(1)
-    cache_key = get_cache_key("exp", x, mode, [1])
+    cache_key = get_cache_key("exp", x, mode, [1, 10, 100, MAX_EXP_ABLE.to_i])
     y_k = get_cached(cache_key, x, iprec)
 
     if (y_k.nil?) then
@@ -2451,14 +2436,68 @@ module LongMath
   # calculate approximation of sqrt of a LongDecimal.
   #
   def LongMath.sqrt(x, prec, mode = LongDecimal::ROUND_HALF_DOWN)
-    # check_is_ld(x, "x")
+    LongMath.sqrt_internal(x, prec, mode, false)
+  end
+
+  #
+  # calculate approximation of sqrt of a LongDecimal with remainder
+  #
+  def LongMath.sqrt_with_remainder(x, prec)
+    LongMath.sqrt_internal(x, prec, ROUND_DOWN, true)
+  end
+
+  private
+
+  #
+  # internal helper method for calculationg sqrt and sqrt_with_remainder
+  #
+  def LongMath.sqrt_internal(x, prec, mode, with_rem, cache_result = true)
     check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
     unless (x.kind_of? LongDecimal)
-      x = x.to_ld(2*(prec+1), mode)
+      x = x.to_ld(2 * (prec+1), mode)
     end
-    x.sqrt(prec, mode)
+    prec1 = prec
+    unless (with_rem) then
+      prec1 += 1
+    end
+    cache_key = nil
+    unless (with_rem)
+      cache_key = get_cache_key("sqrt", x, mode, [2, 3, 5, 6, 7, 8, 10])
+      y_arr = get_cached(cache_key, x, prec)
+    end
+    if (y_arr.nil?) then
+      y_arr = sqrt_raw(x, prec1, mode)
+      def y_arr.scale
+	self[0].scale
+      end
+      set_cached(cache_key, y_arr) if cache_result
+    end
+    if (with_rem) then
+      return y_arr
+    else
+      y, r = y_arr
+      if ((mode == ROUND_HALF_EVEN || mode == ROUND_HALF_DOWN) && r > 0) then
+        mode = ROUND_HALF_UP
+      end
+      y = y.round_to_scale(prec, mode)
+      return y
+    end
   end
+
+  #
+  # calculate sqrt with remainder uncached
+  #
+  def LongMath.sqrt_raw(x, new_scale1, rounding_mode)
+    old_scale  = (new_scale1 << 1)
+    x = x.round_to_scale(old_scale, rounding_mode)
+    root, rem = LongMath.sqrtw_with_remainder(x.int_val)
+    y = LongDecimal(root, new_scale1)
+    r = LongDecimal(rem, old_scale)
+    return [y, r]
+  end
+
+  public
 
   #
   # calculate the natural logarithm function of x to the given precision as
@@ -2576,51 +2615,97 @@ module LongMath
   #
   def LongMath.log_raw(x, prec, iprec, mode)
 
+    # t0 = Time.new
+    # puts("log_raw start")
+
+    # we have to rely on iprec being at least 10
+    raise TypeError, "iprec=#{iprec} out of range" unless (iprec.kind_of? Fixnum) && iprec >= 10
+
     #    dprec = [ iprec - 1, (prec + 1) << 1 ].min
+    # dprec >= 9
     dprec = iprec - 1
 
+    # result is stored in y
     y = 0
+    # sign of result
     s = 1
+    # make sure x is >= 1
     if (x < 1) then
       x = (1 / x).round_to_scale(iprec, mode)
       s = -1
     end
+    # puts("log_raw prepared t=#{Time.new-t0}")
+
+    # number that are beyond the usual range of Float need to be
+    # handled specially to reduce to something expressable as Float
     exp_part = 0
     estimate = 0
-    while (x > MAX_FLOATABLE) do
-      if (exp_part == 0) then
-        estimate = MAX_EXP_ABLE.to_ld
-        exp_part = exp(estimate, iprec)
-      end
-      x = (x / exp_part).round_to_scale(iprec, mode)
-      if (s < 0) then
-        y -= estimate
-      else
-        y += estimate
-      end
-    end
-
-    delta = LongDecimal(1, 3)
-    while (x - 1).abs > delta do
-      xf = x.to_f
-      mlx = Math.log(xf)
-      estimate = mlx.to_ld(20, mode)
-      exp_part = exp(estimate, iprec << 1)
-      x = (x / exp_part).round_to_scale(iprec, mode)
-
-      if (s < 0) then
-        y -= estimate
-      else
-        y += estimate
+#     while (x > MAX_FLOATABLE) do
+#       if (exp_part == 0) then
+#         estimate = MAX_EXP_ABLE.to_i.to_ld
+#         exp_part = exp(estimate, iprec)
+#       end
+#       x = (x / exp_part).round_to_scale(iprec, mode)
+#       if (s < 0) then
+#         y -= estimate
+#       else
+#         y += estimate
+#       end
+#     end
+    exp_keys = [ MAX_EXP_ABLE.to_i, 100, 10, 1 ]
+    exp_keys.each do |exp_key|
+      exp_val = exp(exp_key, iprec)
+      while (x > exp_val) do
+        x = (x / exp_val).round_to_scale(iprec, mode)
+        if (s < 0) then
+          y -= exp_key
+        else
+          y += exp_key
+        end
       end
     end
+    # puts("log_raw divided t=#{Time.new-t0}")
+
+#     # make sure x is close enough to 1 in order to ensure good
+#     # convergence of the Taylor-series
+#     s2 = s
+#     delta = LongDecimal(1, 3)
+#     while (x - 1).abs > delta do
+#       xf = x.to_f
+#       mlx = Math.log(xf)
+#       estimate = mlx.to_ld(20, LongDecimal::ROUND_DOWN)
+#       exp_part = exp(estimate, (1.01 * iprec).ceil)
+#       # exp_part = exp(estimate, iprec << 1)
+#       xq = (x / exp_part)
+#       if (xq < 1)
+#       xq = 1/xq
+#       s  = -s
+#       end
+#       x = xq.round_to_scale(iprec, mode)
+#       if (x < 1)
+#       puts("x=#{x} < 1 est=#{estimate} part=#{exp_part} s=#{s} s2=#{s2}\n")
+#       end
+
+#       # add/subtract to y what we have already found
+#       if (s2 < 0) then
+#         y -= estimate
+#       else
+#         y += estimate
+#       end
+#     end
 
     factor = 1
+    sprec  = (iprec * 1.5).round
     # delta  = LongDecimal(1, (iprec.to_f**(1/3)).round)
-    # while (x - 1).abs > delta do
-    #  x       = sqrt(x)
-    #  factor *= 2
-    # end
+    # delta  = LongDecimal(1, (iprec.to_f**0.3).round)
+    delta  = LongDecimal(1, (iprec.to_f**0.45).round)
+    # delta  = LongDecimal(1, LongMath.sqrtw(iprec))
+    # delta  = LongDecimal(1, LongMath.sqrtw(LongMath.sqrtw(iprec+1)+1))
+    while (x - 1).abs > delta do
+      x       = LongMath.sqrt(x, sprec, mode)
+      factor *= 2
+    end
+    # puts("log_raw rooted t=#{Time.new-t0}")
 
     sum = 0
     z   = 1 - x
@@ -2634,8 +2719,10 @@ module LongMath
       sum += d
 
     end
+    # puts("log_raw summed t=#{Time.new-t0}")
 
     y -= ((s * factor) * sum).round_to_scale(iprec, mode)
+    # puts("log_raw done t=#{Time.new-t0}")
     return y
   end
 
@@ -2671,18 +2758,24 @@ module LongMath
   # fits into a float (y <= 709)
   #
   def LongMath.power(x, y, prec, mode = LongDecimal::ROUND_HALF_DOWN)
-    # check_is_ld(x, "x")
-    # check_is_ld(y, "y")
-    raise TypeError, "y=#{y.inspect} must not be greater #{MAX_EXP_ABLE}" unless y <= MAX_EXP_ABLE
-    raise TypeError, "x=#{x.inspect} must not be greater #{MAX_FLOATABLE}" unless x <= MAX_FLOATABLE
-    raise TypeError, "x=#{x.inspect} must not positive" unless x > 0
+
+    raise TypeError, "x=#{x} must be numeric" unless x.kind_of? Numeric
+    raise TypeError, "y=#{y} must be numeric" unless y.kind_of? Numeric
+    # raise TypeError, "y=#{y.inspect} must not be greater #{MAX_EXP_ABLE}" unless y <= MAX_EXP_ABLE
+    # raise TypeError, "x=#{x.inspect} must not be greater #{MAX_FLOATABLE}" unless x <= MAX_FLOATABLE
+    raise TypeError, "x=#{x.inspect} must not positive" unless x >= 0
     check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
 
+    # handle the special cases where base or exponent are 0 or 1 explicitely
     if y.zero? then
       return LongDecimal.one!(prec)
     elsif x.zero? then
       return LongDecimal.zero!(prec)
+    elsif y.one? then
+      return x.to_ld(prec, mode)
+    elsif x.one? then
+      return LongDecimal.one!(prec)
     end
 
     iprec, iprec_x, iprec_y = calc_iprec_for_power(x, y, prec)
