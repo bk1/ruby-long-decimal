@@ -1,8 +1,8 @@
 #
 # longdecimal.rb -- Arbitrary precision decimals with fixed decimal point
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/longdecimal.rb,v 1.6 2006/02/17 20:51:37 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_02 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/longdecimal.rb,v 1.8 2006/02/18 15:39:14 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_03 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 require "complex"
@@ -76,6 +76,7 @@ class Rational
     m2 = denominator.multiplicity_of_factor(prime_number)
     m1 - m2
   end
+
 end
 
 #
@@ -116,7 +117,7 @@ end
 # class for holding fixed point long decimal numbers
 #
 class LongDecimal < Numeric
-  @RCS_ID='-$Id: longdecimal.rb,v 1.6 2006/02/17 20:51:37 bk1 Exp $-'
+  @RCS_ID='-$Id: longdecimal.rb,v 1.8 2006/02/18 15:39:14 bk1 Exp $-'
 
   include LongDecimalRoundingMode
 
@@ -258,10 +259,10 @@ class LongDecimal < Numeric
       d = s - @scale
       f = 10 ** (d.abs)
       if (d >= 0) then
-	@int_val = (@int_val * f).to_i
-      else 
-	# here we actually do rounding
-	@int_val = (@int_val / f).to_i
+        @int_val = (@int_val * f).to_i
+      else
+        # here we actually do rounding
+        @int_val = (@int_val / f).to_i
       end
       @scale   = s
     end
@@ -269,7 +270,7 @@ class LongDecimal < Numeric
 
   protected :scale=
 
-  # 
+  #
   # create copy of self with different scale
   # param1: new_scale  new scale for result
   # param2: mode       rounding mode to be applied when information is lost
@@ -303,7 +304,9 @@ class LongDecimal < Numeric
 
   # convert into String
   def to_s
-    str = @int_val.to_s
+    s = sgn
+    i = int_val.abs
+    str = i.to_s
     if @scale > 0 then
       missing = @scale - str.length + 1
       if missing > 0 then
@@ -311,6 +314,7 @@ class LongDecimal < Numeric
       end
       str[-@scale, 0] = "."
     end
+    str = "-" + str if s < 0
     str
   end
 
@@ -344,11 +348,11 @@ class LongDecimal < Numeric
     if (s.kind_of? LongDecimal) then
       # make sure Floats do not mess up our number of significant digits when adding
       if (other.kind_of? Float) then
-	o = o.round_to_scale(s.scale, ROUND_HALF_UP)
-      else 
-	new_scale = [s.scale, o.scale].max
-	s = s.round_to_scale(new_scale)
-	o = o.round_to_scale(new_scale)
+        o = o.round_to_scale(s.scale, ROUND_HALF_UP)
+      else
+        new_scale = [s.scale, o.scale].max
+        s = s.round_to_scale(new_scale)
+        o = o.round_to_scale(new_scale)
       end
     end
     return s, o
@@ -386,7 +390,6 @@ class LongDecimal < Numeric
 
   def +(other)
     s, o = equalize_scale(other)
-    p "adding #{s.inspect} + #{o.inspect}"
     if s.kind_of? LongDecimal then
       LongDecimal(s.int_val + o.int_val, s.scale)
     else
@@ -432,20 +435,29 @@ class LongDecimal < Numeric
   end
 
   def **(other)
+    if ((other.kind_of? LongDecimal) || (other.kind_of? LongDecimalQuot)) && other.is_int? then
+      other = other.to_i
+    end
     if other.kind_of? Integer then
       if other >= 0 then
-	LongDecimal(int_val ** other, scale * other)
+        LongDecimal(int_val ** other, scale * other)
       else
-	abs_other = -other
-	new_scale = abs_other * scale
-	LongDecimalQuot(Rational(10 ** new_scale, int_val ** abs_other), new_scale)
+        abs_other = -other
+        new_scale = abs_other * scale
+        LongDecimalQuot(Rational(10 ** new_scale, int_val ** abs_other), new_scale)
       end
     else
+      if (other.kind_of? LongDecimal) || (other.kind_of? LongDecimalQuot) then
+        other = other.to_f
+      end
       self.to_f ** other
     end
   end
 
   def divmod(other)
+    if (other.kind_of? Complex) then
+      raise TypeError, "divmod not supported for Complex"
+    end
     q = (self / other).to_i
     return q, self - other * q
   end
@@ -455,8 +467,51 @@ class LongDecimal < Numeric
     r
   end
 
-  # def movePointLeft(n)
-  # def movePointRight(n)
+  #
+  # divide by 10**n
+  #
+  def move_point_left(n)
+    raise TypeError, "only implemented for Fixnum" unless n.kind_of? Fixnum
+    if (n >= 0) then
+      move_point_left_int(n)
+    else
+      move_point_right_int(-n)
+    end
+  end
+
+  #
+  # multiply by 10**n
+  #
+  def move_point_right(n)
+    raise TypeError, "only implemented for Fixnum" unless n.kind_of? Fixnum
+    if (n < 0) then
+      move_point_left_int(-n)
+    else
+      move_point_right_int(n)
+    end
+  end
+
+  #
+  # divide by 10**n
+  #
+  def move_point_left_int(n)
+    raise TypeError, "only implemented for Fixnum >= 0" unless n >= 0
+    LongDecimal(int_val, scale + n)
+  end
+
+  #
+  # multiply by 10**n
+  #
+  def move_point_right_int(n)
+    raise TypeError, "only implemented for Fixnum >= 0" unless n >= 0
+    if (n > scale) then
+      LongDecimal(int_val * 10**(n-scale), 0)
+    else
+      LongDecimal(int_val, scale-n)
+    end
+  end
+
+  protected :move_point_left_int, :move_point_right_int
 
   def square
     self * self
@@ -477,7 +532,12 @@ class LongDecimal < Numeric
   # Compares the absolute values of the two numbers.
   #
   def <=> (other)
-    (self - other).sgn
+    diff = (self - other)
+    if (diff.kind_of? LongDecimal) || (diff.kind_of? LongDecimalQuot) then
+      diff.sgn
+    else
+      diff <=> 0
+    end
   end
 
   def coerce(other)
@@ -491,7 +551,7 @@ class LongDecimal < Numeric
     elsif (other.kind_of? Integer) || (other.kind_of? Float) then
       other = LongDecimal(other)
       if (other.scale > scale) then
-	other = other.round_to_scale(scale, ROUND_HALF_UP)
+        other = other.round_to_scale(scale, ROUND_HALF_UP)
       end
       return other, self
     elsif other.kind_of? Numeric then
@@ -500,6 +560,11 @@ class LongDecimal < Numeric
     else
       raise TypeError, "unsupported type #{other.inspect} for coerce of LongDecimal"
     end
+  end
+
+  # is self expressable as an integer without loss of digits?
+  def is_int?
+    scale == 0 || int_val % 10**scale == 0
   end
 
   def sgn
@@ -538,9 +603,9 @@ end
 # performed a division.  The division cannot be completed without
 # providing additional information on how to round the result.
 #
-class LongDecimalQuot < Rational
+class LongDecimalQuot < Numeric
 
-  @RCS_ID='-$Id: longdecimal.rb,v 1.6 2006/02/17 20:51:37 bk1 Exp $-'
+  @RCS_ID='-$Id: longdecimal.rb,v 1.8 2006/02/18 15:39:14 bk1 Exp $-'
 
   include LongDecimalRoundingMode
 
@@ -553,12 +618,12 @@ class LongDecimalQuot < Rational
   # pair of LongDecimals
   def initialize(first, second)
     if (first.kind_of? Rational) && (second.kind_of? Integer) then
-      super(first.numerator, first.denominator)
+      @rat = Rational(first.numerator, first.denominator)
       @scale = second
     elsif (first.kind_of? LongDecimal) && (second.kind_of? LongDecimal) then
       orig_scale = first.scale
       first, second = first.anti_equalize_scale(second)
-      super(first.to_i, second.to_i)
+      @rat = Rational(first.to_i, second.to_i)
       @scale = orig_scale
     else
       raise TypeError, "parameters must be (LongDecimal, LongDecimal) or (Rational, Integer): first=#{first.inspect} second=#{second.inspect}";
@@ -568,6 +633,18 @@ class LongDecimalQuot < Rational
 
   def scale
     @scale
+  end
+
+  def rat
+    @rat
+  end
+
+  def numerator
+    rat.numerator
+  end
+  
+  def denominator
+    rat.denominator
   end
 
   # alter scale
@@ -580,12 +657,22 @@ class LongDecimalQuot < Rational
   private :scale=
 
   def to_s
-    str = super
+    str = @rat.to_s
     str + "[" + scale.to_s + "]"
   end
 
   def to_r
     Rational(numerator, denominator)
+  end
+
+  # convert into Float
+  def to_f
+    to_r.to_f
+  end
+
+  # convert into Integer
+  def to_i
+    to_r.to_i
   end
 
   def to_ld
@@ -600,15 +687,14 @@ class LongDecimalQuot < Rational
     if self.zero? then
       self
     else
-      LongDecimalQuot(super, scale)
+      LongDecimalQuot(-rat, scale)
     end
   end
 
   def +(other)
     o, s = coerce(other)
-    p "adding #{s.inspect} + #{o.inspect}"
     if (s.kind_of? LongDecimalQuot) then
-      LongDecimalQuot(super(o), [s.scale, o.scale].max)
+      LongDecimalQuot(s.rat + o.rat, [s.scale, o.scale].max)
     else
       s + o
     end
@@ -616,32 +702,73 @@ class LongDecimalQuot < Rational
 
   def -(other)
     o, s = coerce(other)
-    LongDecimalQuot(super(o), [s.scale, o.scale].max)
+    if (s.kind_of? LongDecimalQuot) then
+      LongDecimalQuot(s.rat - o.rat, [s.scale, o.scale].max)
+    else
+      s - o
+    end
   end
 
   def *(other)
     o, s = coerce(other)
-    LongDecimalQuot(super(other), s.scale + o.scale)
+    if (s.kind_of? LongDecimalQuot) then
+      LongDecimalQuot(s.rat * o.rat, s.scale + o.scale)
+    else
+      s * o
+    end
   end
 
   def /(other)
     o, s = coerce(other)
-    LongDecimalQuot(super(other), scale)
-  end
-
-  def **(other)
-    rat = super(other)
-    if (rat.kind_of? Rational) then
-      LongDecimalQuot(rat, scale)
+    if (s.kind_of? LongDecimalQuot) then
+      LongDecimalQuot(s.rat / o.rat, scale)
     else
-      rat
+      s / o
     end
   end
 
-  def %(other)
-    o, s = coerce(other)
-    LongDecimalQuot(super(other), scale)
+  def **(other)
+    if (other.kind_of? LongDecimal) || (other.kind_of? LongDecimalQuot) then
+      if other.is_int? then
+	other = other.to_i
+      else
+	other = other.to_r
+      end
+    end
+    rat_result = rat ** other
+    if (rat_result.kind_of? Rational) then
+      if (other.kind_of? Integer) && other >= 0 then
+	new_scale = scale * other
+      else
+	new_scale = scale
+      end
+      LongDecimalQuot(rat_result, new_scale)
+    else
+      rat_result
+    end
   end
+
+  def divmod(other)
+    if (other.kind_of? Complex) then
+      raise TypeError, "divmod not supported for Complex"
+    end
+    q = (self / other).to_i
+    return q, self - other * q
+  end
+
+  def %(other)
+    q, r = divmod other
+    r
+  end
+
+#   def %(other)
+#     o, s = coerce(other)
+#     if (s.kind_of? LongDecimalQuot) then
+#       LongDecimalQuot(s.rat % o.rat, scale)
+#     else
+#       s % o
+#     end
+#   end
 
   def square
     self * self
@@ -651,13 +778,17 @@ class LongDecimalQuot < Rational
   # Absolute value
   #
   def abs
-    LongDecimalQuot(super, scale)
+    LongDecimalQuot(rat.abs, scale)
   end
 
   def abs2
     self.abs.square
   end
 
+  #
+  # convert LongDecimalQuot to LongDecimal with the given precision
+  # and the given rounding mode
+  #
   def round_to_scale(new_scale = @scale, mode = ROUND_UNNECESSARY)
 
     raise TypeError, "new_scale #{new_scale.inspect} must be integer" unless new_scale.kind_of? Integer
@@ -698,21 +829,21 @@ class LongDecimalQuot < Rational
       abs_rem = rem.abs
       half    = (abs_rem << 1) <=> denominator
       if (mode == ROUND_HALF_UP || mode == ROUND_HALF_DOWN || mode == ROUND_HALF_EVEN) then
-	if (half < 0) then
-	  mode = ROUND_DOWN
-	elsif half > 0 then
-	  mode = ROUND_UP
-	else
-	  # half == 0
-	  if (mode == ROUND_HALF_UP) then
-	    mode = ROUND_UP
-	  elsif (mode == ROUND_HALF_DOWN) then
-	    mode = ROUND_DOWN
-	  else 
-	    # mode == ROUND_HALF_EVEN
-	    mode = (quot[0] == 1 ? ROUND_UP : ROUND_DOWN)
-	  end
-	end
+        if (half < 0) then
+          mode = ROUND_DOWN
+        elsif half > 0 then
+          mode = ROUND_UP
+        else
+          # half == 0
+          if (mode == ROUND_HALF_UP) then
+            mode = ROUND_UP
+          elsif (mode == ROUND_HALF_DOWN) then
+            mode = ROUND_DOWN
+          else
+            # mode == ROUND_HALF_EVEN
+            mode = (quot[0] == 1 ? ROUND_UP : ROUND_DOWN)
+          end
+        end
       end
     end
 
@@ -731,8 +862,10 @@ class LongDecimalQuot < Rational
     elsif other.kind_of? Rational then
       s = scale
       return LongDecimalQuot(other, s), self
-    elsif (other.kind_of? Integer) || (other.kind_of? Float) then
+    elsif (other.kind_of? Integer) then
       return LongDecimalQuot(other.to_r, scale), self
+    elsif other.kind_of? Float then
+      return LongDecimalQuot(other.to_ld.to_r, scale), self
     elsif other.kind_of? Numeric then
       s, o = other.coerce(self.to_f)
       return o, s
@@ -742,14 +875,37 @@ class LongDecimalQuot < Rational
   end
 
   def ==(other)
-    (self <=> other) == 0 && self.scale == other.scale
+    (other.kind_of? LongDecimalQuot) && (self <=> other) == 0 && self.scale == other.scale
   end
+
+  #
+  # Compares the two numbers.
+  #
+  def <=> (other)
+    diff = (self - other)
+    if (diff.kind_of? LongDecimal) || (diff.kind_of? LongDecimalQuot) then
+      diff.sgn
+    else
+      diff <=> 0
+    end
+  end
+
+  # is self expressable as an integer without loss of digits?
+  def is_int?
+    denominator == 1
+  end
+
+  def sgn
+    numerator <=> 0
+  end
+  alias signum sgn
+  alias sign   sgn
 
   #
   # Returns a hash code for the complex number.
   #
   def hash
-    super ^ scale.hash
+    rat.hash ^ scale.hash
   end
 
 
