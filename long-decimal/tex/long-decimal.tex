@@ -1,0 +1,253 @@
+% LaTeX
+% $Header: /var/cvs/long-decimal/long-decimal/tex/long-decimal.tex,v 1.3 2011/02/09 22:51:52 bk1 Exp $
+% $Name:  $
+%
+\documentclass[10pt,a4paper]{article}
+\usepackage{isodate}
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+\usepackage{graphics}
+\usepackage{amsmath,amssymb}
+
+\title{The Ruby library {\slshape long-decimal}}
+\author{Karl Brodowsky\\
+IT Sky Consulting GmbH\\
+Switzerland}
+
+\date{2011-02-06}
+
+%\makeatletter
+%\makeatother
+
+\setlength{\topmargin}{0mm}
+%\setlength{\leftmargin}{10mm}
+\setlength{\oddsidemargin}{-11mm}
+\setlength{\evensidemargin}{-11mm}
+\setlength{\parindent}{0mm}
+
+%\newfont{\ocrb}{ocrb10}
+
+\def\ld{\mathrm l}
+\def\ldq{\mathrm q}
+
+\begin{document}
+\sffamily
+\maketitle
+
+\begin{abstract}
+
+The goal of the Ruby-library {\slshape long-decimal}\/ is to provide a new
+numerical type {\slshape LongDecimal}\/ and arithmetic operations to deal
+with this type.
+
+\end{abstract}
+
+\section{Introduction}
+
+Ruby supports non-integral numbers with the built-in types {\slshape
+  Float\/} and {\slshape Rational\/} and {\slshape BigDecimal\/}.
+While these are very useful for many purposes, the development of
+finance application requires the availability of a type like
+LongDecimal, that allows explicit control of the rounding and uses a
+decimal representation for the fractional part.  An instance of
+{\slshape LongDecimal\/} can be represented as a pair of integral
+numbers $(n, d)$, where the value of the number is $\frac{n}{10^d}$.
+The ring-operations $+$, $-$ and $*$ can be trivially defined in a way
+that does not loose any information (and thus does not require any
+rounding).
+
+Division requires some additional thought, because the exact quotient
+of two {\slshape LongDecimal\/}s can very well be expressed as
+Rational, but not always as {\slshape LongDecimal\/}.  A supplementary
+numeric type {\slshape LongDecimalQuot\/} has been introduced to
+support storing pairs $(r, d)$, where $r$ is a rational number and $d$
+is an estimation about the significant digits after the decimal point.
+The represented value is the rational number $r$.
+
+Calculation of roots and trancendental functions require additional
+information as input parameters to control the number of digits after
+the decimal point and the rounding rules for achieving the result.
+
+In the remainder of this document we will write $\ld(n, d)$ for the
+{\slshape LongDecimal\/}-number represented by the pair $(n, d)$ in
+the manner described above and $\ldq(r, d)$ for the {\slshape
+  LongDecimalQuot\/}-number represented by teh pair $(r, n)$.  It
+needs to be observed that the part $d$ in both cases carries
+information about the precision of the number in terms of significant
+digits after the decimal point.
+
+\pagebreak
+
+\section{Ring Operations}
+
+The ring operations $+$, $-$ and $*$ and obvious derived operations
+like negation are defined like this:
+
+$$\bigwedge_{m,n \in \mathbb{N}_0} \bigwedge_{d, e \in \mathbb{Z}}
+\ld(m,d) + \ld(n,e) = \ld(m \frac{\max(d, e)}{d} + n \frac{\max(d, e)}{e}, \max(d, e))$$
+$$\bigwedge_{m,n \in \mathbb{N}_0} \bigwedge_{d, e \in \mathbb{Z}}
+\ld(m,d) - \ld(n,e) = \ld(m \frac{\max(d, e)}{d} - n \frac{\max(d, e)}{e}, \max(d, e))$$
+$$\bigwedge_{m,n \in \mathbb{N}_0} \bigwedge_{d, e \in \mathbb{Z}}
+\ld(m,d) \cdot \ld(n,e) = \ld(m n, d+e)$$
+
+\pagebreak
+
+\section{Rounding Operations}
+
+The library supports two rounding operations that can be applied both
+to {\slshape LongDecimal\/} and {\slshape LongDecimalQuot\/}.  In the
+latter case it implies a conversion to {\slshape LongDecimal\/}.  The
+normal rounding function {\slshape round\_to\_scale\/} changes the
+precision to the given value, while keeping the value expressed by the
+number approximately the same.
+
+The optional second parameter describes how rounding will be done, if the
+process looses information.  It defaults to {\slshape
+ROUND\_UNNECESSARY\/}, in which case an exception is raised whenever
+a value changing rounding process would be required.
+
+\begin{tabular}{|l|l|}
+\hline
+{\bfseries rounding mode}&{\bfseries description}\\
+\hline
+  ROUND\_UP           & always round in such a way that the absolute value does not decrease.\\
+\hline
+  ROUND\_DOWN         & always round in such a way that the absolute value does not increase.\\
+\hline
+  ROUND\_CEILING      & always round in such a way that the rational value does not decrease.\\
+\hline
+  ROUND\_FLOOR        & always round in such a way that the rational value does not increase.\\
+\hline
+  ROUND\_HALF\_UP      & round to the nearest available value, prefer increasing the absolute value if the last digit is 5\\
+\hline
+  ROUND\_HALF\_DOWN    & round to the nearest available value, prefer decreasing the absolute value if the last digit is 5\\
+\hline
+  ROUND\_HALF\_CEILING & round to the nearest available value, prefer increasing the rational value if the last digit is 5\\
+\hline
+  ROUND\_HALF\_FLOOR   & round to the nearest available value, prefer decreasing the rational value if the last digit is 5\\
+\hline
+  ROUND\_HALF\_EVEN    & round to the nearest available value, prefer the resulting last digit to be even if the last digit prior to rounding is 5\\
+\hline
+  ROUND\_UNNECESSARY  & raise an exception if value changing rounding would be needed\\
+\hline
+\end{tabular}
+
+In addition to these commonly available rounding operations {\slshape long-decimal\/} provides rounding to remainder sets.  This is motivated by the practice in some
+currencies to prefer using certain multiples of the smallest unit.  For example in CHF you commonly use two digits after the decimal point, but the last digit is
+required to be 0 or 5.  This is achieved as a special case of a more general concept {\slshape round\_to\_allowed\_remainders\/}.  A modulus $M \ge 2$ and a set
+$R\subset\mathbb{N}_0$ are given and a number $x$ is rounded to $\ld(n, d)$ such that
+
+$$\bigvee_{r\in R} n \equiv r (\mod M)$$
+
+Typically $M$ is ten or a power of ten, but this is not required.  Neither is it required that zero is a member of $R$.  In that case an additional parameter is needed
+in order to define to which direction a potential last digit of zero would be rounded.  In the CHF case we would have $M=10$ and $R=\{0, 5\}$.
+
+\pagebreak
+
+\section{Division}
+
+Regular division using $/$ yield an instance of {\slshape LongDecimalQuot\/}.  The approximate number of significant digits is estimated by using the partial derivatives of $f(x, y) = \frac{x}{y}$.
+Assume $x=\ld(m, s)$ and $y=\ld(n, t)$.  So we get for $\ld(m, s) / \ld(n, t)$ an result 
+
+$$\frac{x}{y} = \ldq(10^{t-s}\frac{m}{n}, r)$$
+
+with 
+
+$$r \approx -\log_{10}\left(10^{-s} \frac{1}{|y|} + 10^{-t} \frac{|x|}{y^2}\right) 
+    =  2 \log_{10}(y) + s + t -\log_{10}\left(|m| + |n|) \right)$$
+
+In order to avoid expensive logarithmic operation for such basic operations as division this is approximated by
+
+$$r = \max( 0, 2 v + s + t - \max( u + s, v + t) - 3)$$
+with $u = \lfloor\log |m| \rfloor - s + 1$ and $v = \lfloor\log |n| \rfloor - t + 1$ for $m$ and $n$ not zero 
+and $u=-s$ for $m = 0$ and $v=-t$ for $n=0$.  Using $\max(a, b)$ instead of $log_{10}(10^a + 10^b)$ is a good approximation, when a and b are far apart.
+
+It is recommended to use explicit rounding after having performed
+division rather than to rely on this somewhat arbitrary estimation on
+the number of significant digits.  It is possible to retain
+intermediate results with {\slshape LongDecimalQuot\/}, because the
+full arithmetic is available for this type as well, but using rational
+numbers internally it will blow up numerator and denominator to an
+extent that diminishes performance by quite a margin in longer
+calculations.
+
+\pagebreak
+
+\section{Roots}
+
+Square root and cube root of LongDecimal can be calculated quite
+efficiently using an algorithm that is somewhat similar to the
+algorithm for long integer division.  This has been preferred over the
+more commonly known Newton algorithm.  Since square and cube roots are
+usually irrational, it is mandatory to provide rounding information
+concerning the number of desired digits and the rounding mode.
+
+\section{$\pi$}
+
+The number $\pi$ can be calculated to a given number of digits, which
+works sufficiently fast for a few thousend digits.
+
+Please use dedicated programs if you seriously want to calculate $\pi$
+to millions of digits, Ruby is not fast enough for this kind of number
+crunching to compete with the best C-programs.
+
+\pagebreak
+
+\section{Transcendental Functions}
+
+It is the goal of this library to support the most common
+transcendental functions in the long run.  Currently $\exp$ and $\log$
+are supported.  These are calculated using the Taylor series, but the
+calculation has been improved.  Most important it is to improve the
+convergence, which is the case with a series of the form
+
+$$\sum_{n=0}^\infty \frac{x^n}{n!}$$
+
+for $x< 0.5$.
+
+For the exponential function this can always be achieved by using the following transformations: $x = 2^n x_0$ with $x_0 < 0.5$ implies
+
+$$\exp(x) = \exp(x_0)^{2^n}$$
+
+which can be easily calculated using successive squaring operations.
+
+For the logarithm we first use $x = e^n x_0$ with $n \in \mathbb{N}_0$ and $x_0 < e$ with
+
+$$\log(x) = n + \log(x_0).$$
+
+From here we make use of the efficient square root calculation facility and use 
+
+$$\bigwedge_{m=0}^\infty x_{m+1} = \sqrt{x_m}$$
+
+and
+
+$$\log(x) = n + 2^m \log x_m$$
+
+Using this $x_m$ can be brought sufficiently close to $1$ to make the Taylor series of $\log$ converge sufficiently fast to be useful for the calculation:
+
+$$\log(x_m) = \sum_{k=1}^\infty \frac{(x_m-1)^k(-1)^{k+1}}{k}$$
+
+Another minor optimization uses some integer $j$ and adds
+
+$$ \bigwedge_{l=0}^{j-1} s_k = \sum_{l=0}^n \frac{x^{lj}}{(lj+k)!}$$
+
+from which we finally multiply the partial sums with appropriate low powers of $x$.  This saves on the number of multiplications.
+Similar patterns will be applied to the calculation of other transcendental functions.
+
+\pagebreak
+
+\section{Powers}
+
+Calculation of powers with any positive {\slshape LongDecimal} as base and any {\slshape LongDecimal} as exponent is quite challenging to do.
+
+It is quite trivial that $x^y = \exp(y \log x)$, but the challenges
+are to achieve the result in acceptable time and with the required
+precision.  The builtin class {\slshape BigDecimal} does not meet
+these goals, because it becomes incredibly slow for certain
+combinations of $x$ and $y$.  
+
+\section{Limitations}
+
+\section{Tests}
+
+\end{document}
