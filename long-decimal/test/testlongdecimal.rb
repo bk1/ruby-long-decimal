@@ -2,8 +2,8 @@
 #
 # testlongdecimal.rb -- runit test for longdecimal.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.4 2006/03/02 20:20:12 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_08 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.5 2006/03/04 21:49:00 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_09 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -18,7 +18,95 @@ load "lib/longdecimal.rb"
 #
 class TestLongDecimal_class < RUNIT::TestCase
 
-  @RCS_ID='-$Id: testlongdecimal.rb,v 1.4 2006/03/02 20:20:12 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdecimal.rb,v 1.5 2006/03/04 21:49:00 bk1 Exp $-'
+
+  def check_split_merge_words(x, l, wl)
+    w = LongMath.split_to_words(x, l)
+    y = LongMath.merge_from_words(w, l)
+    assert_equal(x, y, "#{x} splitted and merged should be equal but is #{y} l=#{l}")
+    assert_equal(wl, w.length, "#{x} splitted to l=#{l} should have length #{wl} but has #{w.length}")
+    w
+  end
+
+  #
+  # test split_to_words and merge_from_words
+  #
+  def test_split_merge_words
+    check_split_merge_words(0, 1, 1)
+    check_split_merge_words(0, 10, 1)
+    check_split_merge_words(0, 100, 1)
+    check_split_merge_words(0, 1000, 1)
+    check_split_merge_words(-1, 1, 1)
+    check_split_merge_words(-1, 10, 1)
+    check_split_merge_words(-1, 100, 1)
+    check_split_merge_words(-1, 1000, 1)
+    check_split_merge_words(1, 1, 1)
+    check_split_merge_words(1, 10, 1)
+    check_split_merge_words(1, 100, 1)
+    check_split_merge_words(1, 1000, 1)
+    check_split_merge_words(10, 1, 4)
+    check_split_merge_words(10, 10, 1)
+    check_split_merge_words(10, 100, 1)
+    check_split_merge_words(10, 1000, 1)
+    x = 10**12 # 10**12 = 1000**4 < 2**40
+    check_split_merge_words(x, 1, 40)
+    check_split_merge_words(x, 10, 4)
+    check_split_merge_words(x, 100, 1)
+    check_split_merge_words(x, 1000, 1)
+    x = 2**40
+    check_split_merge_words(x, 1, 41)
+    check_split_merge_words(x, 10, 5)
+    check_split_merge_words(x, 100, 1)
+    check_split_merge_words(x, 1000, 1)
+  end
+
+  #
+  # helper method for test_exp
+  #
+  def check_exp_floated(x, prec)
+    x0 = x
+    x = x.to_ld
+    y = LongMath.exp(x, prec)
+    z = Math.exp(x.to_f)
+    yf = y.to_f
+    assert((yf - z) / [yf.abs, z.abs, Float::MIN].max < 1e-9, "y=#{yf.to_s} and z=#{z.to_s} should be almost equal x=#{x}")
+    yd = LongMath.exp_internal(x, prec, nil, nil, nil, nil, LongDecimal::ROUND_DOWN)
+    yu = LongMath.exp_internal(x, prec, nil, nil, nil, nil, LongDecimal::ROUND_UP)
+    #    if (x >= 0)
+    assert_equal(yd, yu, "the result yd/yu should not depend on the internal rounding mode x0=#{x0} x=#{x} p=#{prec} d=#{(yd-yu).to_f.to_s}")
+    assert_equal(y,  yu, "the result y/yu  should not depend on the internal rounding mode x0=#{x0} x=#{x} p=#{prec} d=#{(y -yu).to_f.to_s}")
+    #   else
+    #      assert((yu - yd).abs <= y.unit, "the difference should not be too much x=#{x} d=#{(yd-yu).to_f.to_s}")
+    #      assert((yu - y ).abs <= y.unit, "the difference should not be too much x=#{x} d=#{(y -yu).to_f.to_s}")
+    #    end
+  end
+
+  #
+  # test the calculation of the exponential function
+  #
+  def test_exp
+    check_exp_floated(700, 10)
+    check_exp_floated(100, 10)
+    check_exp_floated(1, 10)
+    check_exp_floated(0.01, 10)
+    check_exp_floated(1e-10, 10)
+    check_exp_floated(1e-90, 10)
+    check_exp_floated(0, 10)
+    check_exp_floated(-1, 10)
+    check_exp_floated(-100, 10)
+    check_exp_floated(-700, 10)
+
+    check_exp_floated(700, 100)
+    check_exp_floated(100, 100)
+    check_exp_floated(1, 100)
+    check_exp_floated(0.01, 100)
+    check_exp_floated(1e-10, 100)
+    check_exp_floated(1e-90, 100)
+    check_exp_floated(0, 100)
+    check_exp_floated(-1, 100)
+    check_exp_floated(-100, 100)
+    check_exp_floated(-700, 100)
+  end
 
   #
   # helper method for test_sqrtb
@@ -45,22 +133,22 @@ class TestLongDecimal_class < RUNIT::TestCase
       y = check_sqrtb(x1, " i*i i=#{i}")
       assert_equal(i, y, "i=#{i} y=#{y}")
       if (i > 0) then
-	x2 = x1 + 1
-	y = check_sqrtb(x2, " i*i+1 i=#{i}")
-	assert_equal(i, y, "i=#{i} y=#{y}")
-	x0 = x1 - 1
-	y = check_sqrtb(x0, " i*i-1 i=#{i}")
-	assert_equal(i-1, y, "i=#{i} y=#{y}")
+        x2 = x1 + 1
+        y = check_sqrtb(x2, " i*i+1 i=#{i}")
+        assert_equal(i, y, "i=#{i} y=#{y}")
+        x0 = x1 - 1
+        y = check_sqrtb(x0, " i*i-1 i=#{i}")
+        assert_equal(i-1, y, "i=#{i} y=#{y}")
       end
-      
+
       x1 = 1 << i
       y = check_sqrtb(x1, " 2**i i=#{i}")
       if (i[0] == 0)
-	assert_equal(1 << (i>>1), y, "2^(i/2) i=#{i} y=#{y}")
+        assert_equal(1 << (i>>1), y, "2^(i/2) i=#{i} y=#{y}")
       end
       if (i > 0) then
-	check_sqrtb(x1-1, " 2**i-1 i=#{i}")
-	check_sqrtb(x1+1, " 2**i+1 i=#{i}")
+        check_sqrtb(x1-1, " 2**i-1 i=#{i}")
+        check_sqrtb(x1+1, " 2**i+1 i=#{i}")
       end
 
       x1 = 3 << i
@@ -95,22 +183,22 @@ class TestLongDecimal_class < RUNIT::TestCase
       y = check_sqrtw(x1, " i*i i=#{i}")
       assert_equal(i, y, "i=#{i} y=#{y}")
       if (i > 0) then
-	x2 = x1 + 1
-	y = check_sqrtw(x2, " i*i+1 i=#{i}")
-	assert_equal(i, y, "i=#{i} y=#{y}")
-	x0 = x1 - 1
-	y = check_sqrtw(x0, " i*i-1 i=#{i}")
-	assert_equal(i-1, y, "i=#{i} y=#{y}")
+        x2 = x1 + 1
+        y = check_sqrtw(x2, " i*i+1 i=#{i}")
+        assert_equal(i, y, "i=#{i} y=#{y}")
+        x0 = x1 - 1
+        y = check_sqrtw(x0, " i*i-1 i=#{i}")
+        assert_equal(i-1, y, "i=#{i} y=#{y}")
       end
-      
+
       x1 = 1 << i
       y = check_sqrtw(x1, " 2**i i=#{i}")
       if (i[0] == 0)
-	assert_equal(1 << (i>>1), y, "2^(i/2) i=#{i} y=#{y}")
+        assert_equal(1 << (i>>1), y, "2^(i/2) i=#{i} y=#{y}")
       end
       if (i > 0) then
-	check_sqrtw(x1-1, " 2**i-1 i=#{i}")
-	check_sqrtw(x1+1, " 2**i+1 i=#{i}")
+        check_sqrtw(x1-1, " 2**i-1 i=#{i}")
+        check_sqrtw(x1+1, " 2**i+1 i=#{i}")
       end
 
       x1 = 3 << i
@@ -154,7 +242,7 @@ class TestLongDecimal_class < RUNIT::TestCase
 
   #
   # test multiplicity_of_factor for rationals with numerator and
-  # denominator exceeding Float 
+  # denominator exceeding Float
   #
   def test_rat_long_multiplicity_of_factor
     n = Rational(224*(10**600+1), 225*(5**800))

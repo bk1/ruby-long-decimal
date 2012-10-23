@@ -1,8 +1,8 @@
 #
 # longdecimal.rb -- Arbitrary precision decimals with fixed decimal point
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/longdecimal.rb,v 1.4 2006/03/02 20:20:12 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_08 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/longdecimal.rb,v 1.5 2006/03/04 21:49:00 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_09 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 require "complex"
@@ -12,24 +12,88 @@ require "bigdecimal"
 # require "bigdecimal/math"
 
 #
+# define rounding modes to be used for LongDecimal
+# this serves the purpose of an "enum" in C/C++
+#
+module LongDecimalRoundingMode
+  RoundingModeClass = Struct.new(:name, :num)
+  class RoundingModeClass
+    include Comparable
+
+    #
+    # introduce some ordering for rounding modes
+    #
+    def <=>(o)
+      if o.respond_to?:num
+        self.num <=> o.num
+      else
+        self.num <=> o
+      end
+    end
+  end
+
+  #
+  # rounding modes as constants
+  #
+  ROUND_UP          = RoundingModeClass.new(:ROUND_UP, 0)
+  ROUND_DOWN        = RoundingModeClass.new(:ROUND_DOWN, 1)
+  ROUND_CEILING     = RoundingModeClass.new(:ROUND_CEILING, 2)
+  ROUND_FLOOR       = RoundingModeClass.new(:ROUND_FLOOR, 3)
+  ROUND_HALF_UP     = RoundingModeClass.new(:ROUND_HALF_UP, 4)
+  ROUND_HALF_DOWN   = RoundingModeClass.new(:ROUND_HALF_DOWN, 5)
+  ROUND_HALF_EVEN   = RoundingModeClass.new(:ROUND_HALF_EVEN, 6)
+  ROUND_UNNECESSARY = RoundingModeClass.new(:ROUND_UNNECESSARY, 7)
+
+end
+
+#
 # helper functions to support LongDecimal and LongDecimalQuot
 # functions for LongDecimal that do not go as methods of LongDecimal
 #
 module LongMath
 
+  include LongDecimalRoundingMode
+
   MAX_FLOATABLE = Float::MAX.to_i
-  MIN_FLOATABLE = Float::MIN.to_i
+  MAX_EXP_ABLE  = Math.log(MAX_FLOATABLE).to_i
 
   #
   # helper method: checks if word_len is of reasonable for splitting a
   # number into parts
   #
-  def LongMath.check_word_len(word_len)
-    raise TypeError, "word_len must be a positive number <= 1024" unless (word_len.kind_of? Fixnum) && word_len > 0 && word_len <= 1024
+  def LongMath.check_word_len(word_len, name="word_len")
+    raise TypeError, "#{name} must be a positive number <= 1024" unless (word_len.kind_of? Fixnum) && word_len > 0 && word_len <= 1024
     word_len
   end
 
-  # private :check_word_len
+  #
+  # helper method: checks if parameter x is an Integer
+  #
+  def LongMath.check_is_int(x, name="x")
+    raise TypeError, "#{name}=#{x.inspect} must be Integer" unless x.kind_of? Integer
+  end
+
+  #
+  # helper method: checks if parameter x is a LongDecimal
+  #
+  def LongMath.check_is_ld(x, name="x")
+    raise TypeError, "x=#{x.inspect} must be LongDecimal" unless x.kind_of? LongDecimal
+  end
+
+  #
+  # helper method: checks if parameter x is a LongDecimal
+  #
+  def LongMath.check_is_prec(prec, name="prec")
+    check_is_int(prec, "prec")
+    raise TypeError, "#{name}=#{prec.inspect} must be >= 0" unless prec >= 0
+  end
+
+  #
+  # helper method: checks if parameter x is a LongDecimal
+  #
+  def LongMath.check_is_mode(mode, name="mode")
+    raise TypeError, "#{name}=#{mode.inspect} must be legal rounding mode" unless mode.kind_of? RoundingModeClass
+  end
 
   #
   # split number x into parts of word_len bits each
@@ -37,7 +101,7 @@ module LongMath
   #
   def LongMath.split_to_words(x, word_len = 32)
     check_word_len(word_len)
-    raise TypeError, "x must be Integer" unless x.kind_of? Integer
+    check_is_int(x)
     m = x.abs
     s = (x <=> 0)
     bit_pattern = (1 << word_len) - 1
@@ -82,8 +146,14 @@ module LongMath
     a[0]
   end
 
+  #
+  # calculate the an integer s >= 0 and a remainder r >= 0 such that
+  # x = s**2 + r and x < (x.succ)**2
+  # the bitwise algorithm is used, which works well for relatively
+  # small values of x.
+  #
   def LongMath.sqrtb_with_remainder(x)
-    raise TypeError, "x must be integer" unless x.kind_of? Integer
+    check_is_int(x)
 
     s = (x <=> 0)
     if (s == 0) then
@@ -119,12 +189,20 @@ module LongMath
     a[0]
   end
 
+  #
+  # calculate the an integer s >= 0 and a remainder r >= 0 such that
+  # x = s**2 + r and x < (x.succ)**2
+  # the wordwise algorithm is used, which works well for relatively
+  # large values of x.  n defines the word size to be used for the
+  # algorithm.  It is good to use half of the machine word, but the
+  # algorithm would also work for other values. 
+  #
   def LongMath.sqrtw_with_remainder(x, n = 16)
-    raise TypeError, "x must be integer" unless x.kind_of? Integer
-    raise TypeError, "n must be an integer" unless (n.kind_of? Integer)
+    check_is_int(x)
+    check_is_int(n, "n")
     n2 = n<<1
     n1 = n+1
-    check_word_len(n2)
+    check_word_len(n2, "2*n")
 
     s = (x <=> 0)
     if (s == 0) then
@@ -184,9 +262,9 @@ module LongMath
   # for all m, n > n0
   #
   def LongMath.gcd_with_high_power(x, b)
-    raise TypeError, "gcd_with_high_power can only be calculated for integers, but x=#{x.inspect} is no integer." unless x.kind_of? Integer
+    check_is_int(x, "x")
     raise ZeroDivisionError, "gcd_with_high_power of zero with \"#{b.inspect}\" would be infinity" if x.zero?
-    raise TypeError, "gcd_with_high_power can only be calculated for integers \"#{b.inspect}\" is no integer" unless b.kind_of? Integer
+    check_is_int(b, "b")
     raise ZeroDivisionError, "gcd_with_high_power with b < 2 is not defined. b=\"#{b.inspect}\"" if b < 2
     s = x.abs
     exponent = 1
@@ -253,6 +331,7 @@ module LongMath
   # for more digits, you will find a specialized and optimized program
   # for this specific purpose.
   # (this is the easter egg ;-) )
+  #
   def LongMath.calc_pi(prec, final_mode = LongDecimal::ROUND_HALF_DOWN)
     mode  = LongDecimal::ROUND_HALF_DOWN
     iprec = 5*(prec+1)
@@ -286,39 +365,118 @@ module LongMath
     pi.round_to_scale(prec, final_mode)
   end
 
-end
-
-#
-# define rounding modes to be used for LongDecimal
-# this serves the purpose of an "enum" in C/C++
-#
-module LongDecimalRoundingMode
-  RoundingModeClass = Struct.new(:name, :num)
-  class RoundingModeClass
-    include Comparable
-
-    #
-    # introduce some ordering for rounding modes
-    #
-    def <=>(o)
-      if o.respond_to?:num
-        self.num <=> o.num
-      else
-        self.num <=> o
-      end
-    end
+  #
+  # calc the exponential function of x to the given precision as
+  # LongDecimal.  Only supports values of x such that the result still
+  # fits into a float (x <= 709)
+  #
+  def LongMath.exp(x, prec, mode = LongDecimal::ROUND_HALF_DOWN)
+    check_is_ld(x, "x")
+    check_is_prec(prec, "prec")
+    check_is_mode(mode, "mode")
+    exp_internal(x, prec, mode)
   end
 
-  # rounding modes as constants
   #
-  ROUND_UP          = RoundingModeClass.new(:ROUND_UP, 0)
-  ROUND_DOWN        = RoundingModeClass.new(:ROUND_DOWN, 1)
-  ROUND_CEILING     = RoundingModeClass.new(:ROUND_CEILING, 2)
-  ROUND_FLOOR       = RoundingModeClass.new(:ROUND_FLOOR, 3)
-  ROUND_HALF_UP     = RoundingModeClass.new(:ROUND_HALF_UP, 4)
-  ROUND_HALF_DOWN   = RoundingModeClass.new(:ROUND_HALF_DOWN, 5)
-  ROUND_HALF_EVEN   = RoundingModeClass.new(:ROUND_HALF_EVEN, 6)
-  ROUND_UNNECESSARY = RoundingModeClass.new(:ROUND_UNNECESSARY, 7)
+  # internal functionality of exp.  exposes some more parameters, that
+  # should usually be set to defaut values, in order to allow better testing.
+  # do not actually call this method unless you are testing exp.
+  # create a bug report, if the default settings for the parameters do
+  # not work correctly
+  #
+  def LongMath.exp_internal(x, prec = nil, final_mode = LongDecimal::ROUND_HALF_DOWN, j = nil, k = nil, iprec = nil, mode = LongDecimal::ROUND_HALF_DOWN)
+    check_is_ld(x)
+    raise TypeError, "x=#{x.inspect} must not be greater #{MAX_EXP_ABLE}" unless x <= MAX_EXP_ABLE
+    if (prec == nil) then
+      prec = x.scale
+    end
+    check_is_prec(prec, "prec")
+
+    if (final_mode == nil)
+      final_mode = LongDecimal::ROUND_HALF_DOWN
+    end
+    check_is_mode(final_mode, "final_mode")
+    check_is_mode(mode, "mode")
+
+    # if the result would come out to zero anyway, cut the work
+    xi = x.to_i
+    if (xi < -LongMath::MAX_FLOATABLE) || -((xi.to_f - 1) / Math.log(10)) > prec+1 then 
+      return LongDecimal(25, prec+2).round_to_scale(prec, final_mode)
+    end
+
+    if j == nil || k == nil then
+      l2 = Math.log(2.0)
+      lb = Math.log(10.0)
+      s1 = (prec * lb / l2) ** (1.0/3.0)
+      if (j == nil) then
+	j = s1.round
+      end
+      if (k == nil) then
+	k = (s1 + Math.log([1, prec].max) / l2).round
+      end
+    end
+    if (j <= 0) then
+      j = 1
+    end
+    if (k < 0) then
+      k = 0
+    end
+    check_is_int(j, "j")
+    check_is_int(k, "k")
+
+    iprec_extra = 0
+    if (x > 1) then
+      xf = x.to_f
+      k += (Math.log(xf) / Math.log(2)).abs.round
+      iprec_extra = (xf / Math.log(10)).abs
+    end
+    if (iprec == nil) then
+      iprec = ((prec+10)*1.20 + iprec_extra).round
+    end
+    if (iprec < prec) then
+      iprec = prec
+    end
+    check_is_prec(iprec, "iprec")
+
+    dprec = [ iprec, (prec + 1) << 1 ].min
+    
+    x_k = (x / (1 << k)).round_to_scale(iprec, mode)
+    x_j = (x_k ** j).round_to_scale(iprec, mode)
+    s = [ LongDecimal(0) ] * j
+    t = LongDecimal(1)
+    last_t = 1
+    f = 0
+    loop do
+      j.times do |i|
+	s[i] += t
+	f += 1
+	t = (t / f).round_to_scale(iprec, mode)
+      end
+      t = (t * x_j).round_to_scale(iprec, mode)
+      break if (t.zero?)
+      tr = t.round_to_scale(dprec, LongDecimal::ROUND_DOWN).abs
+      break if (t.zero?)
+      tu = t.unit
+      break if (tr <= tu && last_t <= tu)
+      last_t = tr
+    end
+    x_i = 1
+    y_k = LongDecimal(0)
+    j.times do |i|
+      if (i > 0) then
+	x_i = (x_i * x_k).round_to_scale(iprec, mode)
+      end
+      # puts("y_k=#{y_k}\ni=#{i} j=#{j} k=#{k} x=#{x}\nx_k=#{x_k}\nx_j=#{x_j}\nx_i=#{x_i}\ns[i]=#{s[i]}\n\n")
+      y_k += (s[i] * x_i).round_to_scale(iprec, mode)
+    end
+    # puts("y_k = #{y_k}\n")
+    k.times do |i|
+      y_k = y_k.square.round_to_scale(iprec, mode)
+      # puts("i=#{i} y_k = #{y_k}\n")
+    end
+    y = y_k.round_to_scale(prec, final_mode)
+    y
+  end
 
 end
 
@@ -328,7 +486,7 @@ end
 # digits and the other one the position of the decimal point.
 #
 class LongDecimal < Numeric
-  @RCS_ID='-$Id: longdecimal.rb,v 1.4 2006/03/02 20:20:12 bk1 Exp $-'
+  @RCS_ID='-$Id: longdecimal.rb,v 1.5 2006/03/04 21:49:00 bk1 Exp $-'
 
   include LongDecimalRoundingMode
 
@@ -372,7 +530,7 @@ class LongDecimal < Numeric
   # digits after the decimal point (scale=s)
   #
   def LongDecimal.two!(s = 0)
-    new(2, s)
+    new(2*10**s, s)
   end
 
 
@@ -381,7 +539,7 @@ class LongDecimal < Numeric
   # digits after the decimal point (scale=s)
   #
   def LongDecimal.ten!(s = 0)
-    new(10, s)
+    new(10**(s+1), s)
   end
 
 
@@ -390,7 +548,7 @@ class LongDecimal < Numeric
   # digits after the decimal point (scale=s)
   #
   def LongDecimal.minus_one!(s = 0)
-    new(-1, s)
+    new(-1*10**s, s)
   end
 
 
@@ -400,7 +558,9 @@ class LongDecimal < Numeric
   # point (scale=s)
   #
   def LongDecimal.power_of_ten!(e, s = 0)
-    new(10**e, s)
+    raise TypeError, "non integer 1st arg \"#{e.inspect}\"" if ! e.kind_of? Integer
+    raise TypeError, "negative 1st arg \"#{e.inspect}\""    if e < 0
+    new(10**(s+e), s)
   end
 
 
@@ -643,7 +803,11 @@ class LongDecimal < Numeric
   # float-arithmetic.
   #
   def to_f
-    int_val.to_f / 10**scale
+    if int_val.abs <= LongMath::MAX_FLOATABLE then
+      int_val.to_f / 10**scale
+    else
+      (int_val / 10**scale).to_f
+    end
   end
 
   #
@@ -1111,6 +1275,10 @@ class LongDecimal < Numeric
     elsif other.kind_of? BigDecimal then
       s, o = other.coerce(self.to_bd)
       return o, s
+    elsif other.kind_of? Complex then
+      # s, o = other.coerce(Complex(self.to_bd, 0))
+      s, o = other.coerce(Complex(self.to_f, 0))
+      return o, s
     elsif (other.kind_of? Float) && size > 8 then
       return coerce(BigDecimal(other.to_s))
     elsif other.kind_of? Numeric then
@@ -1163,7 +1331,7 @@ end
 #
 class LongDecimalQuot < Numeric
 
-  @RCS_ID='-$Id: longdecimal.rb,v 1.4 2006/03/02 20:20:12 bk1 Exp $-'
+  @RCS_ID='-$Id: longdecimal.rb,v 1.5 2006/03/04 21:49:00 bk1 Exp $-'
 
   include LongDecimalRoundingMode
 
