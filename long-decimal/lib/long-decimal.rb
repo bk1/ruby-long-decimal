@@ -1,8 +1,8 @@
 #
 # long-decimal.rb -- Arbitrary precision decimals with fixed decimal point
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal.rb,v 1.19 2006/04/01 08:52:06 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_19 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal.rb,v 1.20 2006/04/02 15:52:27 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_20 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 require "complex"
@@ -61,7 +61,7 @@ end # LongDecimalRoundingMode
 # common base class for LongDecimal and LongDecimalQuot
 #
 class LongDecimalBase < Numeric
-  @RCS_ID='-$Id: long-decimal.rb,v 1.19 2006/04/01 08:52:06 bk1 Exp $-'
+  @RCS_ID='-$Id: long-decimal.rb,v 1.20 2006/04/02 15:52:27 bk1 Exp $-'
 
   include LongDecimalRoundingMode
 
@@ -164,7 +164,7 @@ end # class LongDecimalBase
 # digits and the other one the position of the decimal point.
 #
 class LongDecimal < LongDecimalBase
-  @RCS_ID='-$Id: long-decimal.rb,v 1.19 2006/04/01 08:52:06 bk1 Exp $-'
+  @RCS_ID='-$Id: long-decimal.rb,v 1.20 2006/04/02 15:52:27 bk1 Exp $-'
 
   #  MINUS_ONE = LongDecimal(-1)
   #  ZERO      = LongDecimal(0)
@@ -273,8 +273,8 @@ class LongDecimal < LongDecimalBase
       # we need to come up with a better rule here.
       # if denominator is any product of powers of 2 and 5, we do not need to round
       denom = x.denominator
-      mul_2 = LongMath.multiplicity_of_factor(denom, 2)
-      mul_5 = LongMath.multiplicity_of_factor(denom, 5)
+      mul_2  = LongMath.multiplicity_of_factor(denom, 2)
+      mul_5  = LongMath.multiplicity_of_factor(denom, 5)
       iscale = [mul_2, mul_5].max
       scale += iscale
       denom /= 2 ** mul_2
@@ -342,8 +342,14 @@ class LongDecimal < LongDecimalBase
         int_val = -int_val
       end
     end
-    @scale   = scale
-    @int_val = int_val
+    # scale is the number of digits that go after the decimal point
+    @scale    = scale
+    # int_val holds all the digits.  The value actually expressed by self is
+    # int_val * 10**(-scale)
+    @int_val  = int_val
+    # used for storing the number of digits before the decimal point.
+    # Is nil, until it is used the first time
+    @digits10 = nil
 
   end # initialize
 
@@ -371,11 +377,26 @@ class LongDecimal < LongDecimalBase
         # here we actually do rounding
         @int_val = (@int_val / f).to_i
       end
-      @scale   = s
+      @scale    = s
+      @digits10 = nil
     end
   end
 
   protected :scale=
+
+  #
+  # get rid of trailing zeros
+  #
+  def round_trailing_zeros
+    n = LongMath.multiplicity_of_10(int_val)
+    if (n.zero?) then
+      return self
+    end
+    if (n > scale) then
+      n = scale
+    end
+    return self.round_to_scale(scale - n)
+  end
 
   #
   # create copy of self with different scale
@@ -586,41 +607,37 @@ class LongDecimal < LongDecimalBase
 
   #
   # number of decimal digits before the decimal point, not counting a
+  # single 0.  negative value, if some zeros follow immediately after
+  # decimal point
+  #
+  # 0.000x -> -3
+  # 0.00x -> -2
+  # 0.0xx -> -1
+  # 0.xxx ->  0
+  # 1.xxx  -> 1
+  # 10.xxx -> 2
+  # 99.xxx -> 2
+  # 100.xxx -> 3
+  # ...
+  #
+  def sint_digits10
+    if (@digits10.nil?)
+      @digits10 = LongMath.int_digits10(int_val) - scale
+    end
+    @digits10
+  end
+
+  #
+  # number of decimal digits before the decimal point, not counting a
   # single 0.
+  # 0.0xx -> 0
   # 0.xxx -> 0
   # 1.xxx -> 1
   # 10.xxx -> 2
   # ...
   #
   def int_digits10
-    int_part = self.abs.to_i
-    if int_part.zero? then
-      return 0
-    end
-
-    id = 1
-    powers = []
-    power  = 10
-    idx    = 0
-    until int_part.zero? do
-      expon       = 1 << idx
-      powers[idx] = power
-      break if int_part < power
-      id += expon
-      int_part = (int_part / power).to_i
-      idx += 1
-      power = power * power
-    end
-    until int_part < 10 do
-      idx -= 1
-      expon = 1 << idx
-      power = powers[idx]
-      while int_part >= power
-        id += expon
-        int_part = (int_part / power).to_i
-      end
-    end
-    id
+    return [ sint_digits10, 0 ].max
   end
 
   #
@@ -688,6 +705,7 @@ class LongDecimal < LongDecimalBase
   #
   def inc!
     @int_val += denominator
+    @digits10 = nil
   end
 
   #
@@ -695,6 +713,7 @@ class LongDecimal < LongDecimalBase
   #
   def dec!
     @int_val -= denominator
+    @digits10 = nil
   end
 
   #
@@ -1166,7 +1185,8 @@ class LongDecimal < LongDecimalBase
   # equality of the number of digits.
   #
   def ===(other)
-    (other.kind_of? LongDecimal) && self.int_val == other.int_val
+    # (other.kind_of? LongDecimal) && self.int_val == other.int_val
+    (self <=> other).zero?
   end
 
   #
@@ -1208,7 +1228,7 @@ end # LongDecimal
 #
 class LongDecimalQuot < LongDecimalBase
 
-  @RCS_ID='-$Id: long-decimal.rb,v 1.19 2006/04/01 08:52:06 bk1 Exp $-'
+  @RCS_ID='-$Id: long-decimal.rb,v 1.20 2006/04/02 15:52:27 bk1 Exp $-'
 
   #
   # constructor
@@ -1229,13 +1249,30 @@ class LongDecimalQuot < LongDecimalBase
   #
   def initialize(first, second)
     if ((first.kind_of? Rational) || (first.kind_of? Integer)) && (second.kind_of? Integer) then
-      @rat = Rational(first.numerator, first.denominator)
+      @rat   = Rational(first.numerator, first.denominator)
       @scale = second
+
     elsif (first.kind_of? LongDecimal) && (second.kind_of? LongDecimal) then
-      orig_scale = first.scale
+      # calculate the number of digits after the decimal point we can
+      # be confident about.  Use 0, if we do not have any confidence
+      # about any digits after the decimal point.  The formula has
+      # been obtained by using the partial derivatives of f(x, y) =
+      # x/y and assuming that sx and sy are the number of digits we
+      # know after the decimal point and dx and dy are the number of
+      # digits before the decimal point.  Since division is usually
+      # not expressable exactly in decimal digits, it is up to the
+      # calling application to decide on the number of digits actually
+      # used for the result, which can be more that new_scale.
+      sx = first.scale
+      sy = second.scale
+      dx = first.sint_digits10
+      dy = second.sint_digits10
+      new_scale = [ 0, 2 * dy + sx + sy - [ dx + sx, dy + sy ].max - 3].max
+      # puts("sx=#{sx} sy=#{sy} dx=#{dx} dy=#{dy} sc=#{new_scale} x=#{first} y=#{second}\n")
+
       first, second = first.anti_equalize_scale(second)
-      @rat = Rational(first.to_i, second.to_i)
-      @scale = orig_scale
+      @rat   = Rational(first.to_i, second.to_i)
+      @scale = new_scale
     else
       raise TypeError, "parameters must be (LongDecimal, LongDecimal) or (Rational, Integer): first=#{first.inspect} second=#{second.inspect}";
     end
@@ -1793,7 +1830,7 @@ module LongMath
     if (arg.kind_of? Integer) || (arg.kind_of? LongDecimalBase) && arg.is_int? then
       arg = arg.to_i
       unless (allowed_args.index(arg).nil?)
-	key = CacheKey.new(fname, arg, mode)
+        key = CacheKey.new(fname, arg, mode)
       end
     end
     return key
@@ -1824,11 +1861,11 @@ module LongMath
       oval = @@cache[key]
       # puts("set key=#{key}\noval=#{oval}\nval=#{val}\n")
       unless (oval.nil?)
-	raise TypeError, "must be LongDecimal" unless (val.kind_of? LongDecimal) && (oval.kind_of? LongDecimal)
-	r = val.scale_ufo(oval)
-	if (r <= 0)
-	  return
-	end
+        raise TypeError, "must be LongDecimal" unless (val.kind_of? LongDecimal) && (oval.kind_of? LongDecimal)
+        r = val.scale_ufo(oval)
+        if (r <= 0)
+          return
+        end
       end
       @@cache[key] = val
     end
@@ -2113,7 +2150,54 @@ module LongMath
     else
       raise TypeError, "type of x is not supported #{x.class} #{x.inpect}"
     end
+  end # multiplicity_of_factor
+
+  #
+  # how many times can n be divided by 10?
+  #
+  def LongMath.multiplicity_of_10(n)
+    mul_2  = LongMath.multiplicity_of_factor(n, 2)
+    mul_5  = LongMath.multiplicity_of_factor(n, 5)
+    [mul_2, mul_5].min
   end
+
+
+  #
+  # find number of digits in base 10 needed to express the given
+  # number n
+  #
+  def LongMath.int_digits10(n)
+
+    n = n.abs
+    if n.zero? then
+      return 0
+    end
+
+    id = 1
+    powers = []
+    power  = 10
+    idx    = 0
+    until n.zero? do
+      expon       = 1 << idx
+      powers[idx] = power
+      break if n < power
+      id += expon
+      n = (n / power).to_i
+      idx += 1
+      power = power * power
+    end
+
+    until n < 10 do
+      idx -= 1
+      expon = 1 << idx
+      power = powers[idx]
+      while n >= power
+        id += expon
+        n = (n / power).to_i
+      end
+    end
+    return id
+  end # int_digits10
 
   #
   # method for calculating pi to the given number of digits after the
@@ -2176,7 +2260,7 @@ module LongMath
         k += 1
         pow_k = pow_k << 1
       end
-      set_cached(cache_key, curr_pi) if cache_result 
+      set_cached(cache_key, curr_pi) if cache_result
     end
     curr_pi.round_to_scale(prec, final_mode)
   end
@@ -2300,7 +2384,7 @@ module LongMath
       iprec = calc_iprec_for_exp(x, prec)
     end
     check_is_prec(iprec, "iprec")
-    
+
     # we only cache exp(1)
     cache_key = get_cache_key("exp", x, mode, [1])
     y_k = get_cached(cache_key, x, iprec)
@@ -2318,7 +2402,7 @@ module LongMath
 
   #
   # calculation of exp(x) with precision used internally.  Needs to be
-  # rounded to be accurate to all digits that are provided. 
+  # rounded to be accurate to all digits that are provided.
   #
   def LongMath.exp_raw(x, prec, j, k, iprec, mode)
     # dprec = [ (iprec*0.9).round , (prec + 1) << 1 ].min
@@ -2336,9 +2420,9 @@ module LongMath
     f = 0
     loop do
       j.times do |i|
-	s[i] += t
-	f += 1
-	t = (t / f).round_to_scale(iprec, mode)
+        s[i] += t
+        f += 1
+        t = (t / f).round_to_scale(iprec, mode)
       end
       t = (t * x_j).round_to_scale(iprec, mode)
       break if (t.zero?)
@@ -2352,7 +2436,7 @@ module LongMath
     y_k = LongDecimal(0)
     j.times do |i|
       if (i > 0) then
-	x_i = (x_i * x_k).round_to_scale(iprec, mode)
+        x_i = (x_i * x_k).round_to_scale(iprec, mode)
       end
       y_k += (s[i] * x_i).round_to_scale(iprec, mode)
     end
@@ -2392,7 +2476,7 @@ module LongMath
   # LongDecimal.
   #
   def LongMath.log10(x, prec, mode = LongDecimal::ROUND_HALF_DOWN)
-    # check_is_ld(x, "x")
+
     check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
     iprec = prec + 2
@@ -2405,9 +2489,8 @@ module LongMath
 
     id = x.int_digits10
     xx = x.move_point_left(id)
-    # puts("x=#{x} xx=#{xx} id=#{id} iprec=#{iprec}\n")
     lnxx = log_internal(xx, iprec, mode)
-    ln10 = log_internal(10.to_ld, iprec, mode)
+    ln10 = log_internal(10, iprec, mode)
     y  = id + (lnxx / ln10).round_to_scale(prec, mode)
     return y
   end
@@ -2489,8 +2572,8 @@ module LongMath
   #
   # calculate log with all digits used internally.
   # result needs to be rounded in order to ensure that all digits that
-  # are provided are correct. 
-  # 
+  # are provided are correct.
+  #
   def LongMath.log_raw(x, prec, iprec, mode)
 
     #    dprec = [ iprec - 1, (prec + 1) << 1 ].min
@@ -2556,6 +2639,32 @@ module LongMath
     return y
   end
 
+  private
+
+  #
+  # internal helper method for calculating the internal precision for power
+  #
+  def LongMath.calc_iprec_for_power(x, y, prec)
+    x_f = x.to_f
+    y_f = y.to_f
+    logx_f   = Math.log(x_f.abs)
+    logy_f   = Math.log(y_f.abs)
+    logx_y_f = logx_f * y_f
+    iprec_x  = calc_iprec_for_exp(logx_y_f, prec)
+    iprec_y  = iprec_x
+    iprec    = iprec_x + 2
+    if (logx_f < 0)
+      iprec_x -= (logx_f/LOG10).round
+    end
+    if (logy_f < 0)
+      iprec_y -= (logy_f/LOG10).round
+    end
+    [ iprec, iprec_x, iprec_y ]
+
+  end
+
+  public
+
   #
   # calc the power of x with exponent y to the given precision as
   # LongDecimal.  Only supports values of y such that exp(y) still
@@ -2569,6 +2678,21 @@ module LongMath
     raise TypeError, "x=#{x.inspect} must not positive" unless x > 0
     check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
+
+    if y.zero? then
+      return LongDecimal.one!(prec)
+    elsif x.zero? then
+      return LongDecimal.zero!(prec)
+    end
+
+    iprec, iprec_x, iprec_y = calc_iprec_for_power(x, y, prec)
+
+    unless (x.kind_of? LongDecimalBase) || (x.kind_of? Integer)
+      x = x.to_ld(iprec_x, mode)
+    end
+    unless (y.kind_of? LongDecimalBase) || (y.kind_of? Integer)
+      y = y.to_ld(iprec_y, mode)
+    end
 
     # try shortcut if exponent is an integer
     if (y.kind_of? LongDecimalBase) && y.is_int?
@@ -2588,24 +2712,18 @@ module LongMath
       y = y.to_ld(prec, mode)
     end
 
-    # try shortcut if base is an integer
-    if (x.kind_of? LongDecimalBase) && x.is_int?
-      x = x.to_i
+    # exponent is split in two parts, an integer part and a
+    # LongDecimal with absolute value <= 0.5
+    y0 = y.round_to_scale(0, LongDecimal::ROUND_HALF_UP).to_i
+    z0 = x**y0
+    y1 = y - y0
+    prec_extra = 0
+    if (y0 > 0)
+      prec_extra = (y0*Math.log10(x.to_f).abs).ceil
     end
-    if (x.kind_of? Integer)
-      y0 = y.round_to_scale(0, LongDecimal::ROUND_HALF_UP).to_i
-      z0 = x**y0
-      y1 = y - y0
-      prec_extra = 0
-      if (y0 > 0)
-        prec_extra = (y0*Math.log10(x.to_f)).ceil
-      end
-      z1 = LongMath.power_internal(x, y1, prec+prec_extra, mode)
-      # puts("prec=#{prec} prec_extra=#{prec_extra} x=#{x} y0=#{y0} z0=#{z0} y1=#{y1} z1=#{z1}\n")
-      z  = z0 * z1
-      return z.to_ld(prec, mode)
-    end
-    return LongMath.power_internal(x, y, prec, mode)
+    z1 = LongMath.power_internal(x, y1, prec+prec_extra, mode)
+    z  = z0 * z1
+    return z.to_ld(prec, mode)
   end
 
   #
@@ -2616,7 +2734,7 @@ module LongMath
   # not work correctly
   #
   def LongMath.power_internal(x, y, prec = nil, final_mode = LongDecimal::ROUND_HALF_DOWN, iprec = nil, mode = LongDecimal::ROUND_HALF_DOWN)
-    # check_is_ld(x, "x")
+
     if (prec == nil) then
       if (x.kind_of? LongDecimalBase) && (y.kind_of? LongDecimalBase)
         prec = [x.scale, y.scale].max
@@ -2636,12 +2754,14 @@ module LongMath
     check_is_mode(final_mode, "final_mode")
     check_is_mode(mode, "mode")
 
-    logx_y_f = Math.log(x.to_f) * (y.to_f)
+    if y.zero? then
+      return LongDecimal.one!(prec)
+    elsif x.zero? then
+      return LongDecimal.zero!(prec)
+    end
 
-    # iprec = (prec * 1.2 + 20 + (y.abs.to_f) * 1.5 * x.int_digits2).round
     if (iprec == nil) then
-      iprec = calc_iprec_for_exp(logx_y_f, prec) + 2
-      # puts("power_internal: prec=#{prec} iprec=#{iprec} logx_y_f=#{logx_y_f}\n")
+      iprec, iprec_x, iprec_y = calc_iprec_for_power(x, y, prec)
     end
     unless (x.kind_of? LongDecimal)
       x = x.to_ld(iprec, mode)
@@ -2650,11 +2770,9 @@ module LongMath
       y = y.to_ld(iprec, mode)
     end
 
-    # puts("power_internal: (got iprec, x & y) x=#{x} y=#{y} logx_y=#{logx_y_f} iprec=#{iprec} prec=#{prec}\n")
     logx = log(x, iprec, mode)
     logx_y = logx*y
     xy = exp_internal(logx_y, prec + 1, mode)
-    # puts("power_internal: x=#{x} logx=#{logx} y=#{y} logx_y=#{logx_y} xy=#{xy} iprec=#{iprec} prec=#{prec}\n")
     xy.round_to_scale(prec, final_mode)
 
   end # power_internal

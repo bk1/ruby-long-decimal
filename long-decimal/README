@@ -1,8 +1,8 @@
 Version
 -------
 
-This version ($Name: PRE_ALPHA_0_19 $) is functionally identical with the
-previous pre-alpha-0.18.  Improvements are for speed, because certain
+This version ($Name: PRE_ALPHA_0_20 $) is functionally identical with the
+previous pre-alpha-0.19.  Improvements are for speed, because certain
 logarithms that are used frequently internally are cached now, so they
 need to be calculated only when needed for a higher precision than has
 been used before.  The gem-file is now created using Ruby 1.8.4
@@ -47,24 +47,25 @@ Install
 -------
 
 (REMARK: installation has only been successfully tested on Linux with
-ruby 1.8.4 and has been observed to fail on Windows 2000)
+ruby 1.8.4 and on Windows 2000 with ruby 1.8.2)
 
 1. Using ruby-gems (preferred)
-- download the newest gem-file from long-decimal project at rubyforge
-  which can be found by
-  http://rubyforge.org/projects/long-decimal/ -> Files
-  ( http://rubyforge.org/frs/?group_id=1334 )
 - open a shell window
-  cd to the directory where you have downloaded the gem-file
-  (on some systems you need to become root before installing:)
+- become root, unless the current user has the right to install gems
+  (which is usually the case on windows)
+
   su
+
+- uninstall old versions
+
+  gem uninstall long-decimal
+
+- install the newest version
+
   gem install long-decimal
-  [remark: currently rubyforge does not publish long-decimal directly
-           as gem, so you can't use gem to download, but you have to
-           download the gem-file manually first and then use gem only
-           to install it]
 
 - Usage from your ruby-programs:
+
   require "rubygems"
   require_gem "long-decimal"
 
@@ -75,11 +76,15 @@ ruby 1.8.4 and has been observed to fail on Windows 2000)
                   Linux/Unix-systems.
         $RUBY_VERSION is the major version of your Ruby, like 1.8
         $LONG_DECIMAL_VERSION is the version of long-decimal that you
-                              have installed, like 0.00.17
+                              have installed, like 0.00.20
   on my machine that would be
-  /usr/local/lib/ruby/gems/1.8/doc/long-decimal-0.00.17/rdoc/index.html
+  /usr/local/lib/ruby/gems/1.8/doc/long-decimal-0.00.20/rdoc/index.html
 
-2. Installing from the sources (it is preferred to use the gem-installation)
+2. Installing from the sources (it is preferred to use the
+   gem-installation, but since long-decimal is open-source-software you
+   are off course granted the right to download the source and change
+   it and install your own version.
+
 - download the newest source-tar.gz-file from long-decimal project at rubyforge
   which can be found by
   http://rubyforge.org/projects/long-decimal/ -> Files
@@ -96,14 +101,12 @@ ruby 1.8.4 and has been observed to fail on Windows 2000)
       creates the documentation
   - rake gem creates the gem-file in a sub-directory pkg
       recommended for installation, proceed as in 1
-  - rake install installs directly into the site-ruby-directory.
-      it is preferred to use
-      rake gem
-      cd pkg
-      gem install long-decimal
+  - cd pkg
+  - gem install --local long-decimal
+
 
 3. The documentation can be created from the sources.  It is contained
-in the gem-file.
+in the gem-file.  It is not provided as a separate file any more.
 
 License
 -------
