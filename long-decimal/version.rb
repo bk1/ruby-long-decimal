@@ -3,8 +3,8 @@
 #
 # version.rb -- extract version information from files
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/version.rb,v 1.3 2006/02/25 20:05:53 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_06 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/version.rb,v 1.4 2006/03/02 20:33:55 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_08 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -24,7 +24,7 @@ ARGV.each do |file|
 
   str = ""
   if name =~ /PRE_ALPHA_(\d+)_(\d+)/ then
-    str = sprintf("0.%02d.%02d", $1, $2)
+    str = sprintf("0.%02d.%02d", $1.to_i, $2.to_i)
   else
     str = version
   end

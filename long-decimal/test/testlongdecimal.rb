@@ -2,8 +2,8 @@
 #
 # testlongdecimal.rb -- runit test for longdecimal.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.3 2006/02/28 09:57:10 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_07 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.4 2006/03/02 20:20:12 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_08 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -13,10 +13,16 @@ require "runit/testsuite"
 
 load "lib/longdecimal.rb"
 
+#
+# test class for LongDecimal and LongDecimalQuot
+#
 class TestLongDecimal_class < RUNIT::TestCase
 
-  @RCS_ID='-$Id: testlongdecimal.rb,v 1.3 2006/02/28 09:57:10 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdecimal.rb,v 1.4 2006/03/02 20:20:12 bk1 Exp $-'
 
+  #
+  # helper method for test_sqrtb
+  #
   def check_sqrtb(x, s)
     y = LongMath.sqrtb(x)
     z = y * y
@@ -26,7 +32,10 @@ class TestLongDecimal_class < RUNIT::TestCase
     y
   end
 
-  def _test_sqrtb
+  #
+  # test method sqrtb for calculating sqrt of short integers
+  #
+  def test_sqrtb
     assert_equal(Complex(0,1), LongMath.sqrtb(-1), "sqrt(-1)=i")
     1024.times do |x|
       check_sqrtb(x, " loop x=#{x}")
@@ -61,6 +70,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     end
   end
 
+  #
+  # helper method of test_sqrtw
+  #
   def check_sqrtw(x, s)
     y = LongMath.sqrtw(x)
     z = y * y
@@ -70,6 +82,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     y
   end
 
+  #
+  # test method sqrtb for calculating sqrt of long integers
+  #
   def test_sqrtw
     assert_equal(Complex(0,1), LongMath.sqrtw(-1), "sqrt(-1)=i")
     1024.times do |x|
@@ -105,6 +120,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     end
   end
 
+  #
+  # test gcd_with_high_power
+  #
   def test_gcd_with_high_power
     n = 224
     assert_equal(32, LongMath.gcd_with_high_power(n, 2), "2-part of 224 is 32")
@@ -112,6 +130,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(1, LongMath.gcd_with_high_power(n, 3), "3-part of 224 is 1")
   end
 
+  #
+  # test multiplicity_of_factor for integers
+  #
   def test_multiplicity_of_factor
     n = 224
     assert_equal(5, LongMath.multiplicity_of_factor(n, 2), "ny_2(224) is 5")
@@ -119,6 +140,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(0, LongMath.multiplicity_of_factor(n, 3), "ny_3(224) is 0")
   end
 
+  #
+  # test multiplicity_of_factor for rationals
+  #
   def test_rat_multiplicity_of_factor
     n = Rational(224, 225)
     assert_equal(5, LongMath.multiplicity_of_factor(n, 2), "ny_2(n) is 5")
@@ -128,6 +152,10 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(0, LongMath.multiplicity_of_factor(n, 11), "ny_11(n) is 0")
   end
 
+  #
+  # test multiplicity_of_factor for rationals with numerator and
+  # denominator exceeding Float 
+  #
   def test_rat_long_multiplicity_of_factor
     n = Rational(224*(10**600+1), 225*(5**800))
     assert_equal(5, LongMath.multiplicity_of_factor(n, 2), "ny_2(n) is 5")
@@ -137,6 +165,22 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(0, LongMath.multiplicity_of_factor(n, 11), "ny_11(n) is 0")
   end
 
+  #
+  # test multiplicity_of_factor for LongDecimal
+  #
+  def test_rat_multiplicity_of_factor
+    # 0.729
+    n = LongDecimal(729, 3)
+    assert_equal(-3, LongMath.multiplicity_of_factor(n, 2), "ny_2(n) is -3")
+    assert_equal(6, LongMath.multiplicity_of_factor(n, 3), "ny_3(n) is 6")
+    assert_equal(-3, LongMath.multiplicity_of_factor(n, 5), "ny_5(n) is -3")
+    assert_equal(0, LongMath.multiplicity_of_factor(n, 7), "ny_7(n) is 0")
+    assert_equal(0, LongMath.multiplicity_of_factor(n, 11), "ny_11(n) is 0")
+  end
+
+  #
+  # test construction from Integer
+  #
   def test_int_init
     l = LongDecimal(224)
     assert_equal(224, l.to_i, "no loss of information for integers allowed")
@@ -148,6 +192,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(1, l.to_i, "loss of information 1.9->1")
   end
 
+  #
+  # test construction from Rational
+  #
   def test_rat_init
     r = Rational(227, 100)
     l = LongDecimal(r)
@@ -159,6 +206,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert((r - l.to_r).to_f.abs < 0.01, "difference of #{r.inspect} and #{l.inspect} must be less 0.01 but is #{(r - l.to_r).to_f.abs}")
   end
 
+  #
+  # test construction from Float
+  #
   def test_float_init
     s = "5.32"
     l = LongDecimal(s)
@@ -171,6 +221,24 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal("0.000271", l.to_s, "l=#{l.inspect} f=#{f.inspect}")
   end
 
+  #
+  # test construction from BigDecimal
+  #
+  def test_bd_init
+    b = BigDecimal("5.32")
+    l = LongDecimal(b)
+    assert_equal(b, l.to_bd, "l=#{l.inspect}")
+    b = BigDecimal("2.24")
+    l = LongDecimal(b)
+    assert((b.to_f - l.to_f).abs < 1e-9, "l=#{l.inspect} b=#{b.inspect}")
+    b = BigDecimal("2.71E-4")
+    l = LongDecimal(b)
+    assert_equal("0.000271", l.to_s, "l=#{l.inspect} b=#{b.inspect}")
+  end
+
+  #
+  # test rounding with ROUND_UP
+  #
   def test_round_to_scale_up
     l = LongDecimal("2.21")
     r = l.round_to_scale(1, LongDecimal::ROUND_UP)
@@ -193,6 +261,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal("2.2400", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
   end
 
+  #
+  # test rounding with ROUND_DOWN
+  #
   def test_round_to_scale_down
     l = LongDecimal("2.29")
     r = l.round_to_scale(1, LongDecimal::ROUND_DOWN)
@@ -215,6 +286,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal("2.2400", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
   end
 
+  #
+  # test rounding with ROUND_CEILING
+  #
   def test_round_to_scale_ceiling
     l = LongDecimal("2.21")
     r = l.round_to_scale(1, LongDecimal::ROUND_CEILING)
@@ -237,6 +311,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal("2.2400", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
   end
 
+  #
+  # test rounding with ROUND_FLOOR
+  #
   def test_round_to_scale_floor
     l = LongDecimal("2.29")
     r = l.round_to_scale(1, LongDecimal::ROUND_FLOOR)
@@ -259,6 +336,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal("2.2400", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
   end
 
+  #
+  # test rounding with ROUND_HALF_UP
+  #
   def test_round_to_scale_half_up
     l = LongDecimal("2.20")
     r = l.round_to_scale(1, LongDecimal::ROUND_HALF_UP)
@@ -297,6 +377,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal("2.2400", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
   end
 
+  #
+  # test rounding with ROUND_HALF_DOWN
+  #
   def test_round_to_scale_half_down
     l = LongDecimal("2.20")
     r = l.round_to_scale(1, LongDecimal::ROUND_HALF_DOWN)
@@ -335,6 +418,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal("2.2400", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
   end
 
+  #
+  # test rounding with ROUND_HALF_EVEN
+  #
   def test_round_to_scale_half_even
     l = LongDecimal("2.20")
     r = l.round_to_scale(1, LongDecimal::ROUND_HALF_EVEN)
@@ -381,6 +467,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal("2.2400", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
   end
 
+  #
+  # test rounding with ROUND_UNNECESSARY
+  #
   def test_round_to_scale_unnecessary
     l = LongDecimal("2.24")
     r = l.round_to_scale(4, LongDecimal::ROUND_UNNECESSARY)
@@ -397,6 +486,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     end
   end
 
+  #
+  # test conversion to String
+  #
   def test_to_s
     l = LongDecimal(224, 0)
     assert_equal("224", l.to_s, "l=#{l.inspect}")
@@ -421,6 +513,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal("-0.0224", l.to_s, "l=#{l.inspect}")
   end
 
+  #
+  # test conversion to Rational
+  #
   def test_to_r
     l = LongDecimal(224, 0)
     assert_equal(l, l.to_r.to_ld, "l=#{l.inspect}")
@@ -434,6 +529,9 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(l, l.to_r.to_ld, "l=#{l.inspect}")
   end
 
+  #
+  # test conversion to Float
+  #
   def test_to_f
     l = LongDecimal(224, 0)
     assert((l.to_f - 224).abs < 224 * 0.000001, "l=#{l.inspect}")
@@ -447,6 +545,25 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert((l.to_f - 0.0224).abs < 0.0224 * 0.000001, "l=#{l.inspect}")
   end
 
+  #
+  # test conversion to BigDecimal
+  #
+  def test_to_bd
+    l = LongDecimal(224, 0)
+    assert((l.to_bd - 224).abs < 224 * 0.000001, "l=#{l.inspect}")
+    l = LongDecimal(224, 1)
+    assert((l.to_bd - 22.4).abs < 22.4 * 0.000001, "l=#{l.inspect}")
+    l = LongDecimal(224, 2)
+    assert((l.to_bd - 2.24).abs < 2.24 * 0.000001, "l=#{l.inspect}")
+    l = LongDecimal(224, 3)
+    assert((l.to_bd - 0.224).abs < 0.224 * 0.000001, "l=#{l.inspect}")
+    l = LongDecimal(224, 4)
+    assert((l.to_bd - 0.0224).abs < 0.0224 * 0.000001, "l=#{l.inspect}")
+  end
+
+  #
+  # test conversion to Integer
+  #
   def test_to_i
     l = LongDecimal(224, 0)
     assert_equal(224, l.to_i, "l=#{l.inspect}")

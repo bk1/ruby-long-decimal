@@ -1,13 +1,14 @@
 #
 # longdecimal.rb -- Arbitrary precision decimals with fixed decimal point
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/longdecimal.rb,v 1.3 2006/02/28 09:57:10 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_07 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/longdecimal.rb,v 1.4 2006/03/02 20:20:12 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_08 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 require "complex"
 require "rational"
-# require "bigdecimal"
+require "bigdecimal"
+
 # require "bigdecimal/math"
 
 #
@@ -216,7 +217,7 @@ module LongMath
       return m1 - m2
 
     elsif (x.kind_of? LongDecimal)
-      m1 = x.numerator.multiplicity_of_factor(prime_number)
+      m1 = multiplicity_of_factor(x.numerator, prime_number)
       if (prime_number == 2 || prime_number == 5) then
         return m1 - x.scale
       else
@@ -242,6 +243,47 @@ module LongMath
     else
       raise TypeError, "type of x is not supported #{x.class} #{x.inpect}"
     end
+  end
+
+  #
+  # method for calculating pi to the given number of digits after the
+  # decimal point
+  # works fine for 1000 or 2000 digits or so.
+  # this method could be optimized more, but if you really want to go
+  # for more digits, you will find a specialized and optimized program
+  # for this specific purpose.
+  # (this is the easter egg ;-) )
+  def LongMath.calc_pi(prec, final_mode = LongDecimal::ROUND_HALF_DOWN)
+    mode  = LongDecimal::ROUND_HALF_DOWN
+    iprec = 5*(prec+1)
+    sprec = (iprec >> 1) + 1
+    dprec = (prec+1) << 1
+
+    a = LongDecimal(1)
+    b = (1 / LongDecimal(2).sqrt(iprec,mode)).round_to_scale(iprec, mode)
+    c = LongDecimal(5,1)
+    k = 1
+    pow_k = 2
+
+    pi = 0
+    last_pi = 0
+    last_diff = 1
+    
+    loop do
+      a, b = ((a + b) / 2).round_to_scale(sprec, mode), (a * b).round_to_scale(iprec, mode).sqrt(sprec, mode)
+      c    = (c - pow_k * (a * a - b * b)).round_to_scale(iprec, mode)
+      pi   = (2 * a * a / c).round_to_scale(sprec, mode)
+      diff = (pi - last_pi).round_to_scale(dprec, mode).abs
+      if (diff.zero? && last_diff.zero?) then
+	break
+      end
+      last_pi = pi
+      last_diff = diff
+      k += 1
+      pow_k = pow_k << 1
+      # puts("k=#{k} pi=#{pi.to_s}\nd=#{diff}\n\n")
+    end
+    pi.round_to_scale(prec, final_mode)
   end
 
 end
@@ -286,7 +328,7 @@ end
 # digits and the other one the position of the decimal point.
 #
 class LongDecimal < Numeric
-  @RCS_ID='-$Id: longdecimal.rb,v 1.3 2006/02/28 09:57:10 bk1 Exp $-'
+  @RCS_ID='-$Id: longdecimal.rb,v 1.4 2006/03/02 20:20:12 bk1 Exp $-'
 
   include LongDecimalRoundingMode
 
@@ -407,7 +449,10 @@ class LongDecimal < Numeric
 
     else
       # we assume a string or a floating point number
-      # floating point number is converted to string, so we only deal with strings
+      # floating point number or BigDecimal is converted to string, so
+      # we only deal with strings 
+      # this operation is not so common, so there is no urgent need to
+      # optimize it
       num_str  = x.to_s
       len      = num_str.length
 
@@ -616,6 +661,15 @@ class LongDecimal < Numeric
   #
   def to_ld
     self
+  end
+
+  #
+  # convert selt into BigDecimal
+  #
+  def to_bd
+    # this operation is probably not used so heavily, so we can live with a
+    # string as an intermediate step.
+    BigDecimal(self.to_s)
   end
 
   #
@@ -1054,6 +1108,11 @@ class LongDecimal < Numeric
         other = other.round_to_scale(scale, ROUND_HALF_UP)
       end
       return other, self
+    elsif other.kind_of? BigDecimal then
+      s, o = other.coerce(self.to_bd)
+      return o, s
+    elsif (other.kind_of? Float) && size > 8 then
+      return coerce(BigDecimal(other.to_s))
     elsif other.kind_of? Numeric then
       s, o = other.coerce(self.to_f)
       return o, s
@@ -1104,7 +1163,7 @@ end
 #
 class LongDecimalQuot < Numeric
 
-  @RCS_ID='-$Id: longdecimal.rb,v 1.3 2006/02/28 09:57:10 bk1 Exp $-'
+  @RCS_ID='-$Id: longdecimal.rb,v 1.4 2006/03/02 20:20:12 bk1 Exp $-'
 
   include LongDecimalRoundingMode
 
@@ -1372,6 +1431,8 @@ class LongDecimalQuot < Numeric
       return LongDecimalQuot(other.to_r, scale), self
     elsif other.kind_of? Float then
       return LongDecimalQuot(other.to_ld.to_r, scale), self
+    elsif other.kind_of? BigDecimal then
+      s, o = other.coerce(self.to_bd)
     elsif other.kind_of? Numeric then
       s, o = other.coerce(self.to_f)
       return o, s
