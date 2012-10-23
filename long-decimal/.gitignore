@@ -7,4 +7,5 @@ testrandom-2007-06-06.log
 tmp.rb
 todo
 *~
-#*#
+\#*#
+.#*
