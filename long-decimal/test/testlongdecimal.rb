@@ -2,8 +2,8 @@
 #
 # testlongdecimal.rb -- runit test for long-decimal.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.19 2006/03/27 21:54:46 bk1 Exp $
-# CVS-Label: $Name: PRE_ALPHA_0_17 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.22 2006/03/30 21:06:43 bk1 Exp $
+# CVS-Label: $Name: PRE_ALPHA_0_18 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -18,7 +18,7 @@ load "lib/long-decimal.rb"
 #
 class TestLongDecimal_class < RUNIT::TestCase
 
-  @RCS_ID='-$Id: testlongdecimal.rb,v 1.19 2006/03/27 21:54:46 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdecimal.rb,v 1.22 2006/03/30 21:06:43 bk1 Exp $-'
 
   #
   # helper method for test_split_merge_words
@@ -131,6 +131,292 @@ class TestLongDecimal_class < RUNIT::TestCase
     check_exp_floated(xx, 100)
     check_exp_floated(-xx, 100)
   end
+
+  #
+  # helper method for test_exp_int
+  # tests if exp(x) with precision prec is calculated correctly
+  #
+  def check_exp_int(x)
+
+    # make sure x is LongDecimal
+    x0 = x
+    x  = x.to_ld
+    y  = LongMath.exp(x, 0)
+    assert_equal(y.scale, 0, "scale must be 0")
+
+    # compare y against z = exp(x) calculated using regular floating point arithmetic
+    z  = Math.exp(x0.to_f)
+    yf = y.to_f
+    yi = yf.round
+    zi = z.round
+    assert((yi-zi) / [yf.abs, z.abs, Float::MIN].max < 1e-9, "yi=#{yi} and zi=#{zi} should be equal x=#{x} y=#{y} z=#{z}")
+
+    if (y > 1)
+      w = LongMath.log(y, 0)
+      assert((w-x).abs < 1, "log(y)=#{w} must be almost x=#{x0}")
+    end
+
+  end
+
+  #
+  # test the calculation of the exponential function with precision 0
+  #
+  def test_exp_int
+    xx = LongMath.log(10.to_ld, 10)*100
+    pi = Math::PI.to_ld(10)
+    sq = LongMath.sqrt(5, 20)
+
+    check_exp_int(0)
+
+    check_exp_int(700.1)
+    check_exp_int(700)
+    check_exp_int(100.01)
+    check_exp_int(100)
+    check_exp_int(1.001)
+    check_exp_int(1)
+    check_exp_int(0.01)
+    check_exp_int(1e-10)
+    check_exp_int(1e-90)
+    check_exp_int(xx)
+    check_exp_int(pi)
+    check_exp_int(sq)
+
+    check_exp_int(-700.1)
+    check_exp_int(-700)
+    check_exp_int(-100.01)
+    check_exp_int(-100)
+    check_exp_int(-1.001)
+    check_exp_int(-1)
+    check_exp_int(-0.01)
+    check_exp_int(-1e-10)
+    check_exp_int(-1e-90)
+    check_exp_int(-xx)
+    check_exp_int(-pi)
+    check_exp_int(-sq)
+
+  end
+
+  #
+  # helper method for test_lm_power_xint
+  # tests if exp(x) with precision prec is calculated correctly
+  #
+  def check_power_xint(x, y, prec)
+
+    xi = x.to_i
+    x  = x.to_ld()
+    y  = y.to_ld()
+    z  = LongMath.power(x, y, prec)
+    zz = LongMath.power_internal(x, y, prec)
+    assert((zz - z).abs <= z.unit, "power with and without optimizations z=#{z} zz=#{zz} x=#{x} y=#{y}")
+    # compare y against z = exp(x) calculated using regular floating point arithmetic
+    zz = (xi) ** (y.to_f)
+    zf = z.to_f
+    assert((zf - zz).abs < [z.unit.to_f, zz.abs / 1e9 ].max, "z=#{z} and zz=#{zz} should be almost equal x=#{x} y=#{y} (zf=#{zf})")
+  end
+
+  #
+  # test LongMath.power for bases that can be expressed as integer
+  #
+  def test_lm_power_xint
+
+    xx = Math.log(3).to_ld(40)
+    pi = Math::PI.to_ld(40)
+    sq = Math.sqrt(5).to_ld(40)
+
+    check_power_xint(2, 700.01, 10)
+    check_power_xint(2, 100.001, 10)
+    check_power_xint(2, 1.000000001, 10)
+    check_power_xint(2, 0.01, 10)
+    check_power_xint(2, 1e-10, 10)
+    check_power_xint(2, 1e-90, 10)
+    check_power_xint(2, 0, 10)
+    check_power_xint(2, -1.000000001, 10)
+    check_power_xint(2, -100.001, 10)
+    check_power_xint(2, -700.01, 10)
+    check_power_xint(2, xx, 10)
+    check_power_xint(2, pi, 10)
+    check_power_xint(2, sq, 10)
+
+    check_power_xint(10, 308.01, 10)
+    check_power_xint(10, 100.001, 10)
+    check_power_xint(10, 1.000000001, 10)
+    check_power_xint(10, 0.01, 10)
+    check_power_xint(10, 1e-10, 10)
+    check_power_xint(10, 1e-90, 10)
+    check_power_xint(10, 0, 10)
+    check_power_xint(10, -1.000000001, 10)
+    check_power_xint(10, -100.001, 10)
+    check_power_xint(10, -308.01, 10)
+    check_power_xint(10, xx, 10)
+    check_power_xint(10, pi, 10)
+    check_power_xint(10, sq, 10)
+
+    check_power_xint(2, 700.01, 100)
+    check_power_xint(2, 100.001, 100)
+    check_power_xint(2, 1.000000001, 100)
+    check_power_xint(2, 0.01, 100)
+    check_power_xint(2, 1e-10, 100)
+    check_power_xint(2, 1e-90, 100)
+    check_power_xint(2, 0, 100)
+    check_power_xint(2, -1.000000001, 100)
+    check_power_xint(2, -100.001, 100)
+    check_power_xint(2, -700.01, 100)
+    check_power_xint(2, xx, 100)
+    check_power_xint(2, pi, 100)
+    check_power_xint(2, sq, 100)
+
+    check_power_xint(10, 308.01, 100)
+    check_power_xint(10, 100.001, 100)
+    check_power_xint(10, 1.000000001, 100)
+    check_power_xint(10, 0.01, 100)
+    check_power_xint(10, 1e-10, 100)
+    check_power_xint(10, 1e-90, 100)
+    check_power_xint(10, 0, 100)
+    check_power_xint(10, -1.000000001, 100)
+    check_power_xint(10, -100.001, 100)
+    check_power_xint(10, -308.01, 100)
+    check_power_xint(10, xx, 100)
+    check_power_xint(10, pi, 100)
+    check_power_xint(10, sq, 100)
+
+    check_power_xint(2, 700.01, 40)
+    check_power_xint(2, 100.001, 40)
+    check_power_xint(2, 1.000000001, 40)
+    check_power_xint(2, 0.01, 40)
+    check_power_xint(2, 1e-10, 40)
+    check_power_xint(2, 1e-90, 40)
+    check_power_xint(2, 0, 40)
+    check_power_xint(2, -1.000000001, 40)
+    check_power_xint(2, -100.001, 40)
+    check_power_xint(2, -700.01, 40)
+    check_power_xint(2, xx, 40)
+    check_power_xint(2, pi, 40)
+    check_power_xint(2, sq, 40)
+
+    check_power_xint(10, 308.01, 40)
+    check_power_xint(10, 100.001, 40)
+    check_power_xint(10, 1.000000001, 40)
+    check_power_xint(10, 0.01, 40)
+    check_power_xint(10, 1e-10, 40)
+    check_power_xint(10, 1e-90, 40)
+    check_power_xint(10, 0, 40)
+    check_power_xint(10, -1.000000001, 40)
+    check_power_xint(10, -100.001, 40)
+    check_power_xint(10, -308.01, 40)
+    check_power_xint(10, xx, 40)
+    check_power_xint(10, pi, 40)
+    check_power_xint(10, sq, 40)
+
+  end
+
+  #
+  # helper method for test_lm_power_yint
+  # tests if exp(x) with precision prec is calculated correctly
+  #
+  def check_power_yint(x, y, prec)
+
+    yi = y.to_i
+    x  = x.to_ld
+    y  = y.to_ld
+
+    z  = LongMath.power(x, y, prec, LongMath::ROUND_HALF_UP)
+    zz = (x ** yi).round_to_scale(prec, LongMath::ROUND_HALF_UP)
+    assert_equal(z, zz, "power with ** or power-method x=#{x} y=#{y} z=#{z} zz=#{zz}")
+    zz = LongMath.power_internal(x, y, prec)
+    assert((zz - z).abs <= z.unit, "power with and without optimizations x=#{x} y=#{y} z=#{z} zz=#{zz}")
+
+    zz = (x.to_f) ** (y.to_f)
+    zf = z.to_f
+    # assert((zf - zz).abs / [zf.abs, zz.abs, Float::MIN].max < 1e-9, "z=#{zf.to_s} and zz=#{zz.to_s} should be almost equal x=#{x} y=#{y} z=#{z} zz=#{zz}")
+    assert((zf - zz).abs < [ z.unit.to_f, zf.abs / 1e9 ].max, "zf=#{zf.to_s} and zz=#{zz.to_s} should be almost equal x=#{x} y=#{y} z=#{z} zz=#{zz}")
+  end
+
+  #
+  # test LongMath.power for bases that can be expressed as integer
+  #
+  def test_lm_power_yint
+
+    xx = Math.log(3).to_ld(40)
+    pi = Math::PI.to_ld(40)
+    sq = Math.sqrt(5).to_ld(40)
+
+    check_power_yint(xx, 400, 10)
+    check_power_yint(xx, 100, 10)
+    check_power_yint(xx, 1, 10)
+    check_power_yint(xx, 0, 10)
+    check_power_yint(xx, -1, 10)
+    check_power_yint(xx, -100, 10)
+    check_power_yint(xx, -400, 10)
+
+    check_power_yint(pi, 400, 10)
+    check_power_yint(pi, 100, 10)
+    check_power_yint(pi, 1, 10)
+    check_power_yint(pi, 0, 10)
+    check_power_yint(pi, -1, 10)
+    check_power_yint(pi, -100, 10)
+    check_power_yint(pi, -400, 10)
+
+    check_power_yint(sq, 400, 10)
+    check_power_yint(sq, 100, 10)
+    check_power_yint(sq, 1, 10)
+    check_power_yint(sq, 0, 10)
+    check_power_yint(sq, -1, 10)
+    check_power_yint(sq, -100, 10)
+    check_power_yint(sq, -400, 10)
+
+    check_power_yint(xx, 400, 100)
+    check_power_yint(xx, 100, 100)
+    check_power_yint(xx, 1, 100)
+    check_power_yint(xx, 0, 100)
+    check_power_yint(xx, -1, 100)
+    check_power_yint(xx, -100, 100)
+    check_power_yint(xx, -400, 100)
+
+    check_power_yint(pi, 400, 100)
+    check_power_yint(pi, 100, 100)
+    check_power_yint(pi, 1, 100)
+    check_power_yint(pi, 0, 100)
+    check_power_yint(pi, -1, 100)
+    check_power_yint(pi, -100, 100)
+    check_power_yint(pi, -400, 100)
+
+    check_power_yint(sq, 400, 100)
+    check_power_yint(sq, 100, 100)
+    check_power_yint(sq, 1, 100)
+    check_power_yint(sq, 0, 100)
+    check_power_yint(sq, -1, 100)
+    check_power_yint(sq, -100, 100)
+    check_power_yint(sq, -400, 100)
+
+    check_power_yint(xx, 400, 40)
+    check_power_yint(xx, 100, 40)
+    check_power_yint(xx, 1, 40)
+    check_power_yint(xx, 0, 40)
+    check_power_yint(xx, -1, 40)
+    check_power_yint(xx, -100, 40)
+    check_power_yint(xx, -400, 40)
+
+    check_power_yint(pi, 400, 40)
+    check_power_yint(pi, 100, 40)
+    check_power_yint(pi, 1, 40)
+    check_power_yint(pi, 0, 40)
+    check_power_yint(pi, -1, 40)
+    check_power_yint(pi, -100, 40)
+    check_power_yint(pi, -400, 40)
+
+    check_power_yint(sq, 400, 40)
+    check_power_yint(sq, 100, 40)
+    check_power_yint(sq, 1, 40)
+    check_power_yint(sq, 0, 40)
+    check_power_yint(sq, -1, 40)
+    check_power_yint(sq, -100, 40)
+    check_power_yint(sq, -400, 40)
+
+  end
+
+  # TODO test_exp_non_ld
+  #      test_log_non_ld
+  #      test_power_non_ld
 
   #
   # helper method for test_log
@@ -306,6 +592,8 @@ class TestLongDecimal_class < RUNIT::TestCase
       end
 
       z = LongMath.power(10.to_ld, y, eprec)
+      # zz = LongMath.exp10(y, eprec)
+      # assert((zz - z).abs <= z.unit, "zz=#{zz.to_s} and z=#{z.to_s} should be almost equal (y=#{y.to_s} eprec=#{eprec} prec=#{prec})")
       assert((x - z).abs <= z.unit, "x=#{x.to_s} and z=#{z.to_s} should be almost equal (y=#{y.to_s} eprec=#{eprec} prec=#{prec})")
     end
 
@@ -320,7 +608,7 @@ class TestLongDecimal_class < RUNIT::TestCase
     # make sure x is LongDecimal
     x0 = x
     x = x.to_ld
-    log10x = log10x.to_ld.round_to_scale(prec)
+    log10x = log10x.to_ld(prec)
     # calculate y = log10(x)
     y = LongMath.log10(x, prec)
     assert_equal(y, log10x, "log x should match exactly x=#{x} y=#{y} log10x=#{log10x}")
@@ -386,6 +674,8 @@ class TestLongDecimal_class < RUNIT::TestCase
       end
 
       z = LongMath.power(2.to_ld, y, eprec)
+      # zz = LongMath.exp2(y, eprec)
+      # assert((zz - z).abs <= z.unit, "zz=#{zz.to_s} and z=#{z.to_s} should be almost equal (y=#{y.to_s} eprec=#{eprec} prec=#{prec})")
       assert((x - z).abs <= z.unit, "x=#{x.to_s} and z=#{z.to_s} should be almost equal (y=#{y.to_s} eprec=#{eprec} prec=#{prec})")
     end
 
@@ -400,7 +690,7 @@ class TestLongDecimal_class < RUNIT::TestCase
     # make sure x is LongDecimal
     x0 = x
     x = x.to_ld
-    log2x = log2x.to_ld.round_to_scale(prec)
+    log2x = log2x.to_ld(prec)
     # calculate y = log2(x)
     y = LongMath.log2(x, prec)
     assert_equal(y, log2x, "log x should match exactly x=#{x} y=#{y} log2x=#{log2x} prec=#{prec}")
@@ -2017,7 +2307,7 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert(y0 <= y1, "y0 y1")
     assert(y1 <= y2, "y1 y2")
 
-    x  = 4.to_ld.round_to_scale(101)
+    x  = 4.to_ld(101)
     y0 = check_sqrt(x, 120, LongDecimal::ROUND_DOWN, 0, 0, "four")
     y1 = check_sqrt(x, 120, LongDecimal::ROUND_HALF_EVEN, 0, 0, "four")
     y2 = check_sqrt(x, 120, LongDecimal::ROUND_UP, 0, 0, "four")
@@ -2650,6 +2940,7 @@ class TestLongDecimal_class < RUNIT::TestCase
 
   # TODO
   # def test_to_bd
+  # def test_to_ld_with_parms
 
   #
   # test negation operator (unary -) of LongDecimalQuot
