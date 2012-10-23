@@ -1,8 +1,8 @@
 Version
 -------
 
-This version ($Name: ALPHA_01_00 $) is functionally identical with the previous
-pre-alpha-0.22.  The runit tests have been extended and further tests
+This version ($Name: ALPHA_01_01 $) is functionally identical with the previous
+alpha-0.01.00.  The runit tests have been extended and further tests
 have been added.  A lot of additional testing has been done using
 random numbers as parameters with testrandom.rb and values for which
 these random tests have failed have been added to the regular tests in
@@ -15,7 +15,7 @@ found directly with http://rubyforge.org/projects/long-decimal/ .  So
 you should feel encouraged to look if there is a newer version, when
 you install long-decimal.
 
-This version is a alpha-version.  Operations +, -, *, / and sqrt
+This version is an alpha-version.  Operations +, -, *, / and sqrt
 should be working properly and would justify calling this release at
 least beta.  Even log, exp and power should be fine.  log, log2, log10
 and exp have been tested for about a million random values and the
@@ -30,8 +30,8 @@ rounded up or down.  Because these functions are transcendental, at
 least exp and log will always have either one of these true, it will
 never be exactly ....5.  Speed could be improved as well.
 
-It would be a good idea to do some mathematical analysis on how many
-digits are needed internally to guarantee the correctness of the
+It would be a good idea to do some more mathematical analysis on how
+many digits are needed internally to guarantee the correctness of the
 digits that are provided.  But this will not be considered as a
 requirement for the alpha-version.
 
@@ -50,18 +50,27 @@ your machine.  It is about 15 minutes on my machine (1300 MHz).
 Whatever is gained by making the software run faster is used up again
 by adding more tests.  This is the result of the test:
 
-In addition random tests for exp, log, log2 and log10 can be run for a
-long time, using the script test/testrandom.rb.  This requires
-installation of the ruby-library crypt-isaac for its random numbers.
-If you actually want to run this and find an error with it, please
-report it with the lines of output revealing the bug on
+Finished in 1160.808707 seconds.
+
+131 tests, 45612 assertions, 0 failures, 0 errors
+
+In addition random tests for exp, exp2, exp10, sqrt, log, log2 and
+log10 can be run for a long time, using the script test/testrandom.rb.
+Likewise tests for powers x to the yth with random x and y can be
+tested for a long time using test/testrandpower.rb
+
+These two require installation of the ruby-library crypt-isaac for its
+random numbers, which works well with Linux or Windows and Cygwin.  If
+you actually want to run this and find an error with it, please report
+it with the lines of output revealing the bug on
 http://rubyforge.org/projects/long-decimal/ -> tracker
 
 Install
 -------
 
 (REMARK: installation has only been successfully tested on Linux with
-ruby 1.8.4 and on Windows 2000 with ruby 1.8.2)
+ruby 1.8.4 and on Windows XP with Cygwin and ruby 1.8.4 and on Windows
+2000 with ruby 1.8.2)
 
 1. Using ruby-gems (preferred)
 - open a shell window
@@ -121,89 +130,6 @@ ruby 1.8.4 and on Windows 2000 with ruby 1.8.2)
 
 3. The documentation can be created from the sources.  It is contained
 in the gem-file.  It is not provided as a separate file any more.
-
-Install
--------
-
-(REMARK: installation has only been successfully tested on Linux with
-ruby 1.8.4 and on Windows 2000 with ruby 1.8.2)
-
-1. Using ruby-gems (preferred)
-- open a shell window
-- become root, unless the current user has the right to install gems
-  (which is usually the case on windows)
-
-  su
-
-- uninstall old versions
-
-  gem uninstall long-decimal
-
-- install the newest version
-
-  gem install long-decimal
-
-- Usage from your ruby-programs:
-
-  require "rubygems"
-  require_gem "long-decimal"
-
-- documentation will be found in HTML-format in the directory
-  $RUBY_DIR/gems/$RUBY_VERSION/doc/long-decimal-$LONG_DECIMAL_VERSION/rdoc/index.html
-  where $RUBY_DIR is the directory containing your ruby-installation,
-                  usually /usr/lib/ruby or /usr/local/lib/ruby on
-                  Linux/Unix-systems.
-        $RUBY_VERSION is the major version of your Ruby, like 1.8
-        $LONG_DECIMAL_VERSION is the version of long-decimal that you
-                              have installed, like 0.00.20
-  on my machine that would be
-  /usr/local/lib/ruby/gems/1.8/doc/long-decimal-0.00.20/rdoc/index.html
-
-2. Installing from the sources (it is preferred to use the
-   gem-installation, but since long-decimal is open-source-software you
-   are off course granted the right to download the source and change
-   it and install your own version.
-
-- download the newest source-tar.gz-file from long-decimal project at rubyforge
-  which can be found by
-  http://rubyforge.org/projects/long-decimal/ -> Files
-  ( http://rubyforge.org/frs/?group_id=1334 )
-- open a shell window
-  cd to the directory where you have downloaded the gem-file
-  unpack the file using tar
-  tar xfzvv long-decimal-alpha-1_00.tar.gz
-  cd long-decimal
-- now you can use rake for several operations
-  - rake test
-      runs runit tests.  All tests should succeed.
-  - rake doc
-      creates the documentation
-  - rake gem creates the gem-file in a sub-directory pkg
-      recommended for installation, proceed as in 1
-  - cd pkg
-  - gem install --local long-decimal
-
-
-3. The documentation can be created from the sources.  It is contained
-in the gem-file.  It is not provided as a separate file any more.
-
-Test
-----
-
-Some runit tests have been included.  They give some indication of the
-correctness of this library and allow changes to be checked in order
-to make sure that what was running before would still work afterwards.
-Tests for a library as complex as long-decimal can never be
-exhaustive, but they give a good indication that methods are working
-correctly.  About 95% of the tests that will be eventually needed are
-already present.  As a policy a release is not created unless all
-tests succeed.  Running the tests can take a few minutes, depending on
-your machine.  It is about 15 minutes on my machine (1300 MHz).
-Whatever is gained by making the software run faster is used up again
-by adding more tests.  This is the result of the test:
-
-Finished in 1735.081239 seconds.
-125 tests, 44932 assertions, 0 failures, 0 errors
 
 Bugs
 ----

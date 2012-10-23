@@ -1,8 +1,8 @@
 #
 # long-decimal.rb -- Arbitrary precision decimals with fixed decimal point
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal.rb,v 1.33 2006/04/11 19:03:22 bk1 Exp $
-# CVS-Label: $Name: ALPHA_01_00 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal.rb,v 1.43 2006/05/01 12:22:12 bk1 Exp $
+# CVS-Label: $Name: ALPHA_01_01 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 require "complex"
@@ -37,8 +37,18 @@ module LongDecimalRoundingMode
       end
     end
 
-    def inverse
-      LongDecimalRoundingMode::INVERSE_MODE[self]
+    #
+    # inverse mode in terms of multiplication
+    #
+    def minverse
+      LongDecimalRoundingMode::MUL_INVERSE_MODE[self]
+    end
+
+    #
+    # inverse mode in terms of addition
+    #
+    def ainverse
+      LongDecimalRoundingMode::ADD_INVERSE_MODE[self]
     end
 
     def hash
@@ -61,7 +71,7 @@ module LongDecimalRoundingMode
   ROUND_HALF_EVEN    = RoundingModeClass.new(:ROUND_HALF_EVEN, 8)
   ROUND_UNNECESSARY  = RoundingModeClass.new(:ROUND_UNNECESSARY, 9)
 
-  INVERSE_MODE = {
+  MUL_INVERSE_MODE = {
     ROUND_UP           =>   ROUND_DOWN,
     ROUND_DOWN         =>   ROUND_UP,
     ROUND_CEILING      =>   ROUND_FLOOR,
@@ -74,13 +84,26 @@ module LongDecimalRoundingMode
     ROUND_UNNECESSARY  =>   ROUND_UNNECESSARY
   }
 
+  ADD_INVERSE_MODE = {
+    ROUND_UP           =>   ROUND_UP,
+    ROUND_DOWN         =>   ROUND_DOWN,
+    ROUND_CEILING      =>   ROUND_FLOOR,
+    ROUND_FLOOR        =>   ROUND_CEILING,
+    ROUND_HALF_UP      =>   ROUND_HALF_UP,
+    ROUND_HALF_DOWN    =>   ROUND_HALF_DOWN,
+    ROUND_HALF_CEILING =>   ROUND_HALF_FLOOR,
+    ROUND_HALF_FLOOR   =>   ROUND_HALF_CEILING,
+    ROUND_HALF_EVEN    =>   ROUND_HALF_EVEN,
+    ROUND_UNNECESSARY  =>   ROUND_UNNECESSARY
+  }
+
 end # LongDecimalRoundingMode
 
 #
 # common base class for LongDecimal and LongDecimalQuot
 #
 class LongDecimalBase < Numeric
-  @RCS_ID='-$Id: long-decimal.rb,v 1.33 2006/04/11 19:03:22 bk1 Exp $-'
+  @RCS_ID='-$Id: long-decimal.rb,v 1.43 2006/05/01 12:22:12 bk1 Exp $-'
 
   include LongDecimalRoundingMode
 
@@ -188,7 +211,7 @@ end # class LongDecimalBase
 # digits and the other one the position of the decimal point.
 #
 class LongDecimal < LongDecimalBase
-  @RCS_ID='-$Id: long-decimal.rb,v 1.33 2006/04/11 19:03:22 bk1 Exp $-'
+  @RCS_ID='-$Id: long-decimal.rb,v 1.43 2006/05/01 12:22:12 bk1 Exp $-'
 
   #  MINUS_ONE = LongDecimal(-1)
   #  ZERO      = LongDecimal(0)
@@ -525,12 +548,25 @@ class LongDecimal < LongDecimalBase
   # representation otherwise.
   #
   def to_f
+    # handle overflow: raise exception
+    if (self.abs > LongMath::MAX_FLOATABLE) then
+      raise ArgumentError, "self=#{self.inspect} cannot be expressed as Float"
+    end
+
+    # handle underflow: return 0.0
+    if (self.abs < LongMath::MIN_FLOATABLE) then
+      return 0.0
+    end
+
     divisor = denominator
     if (divisor == 1) then
       return numerator.to_f
     elsif numerator.abs <= LongMath::MAX_FLOATABLE then
       if (divisor.abs > LongMath::MAX_FLOATABLE) then
-        return 0.0
+	q = 10**(scale - Float::MAX_10_EXP)
+	f = (numerator / q).to_f
+	d = divisor / q
+        return f / d
       else
         f = numerator.to_f
         return f / divisor
@@ -567,7 +603,7 @@ class LongDecimal < LongDecimalBase
   # optional first argument gives the precision for the desired result
   # optional second argument gives the rouding mode
   #
-  def to_ld(prec = nil, mode = LongDecimal::ROUND_HALF_UP)
+  def to_ld(prec = nil, mode = LongMath.standard_mode)
     if (prec.nil?)
       return self
     else
@@ -748,6 +784,13 @@ class LongDecimal < LongDecimalBase
   end
 
   #
+  # return the unit by which self is incremented by succ times sign
+  #
+  def sunit
+    LongDecimal(sign, scale)
+  end
+
+  #
   # apply unary -
   # (returns negated self)
   #
@@ -894,6 +937,7 @@ class LongDecimal < LongDecimalBase
       else
         abs_other = -other
         new_scale = abs_other * scale
+        # puts("other=#{other} abs_other=#{abs_other} int_val=#{int_val} new_scale=#{new_scale} scale=#{scale}")
         LongDecimalQuot(Rational(10 ** new_scale, int_val ** abs_other), new_scale)
       end
     else
@@ -1225,7 +1269,7 @@ end # LongDecimal
 #
 class LongDecimalQuot < LongDecimalBase
 
-  @RCS_ID='-$Id: long-decimal.rb,v 1.33 2006/04/11 19:03:22 bk1 Exp $-'
+  @RCS_ID='-$Id: long-decimal.rb,v 1.43 2006/05/01 12:22:12 bk1 Exp $-'
 
   #
   # constructor
@@ -1339,7 +1383,7 @@ class LongDecimalQuot < LongDecimalBase
   # optional first argument gives the precision for the desired result
   # optional second argument gives the rouding mode
   #
-  def to_ld(prec = scale, mode = LongDecimal::ROUND_HALF_UP)
+  def to_ld(prec = scale, mode = LongMath.standard_mode)
     round_to_scale(prec, mode)
   end
 
@@ -1782,7 +1826,7 @@ class Numeric
   # optional first argument gives the precision for the desired result
   # optional second argument gives the rouding mode
   #
-  def to_ld(prec = nil, mode = LongDecimal::ROUND_HALF_UP)
+  def to_ld(prec = nil, mode = LongMath.standard_mode)
     l = LongDecimal(self)
     if (prec.nil?)
       return l
@@ -1809,7 +1853,7 @@ class Rational
   # optional first argument gives the precision for the desired result
   # optional second argument gives the rouding mode
   #
-  def to_ld(prec = nil, mode = LongDecimal::ROUND_HALF_UP)
+  def to_ld(prec = nil, mode = LongMath.standard_mode)
     if (prec.nil?)
       return LongDecimal(self)
     else
@@ -1831,10 +1875,11 @@ module LongMath
 
   include LongDecimalRoundingMode
 
-  MAX_FLOATABLE = Float::MAX.to_i
-  MAX_EXP_ABLE  = Math.log(MAX_FLOATABLE).to_i
-  LOG2          = Math.log(2.0)
-  LOG10         = Math.log(10.0)
+  MAX_FLOATABLE  = Float::MAX.to_i
+  MAX_EXP_ABLE   = Math.log(MAX_FLOATABLE).to_i
+  MIN_FLOATABLE  = Float::MIN.to_ld(340, LongMath::ROUND_UP)
+  LOG2           = Math.log(2.0)
+  LOG10          = Math.log(10.0)
 
   @@cache = {}
 
@@ -2281,11 +2326,11 @@ module LongMath
   # cache_result should the result be cached?  Set to false, if an
   # extraordinary long result is really needed only once
   #
-  def LongMath.pi(prec, final_mode = LongDecimal::ROUND_HALF_DOWN, iprec = nil, mode = nil, cache_result = true)
+  def LongMath.pi(prec, final_mode = LongMath.standard_mode, iprec = nil, mode = nil, cache_result = true) # DOWN?
 
     check_is_prec(prec, "prec")
     if (mode.nil?)
-      mode  = LongDecimal::ROUND_HALF_DOWN
+      mode  = LongMath.standard_mode
     end
     check_is_mode(final_mode, "final_mode")
     check_is_mode(mode, "mode")
@@ -2340,7 +2385,7 @@ module LongMath
   # with the exponential function that exceed the memory.  It may be
   # removed in future versions.
   #
-  def LongMath.exp(x, prec, mode = LongDecimal::ROUND_HALF_DOWN)
+  def LongMath.exp(x, prec, mode = LongMath.standard_mode) # down?
     raise TypeError, "x=#{x.inspect} must not be greater #{MAX_EXP_ABLE}" unless x <= MAX_EXP_ABLE
     check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
@@ -2354,7 +2399,7 @@ module LongMath
   # arbitrary, but it is enforced in order to avoid producing numbers
   # with the exponential function that exceed the memory.
   #
-  def LongMath.exp2(x, prec, mode = LongDecimal::ROUND_HALF_DOWN)
+  def LongMath.exp2(x, prec, mode = LongMath.standard_mode) # down?
     LongMath.power(2, x, prec, mode)
   end
 
@@ -2365,7 +2410,7 @@ module LongMath
   # arbitrary, but it is enforced in order to avoid producing numbers
   # with the exponential function that exceed the memory.
   #
-  def LongMath.exp10(x, prec, mode = LongDecimal::ROUND_HALF_DOWN)
+  def LongMath.exp10(x, prec, mode = LongMath.standard_mode) # down?
     LongMath.power(10, x, prec, mode)
   end
 
@@ -2405,7 +2450,7 @@ module LongMath
   # create a bug report, if the default settings for the parameters do
   # not work correctly
   #
-  def LongMath.exp_internal(x, prec = nil, final_mode = LongDecimal::ROUND_HALF_DOWN, j = nil, k = nil, iprec = nil, mode = LongDecimal::ROUND_HALF_DOWN, cache_result = true)
+  def LongMath.exp_internal(x, prec = nil, final_mode = LongMath.standard_mode, j = nil, k = nil, iprec = nil, mode = LongMath.standard_imode, cache_result = true) # down?
 
     if (prec == nil) then
       if (x.kind_of? LongDecimalBase)
@@ -2417,7 +2462,7 @@ module LongMath
     check_is_prec(prec, "prec")
 
     if (final_mode == nil)
-      final_mode = LongDecimal::ROUND_HALF_DOWN
+      final_mode = LongMath.standard_mode
     end
     check_is_mode(final_mode, "final_mode")
     check_is_mode(mode, "mode")
@@ -2528,7 +2573,7 @@ module LongMath
   #
   # calculate approximation of sqrt of a LongDecimal.
   #
-  def LongMath.sqrt(x, prec, mode = LongDecimal::ROUND_HALF_DOWN)
+  def LongMath.sqrt(x, prec, mode = LongMath.standard_mode) # down
     LongMath.sqrt_internal(x, prec, mode, false)
   end
 
@@ -2596,7 +2641,7 @@ module LongMath
   # calculate the natural logarithm function of x to the given precision as
   # LongDecimal.
   #
-  def LongMath.log(x, prec, mode = LongDecimal::ROUND_HALF_DOWN)
+  def LongMath.log(x, prec, mode = LongMath.standard_mode) # down?
     check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
     log_internal(x, prec, mode)
@@ -2606,11 +2651,11 @@ module LongMath
   # calculate the base 10 logarithm of x to the given precision as
   # LongDecimal.
   #
-  def LongMath.log10(x, prec, mode = LongDecimal::ROUND_HALF_DOWN)
+  def LongMath.log10(x, prec, mode = LongMath.standard_mode) # down?
 
     check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
-    iprec = prec + 5
+    iprec = prec + 6
     unless (x.kind_of? LongDecimal)
       x = x.to_ld(iprec, mode)
     end
@@ -2630,7 +2675,7 @@ module LongMath
   # calculate the base 2 logarithm of x to the given precision as
   # LongDecimal.
   #
-  def LongMath.log2(x, prec, mode = LongDecimal::ROUND_HALF_DOWN)
+  def LongMath.log2(x, prec, mode = LongMath.standard_mode)
 
     check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
@@ -2656,7 +2701,7 @@ module LongMath
   # create a bug report, if the default settings for the parameters do
   # not work correctly
   #
-  def LongMath.log_internal(x, prec = nil, final_mode = LongDecimal::ROUND_HALF_DOWN, iprec = nil, mode = LongDecimal::ROUND_HALF_DOWN, cache_result = true)
+  def LongMath.log_internal(x, prec = nil, final_mode = LongMath.standard_mode, iprec = nil, mode = LongMath.standard_imode, cache_result = true)
 
     raise TypeError, "x=#{x.inspect} must not be positive" unless x > 0
     if (prec == nil) then
@@ -2669,7 +2714,7 @@ module LongMath
     check_is_prec(prec, "prec")
 
     if (final_mode == nil)
-      final_mode = LongDecimal::ROUND_HALF_DOWN
+      final_mode = LongMath.standard_mode
     end
     check_is_mode(final_mode, "final_mode")
     check_is_mode(mode, "mode")
@@ -2707,8 +2752,7 @@ module LongMath
   #
   def LongMath.log_raw(x, prec, iprec, mode)
 
-    # t0 = Time.new
-    # puts("log_raw start")
+    # puts("log_raw start x=#{x}")
 
     # we have to rely on iprec being at least 10
     raise TypeError, "iprec=#{iprec} out of range" unless (iprec.kind_of? Fixnum) && iprec >= 10
@@ -2722,11 +2766,13 @@ module LongMath
     # sign of result
     s = 1
     # make sure x is >= 1
+    mode1 = mode
     if (x < 1) then
-      x = (1 / x).round_to_scale(iprec, mode)
+      mode1 = mode1.minverse
+      x = (1 / x).round_to_scale(iprec, mode1)
       s = -1
     end
-    # puts("log_raw prepared t=#{Time.new-t0}")
+    # puts("log_raw prepared t=#{Time.new-t0} x=#{x} s=#{s} mode=#{mode} mode1=#{mode1}")
 
     # number that are beyond the usual range of Float need to be
     # handled specially to reduce to something expressable as Float
@@ -2734,7 +2780,7 @@ module LongMath
     exp_keys.each do |exp_key|
       exp_val = exp(exp_key, iprec)
       while (x > exp_val) do
-        x = (x / exp_val).round_to_scale(iprec, mode)
+        x = (x / exp_val).round_to_scale(iprec, mode1)
         if (s < 0) then
           y -= exp_key
         else
@@ -2742,6 +2788,7 @@ module LongMath
         end
       end
     end
+    # puts("log_raw divided t=#{Time.new-t0} x=#{x} y=#{y} s=#{s}")
 
     factor = 1
     sprec  = (iprec * 1.5).round
@@ -2751,9 +2798,20 @@ module LongMath
     # delta  = LongDecimal(1, LongMath.sqrtw(iprec))
     # delta  = LongDecimal(1, LongMath.sqrtw(LongMath.sqrtw(iprec+1)+1))
     while (x - 1).abs > delta do
-      x       = LongMath.sqrt(x, sprec, mode)
+      x       = LongMath.sqrt(x, sprec, mode1)
       factor *= 2
     end
+    # puts("log_raw rooted t=#{Time.new-t0} x=#{x} y=#{y} s=#{s} f=#{factor}")
+
+    ss = 1
+    mode2 = mode1.ainverse
+    if (x < 1)
+      puts("x<1 inverting")
+      mode2 = mode2.ainverse
+      x  = (1 / x).round_to_scale(iprec, mode2)
+      ss = -1
+    end
+    # puts("log_raw 2nd prep t=#{Time.new-t0} x=#{x} y=#{y} s=#{s} ss=#{ss} f=#{factor}")
 
     sum = 0
     z   = 1 - x
@@ -2761,14 +2819,17 @@ module LongMath
     p   = 1.to_ld
     d   = 1.to_ld
     until p.abs.round_to_scale(dprec, LongDecimal::ROUND_DOWN).zero? do
-      p = (p * z).round_to_scale(iprec, mode)
-      d = (p / i).round_to_scale(iprec, mode)
+      p = (p * z).round_to_scale(iprec, mode2)
+      d = (p / i).round_to_scale(iprec, mode2)
       i += 1
       sum += d
 
     end
+    sum *= ss
+    # puts("log_raw added t=#{Time.new-t0} x=#{x} y=#{y} sum=#{sum} s=#{s} ss=#{ss} f=#{factor}")
 
-    y -= ((s * factor) * sum).round_to_scale(iprec, mode)
+    y -= ((s * factor) * sum).round_to_scale(iprec, mode.ainverse)
+    # puts("log_raw done t=#{Time.new-t0} x=#{x} y=#{y} sum=#{sum} s=#{s} ss=#{ss} f=#{factor}")
     return y
   end
 
@@ -2780,10 +2841,14 @@ module LongMath
   def LongMath.calc_iprec_for_power(x, y, prec)
     x_f = x.to_f
     y_f = y.to_f
+#     if (x_f - 1).abs < 0.1
+#       # x_f += 1e-6
+#       x_f = x.square.to_f + 1e-4
+#     end
     logx_f   = Math.log(x_f.abs)
     logy_f   = Math.log(y_f.abs)
     logx_y_f = logx_f * y_f
-    iprec_x  = calc_iprec_for_exp(logx_y_f, prec, logx_y_f < 0)
+    iprec_x  = calc_iprec_for_exp(logx_y_f.abs.ceil, prec, logx_y_f < 0)
     # iprec_x  = calc_iprec_for_exp(logx_y_f, prec, logx_y_f < 0) + 10
     iprec_y  = iprec_x
     iprec    = iprec_x + 2
@@ -2793,6 +2858,7 @@ module LongMath
     if (logy_f < 0)
       iprec_y -= (logy_f/LOG10).round
     end
+    # puts("\niprec: x=#{x} y=#{y} iprec=#{iprec} iprec_x=#{iprec_x} iprec_y=#{iprec_y}\n")
     [ iprec, iprec_x, iprec_y ]
 
   end
@@ -2804,12 +2870,13 @@ module LongMath
   # LongDecimal.  Only supports values of y such that exp(y) still
   # fits into a float (y <= 709)
   #
-  def LongMath.power(x, y, prec, mode = LongDecimal::ROUND_HALF_DOWN)
+  def LongMath.power(x, y, prec, mode = LongMath.standard_mode)
 
     raise TypeError, "x=#{x} must be numeric" unless x.kind_of? Numeric
     raise TypeError, "y=#{y} must be numeric" unless y.kind_of? Numeric
+    raise TypeError, "x=#{x.inspect} must not be greater #{MAX_FLOATABLE}" unless x.abs <= MAX_FLOATABLE
+    raise TypeError, "y=#{y.inspect} must not be greater #{MAX_FLOATABLE}" unless y.abs <= MAX_FLOATABLE
     # raise TypeError, "y=#{y.inspect} must not be greater #{MAX_EXP_ABLE}" unless y <= MAX_EXP_ABLE
-    # raise TypeError, "x=#{x.inspect} must not be greater #{MAX_FLOATABLE}" unless x <= MAX_FLOATABLE
     # raise TypeError, "x=#{x.inspect} must not negative" unless x >= 0 || (y.kind_of? Integer) || (y.kind_of? LongDecimalBase) && y.is_int?
     raise TypeError, "x=#{x.inspect} must not negative" unless x >= 0
     check_is_prec(prec, "prec")
@@ -2827,6 +2894,7 @@ module LongMath
     end
 
     iprec, iprec_x, iprec_y = calc_iprec_for_power(x, y, prec)
+    # puts("x=#{x} y=#{y} iprec=#{iprec} iprec_x=#{iprec_x} iprec_y=#{iprec_y} prec=#{prec}")
 
     unless (x.kind_of? LongDecimalBase) || (x.kind_of? Integer)
       x = x.to_ld(iprec_x, mode)
@@ -2844,7 +2912,9 @@ module LongMath
         # x = x.to_ld(prec)
         x = x.to_ld(iprec_x)
       end
-      z = x**y
+      # z = x ** y
+      z = LongMath.ipower(x, y, 2*iprec, mode)
+      # puts("x=#{x} y=#{y} z=#{z} y int")
       return z.to_ld(prec, mode)
     end
 
@@ -2855,19 +2925,84 @@ module LongMath
       y = y.to_ld(iprec_y, mode)
     end
 
+    if x < 1 then
+      # since we do not allow x < 0 and we have handled x = 0 already,
+      # we can be sure that x is no integer, so it has been converted
+      # if necessary to LongDecimalBase
+      y = -y
+      x = (1/x).round_to_scale(iprec_x*2, mode)
+      iprec, iprec_x, iprec_y = calc_iprec_for_power(x, y, prec)
+    end
+
     # exponent is split in two parts, an integer part and a
     # LongDecimal with absolute value <= 0.5
-    y0 = y.round_to_scale(0, LongDecimal::ROUND_HALF_UP).to_i
-    z0 = x**y0
+    y0 = y.round_to_scale(0, LongMath.standard_imode).to_i
+    # z0 = x**y0
+    z0 = LongMath.ipower(x, y0, 2*iprec, mode)
     y1 = y - y0
     prec_extra = 0
     if (y0 > 0)
       prec_extra = (y0*Math.log10(x.to_f).abs).ceil
     end
     # z1 = LongMath.power_internal(x, y1, prec+prec_extra , mode)
-    z1 = LongMath.power_internal(x, y1, prec+prec_extra + 3, mode)
+    z1 = LongMath.power_internal(x, y1, prec+prec_extra + 4, mode)
     z  = z0 * z1
+    # puts("x=#{x} y=#{y} z=#{z} y not int")
     return z.to_ld(prec, mode)
+  end
+
+  #
+  # internal functionality to calculate the y-th power of x assuming
+  # that y is an integer
+  # prec is a hint on how much internal precision is needed at most
+  # final rounding is left to the caller
+  #
+  def LongMath.ipower(x, y, prec, mode)
+
+    raise TypeError, "x=#{x} must be numeric" unless x.kind_of? Numeric
+    raise TypeError, "y=#{y} must be integer" unless y.kind_of? Integer
+    raise TypeError, "x=#{x.inspect} must not be greater #{MAX_FLOATABLE}" unless x.abs <= MAX_FLOATABLE
+    raise TypeError, "y=#{y.inspect} must not be greater #{MAX_FLOATABLE}" unless y.abs <= MAX_FLOATABLE
+    check_is_prec(prec, "prec")
+    check_is_mode(mode, "mode")
+
+    if (y.zero?)
+      return 1
+    elsif ! (x.kind_of? LongDecimalBase) || x.scale * y.abs <= prec
+      return x ** y
+    elsif (y < 0)
+      l = Math.log10(x.abs.to_f)
+      if (l > 0)
+        prec += (2*l).ceil
+      end
+      return 1/LongMath.ipower(x, -y, prec, mode)
+    else
+      # y > 0
+      # puts("ipower y>0 x=#{x} y=#{y} prec=#{prec}")
+      z  = x
+      while true do
+
+        y -= 1
+        if (y.zero?)
+          break
+        end
+        while (y & 0x01) == 0 do
+
+          y = y >> 1
+          x = (x*x)
+          if (x.kind_of? LongDecimalBase)
+            x = x.round_to_scale(prec, mode)
+          end
+
+        end
+        z = (z*x)
+        if (z.kind_of? LongDecimalBase)
+          z = z.round_to_scale(prec, mode)
+        end
+
+      end
+    end
+    return z
   end
 
   #
@@ -2877,7 +3012,7 @@ module LongMath
   # create a bug report, if the default settings for the parameters do
   # not work correctly
   #
-  def LongMath.power_internal(x, y, prec = nil, final_mode = LongDecimal::ROUND_HALF_DOWN, iprec = nil, mode = LongDecimal::ROUND_HALF_DOWN)
+  def LongMath.power_internal(x, y, prec = nil, final_mode = LongMath.standard_mode, iprec = nil, mode = LongMath.standard_imode)
 
     if (prec == nil) then
       if (x.kind_of? LongDecimalBase) && (y.kind_of? LongDecimalBase)
@@ -2893,7 +3028,7 @@ module LongMath
     check_is_prec(prec, "prec")
 
     if (final_mode == nil)
-      final_mode = LongDecimal::ROUND_HALF_DOWN
+      final_mode = LongMath.standard_mode
     end
     check_is_mode(final_mode, "final_mode")
     check_is_mode(mode, "mode")
@@ -2925,6 +3060,28 @@ module LongMath
     xy.round_to_scale(prec, final_mode)
 
   end # power_internal
+
+  @@standard_mode = ROUND_HALF_UP
+
+  def LongMath.standard_mode
+    @@standard_mode
+  end
+
+  def LongMath.standard_mode=(x)
+    LongMath.check_is_mode
+    @@standard_mode = x
+  end
+
+  @@standard_imode = ROUND_HALF_EVEN
+
+  def LongMath.standard_imode
+    @@standard_imode
+  end
+
+  def LongMath.standard_imode=(x)
+    LongMath.check_is_mode
+    @@standard_imode = x
+  end
 
 end # LongMath
 

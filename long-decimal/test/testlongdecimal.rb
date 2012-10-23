@@ -2,8 +2,8 @@
 #
 # testlongdecimal.rb -- runit test for long-decimal.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.41 2006/04/11 19:39:43 bk1 Exp $
-# CVS-Label: $Name: ALPHA_01_00 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.54 2006/05/01 12:22:12 bk1 Exp $
+# CVS-Label: $Name: ALPHA_01_01 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -20,7 +20,7 @@ load "test/testlongdeclib.rb"
 class TestLongDecimal_class < RUNIT::TestCase
   include TestLongDecHelper
 
-  @RCS_ID='-$Id: testlongdecimal.rb,v 1.41 2006/04/11 19:39:43 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdecimal.rb,v 1.54 2006/05/01 12:22:12 bk1 Exp $-'
 
   #
   # test split_to_words and merge_from_words
@@ -141,12 +141,18 @@ class TestLongDecimal_class < RUNIT::TestCase
     10.times do |i|
       n = (i*i+i)/2
       x = LongDecimal(n, 3*i)+LongMath.pi(20)
+      check_exp2_floated(x, n)
+
       y  = LongMath.exp2(x, n)
       yy = LongMath.exp2(x, n + 5)
       assert_equal(yy.round_to_scale(y.scale, LongDecimal::ROUND_HALF_DOWN), y, "x=#{x} y=#{y} yy=#{yy}")
       z  = LongMath.power(2, x, n)
       assert_equal(z, y, "exp2 x=#{x} y=#{y} z=#{z} i=#{i} n=#{n}")
     end
+
+    # random tests that have failed previously
+    check_exp2_floated(LongDecimal("-0.00147492625237084606064197462823289474038138852346725504592707365251736299180323394082648207114993022483949313246714392730651107673327728615912046468517225938833913598854936005"), 20)
+
   end
 
   #
@@ -156,6 +162,8 @@ class TestLongDecimal_class < RUNIT::TestCase
     10.times do |i|
       n  = (i*i+i)/2
       x  = LongDecimal(n, 3*i)+LongMath.pi(20)
+      check_exp10_floated(x, n)
+
       y  = LongMath.exp10(x, n)
       yy = LongMath.exp10(x, n + 5)
       assert_equal(yy.round_to_scale(y.scale, LongDecimal::ROUND_HALF_DOWN), y, "x=#{x} y=#{y} yy=#{yy}")
@@ -459,6 +467,10 @@ class TestLongDecimal_class < RUNIT::TestCase
     check_log_floated(LongDecimal("473.00000000000000000000000000000000003200056000000000000000000000000000000000000000000664"), 1)
     check_log_floated(LongDecimal("0.0000000000000000000000000000000000081600000000000000000000000000000000007510000886"), 101)
     check_log_floated(LongDecimal("0.99999999999999999999999571850000000000000000001833124224999999999999992151478630572500000000033603444243589176249999856126853469423130083125615992876877728537781582"), 37)
+    check_log_floated(LongDecimal("0.99999999999999999999999999999999999999999999999999999999999999999999999999091999999999999999999409997650000000000000000000000000000000000000000000008244640000000000000010714442676000000000003481027730055225"), 102)
+    check_log_floated(LongDecimal("0.99999999999999999999999999999999999999999999999999999999999999999999993359999909094250000000000000000000000000000000000000000000000000000000440896012072283682638553830625"), 84)
+    check_log_floated(LongDecimal("1.0000000000000000000000000000000000000000009604500000000000000000000000730"), 46)
+
   end
 
   #
@@ -491,6 +503,96 @@ class TestLongDecimal_class < RUNIT::TestCase
     check_power_floated(1.01, -1e-20, 20)
     check_power_floated(1e-20, -1.01, 21)
     check_power_floated(1.01, -1e-20, 21)
+
+    # random tests that have failed
+    check_power_floated(LongDecimal("1.000000000000000151000000000000000000000000000000000000000000000000000000000000057800000000205"),
+                        LongDecimal("-680.0000000000000000000013100000000000000000000000000000000000000165000000000000000000234"),
+                        26)
+    check_power_floated(LongDecimal("1.0000000000000000000000000000000000000000000068000000000853000000000926"),
+                        LongDecimal("-536.000000000086100000000000000000000000000019200000000000000000000000000000000000000000000000166"),
+                        49)
+    check_power_floated(LongDecimal("1.0000000000000000049000000000002090000000000447"),
+                        LongDecimal("-328.00000000000000000000000000000000567000000000000000026600000000000000000000000679"),
+                        24)
+    check_power_floated(LongDecimal("1.0000000000000000000003580000000000000000000000376238"),
+                        LongDecimal("-359.0000000003910721000000000000000000000000000000000000000000000000000000000000000000000000479"),
+                        39)
+    check_power_floated(LongDecimal("1.000000000000000000000032000000001500000000000000000000439"),
+                        LongDecimal("-252.00000000000000025500000000000176907"),
+                        39)
+    check_power_floated(LongDecimal("1.0000000000000008590000521000000000000621"),
+                        LongDecimal("-135.0000000000000000000000000000000000000000000000000000000074400000000000000000000000000321"),
+                        50)
+    check_power_floated(LongDecimal("1.000000000000000151000000000000000000000000000000000000000000000000000000000000057800000000205"),
+                        LongDecimal("-680.0000000000000000000013100000000000000000000000000000000000000165000000000000000000234"),
+                        26)
+    check_power_floated(LongDecimal("1.02350000000000000000000356000000000000000000000000000000000000000000000000000000000104"),
+                        LongDecimal("-971.0000000000000000055400000000000000000000000000000000000000000000000000040900000000000000000000000603"),
+                        45)
+    check_power_floated(LongDecimal("1.0023800000000000000000000000000000000000000000000000000000000000265000000000000000000000000000000453"),
+                        LongDecimal("-277.000000000000000000000000000000000000000000000000000000000000113000000000000000000041400000294"),
+                        22)
+    check_power_floated(LongDecimal("0.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003422250001093950095910422515315300670761"),
+                        LongDecimal("-0.99999999999999999999999999999999999999999999999999997909999999999999999999999999667999957000000000000000065521500000000000000000000020816402696099999999999997719321110428280027729999999129874367303020000000000071412895105695789681563000036363932570289984431712381817869482773696988055442648559706239710901091550702341077381290973316336980640165855210736680"),
+                        46)
+    check_power_floated(LongDecimal("0.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000049273899694369"),
+                        LongDecimal("-0.99999999999999999999999999999999999999988899963450000000000000000000000000000001847988671170038537499999999999999999999658146648184996349480690906250000000000066400422857493760370353798820585648437488207957808220483456569835670219978619056054192244103752969215743872596800486621906638928959243058783356441503226136251748249991020724187893339868"),
+                        40)
+    check_power_floated(LongDecimal("0.0000000000000000000000000000003868840000000000000000000328416000000000000000000006969600000000000000000000000000000059338800000000000000000002518560000000000000000000000000000000000000000000000000000000227529"),
+                        LongDecimal("-0.999999999999999999999999999999999999999999999999999998264999999999999999999999999999616741000000000000000004515337500000000000000000000001994863094999999999999986943149282831191620999999999993077825060350000000000033980453035745280148525000000024019946927993617107497210600671335038418031107762499920991889855598841096454678838495791189026426859181655270271342"),
+                        31)
+    check_power_floated(LongDecimal("0.0000000000000000000000000000000000000000000000435600000000000000000000000000000000000000000000000006204000000075240000000000000000000000000000000000000022090000000535800000003249"),
+                        LongDecimal("-4.50377349099168904759987513420506734335755704389619751192197520413005925604849718759451665302464588879636922713303481423460050066204079523260315868192642742903330525895063299416"),
+                        20)
+    check_power_floated(LongDecimal("0.0000000000000000000000000000700720943029391693947940220429504569709269190190365416713568"),
+                        LongDecimal("-6.633249580710799698229865473341373367854177091179010213018664944871230"),
+                        7)
+    check_power_floated(LongDecimal("0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000816700000697"),
+                        LongDecimal("-0.58685446009389671361502347417840375586854460093896713614906034406753510106019528753113359342280707917300359276157963863070992095386428055722936293804476401957909668625460628698383384886591034139"),
+                        36)
+    check_power_floated(LongDecimal("0.000000000000000000000000000000000000046500000000000015087"),
+                        LongDecimal("-1.0000000037300000000000000000000000000000000000000000003924"),
+                        3)
+    check_power_floated(LongDecimal("0.0000000000000000000000000000000000000000000000000000000000000000002450257484405715360000000000000000097614149083200000000000000000000000972196"),
+                        LongDecimal("-1.00000008600000184900000000000000000000000000000000000000012640000543520000000000000000000013300000571900000000000000399424000000000000000000000000000840560000000000000000000000000000442225"),
+                        3)
+    check_power_floated(LongDecimal("0.00000000000000000000000000000000000000000000000000000000000000000000367236000000000000000093202800000000000000005914074196000000000000000058905400000000000000000000146689"),
+                        LongDecimal("-1.000000000008800000000019360000000062800000000276320250000000001100000985960000000000007850000000000000015625"),
+                        4)
+    check_power_floated(LongDecimal("0.000000000000000000000000000000000000000000000000000000000000000000002777290000000006513720000000003819240000000000000000000000000000100340800000000117667200000000000000000000000000000000000000000000906304"),
+                        LongDecimal("-0.5773502691896257645091447198050641552797247036332110311421498194545129249630222981047763195372146430879281215100223411775138874331819083544781222838698051829302865547075365868655847179043571799566074987574406310154782766513220296853158689786573196010629608653145605201822170964422894732870490642190250948498852022304300879727510280657218553"),
+                        23)
+    check_power_floated(LongDecimal("0.000000000000000000000000000000000000000000007350000295000915"),
+                        LongDecimal("-1.000002193000861"),
+                        2)
+    check_power_floated(LongDecimal("0.0000000086862400000000000000015172960006039360000000662596000527472000104976"),
+                        LongDecimal("-0.999999999999999999999999999999999999999999999999999999999997169999999999996784999999999687000000000000000000000000000012013350000000027295350000002672874337500003018885000000146896669625999999845508318999984783776699499965759759873248317316431267825611053489338193758007138415641516991908731376997678345955102618540146326218008264916981179817214058767402196571"),
+                        11)
+    check_power_floated(LongDecimal("0.00000000000000000000000000624000383000000000000000000000000000000000000000000000358"),
+                        LongDecimal("-1.0000004600000000000000000000000000000004210"),
+                        3)
+    check_power_floated(LongDecimal("0.00000000006236994468492015585972291475115698519825552824875948893004062366348813472156776148562881057978611940708477498267201430163921921918813918304834563518614088250202460271818014152969"),
+                        LongDecimal("-21.81742422927144044215775880732087497227530694228658299334049542576403906256739064739549866577137008231569804502022381108724983114382624747999460445291671084230968250529511708947428208082234"),
+                        6)
+    check_power_floated(LongDecimal("0.0000000000000000000000000000000000000000000000000000000000000000000035600000000928000000000000000450"),
+                        LongDecimal("-0.70821529745042492917661444999959874487397062785764977666003279651340417551441776107007487983685090756343178115766012078677210548592741818458068450268168492334992979756923"),
+                        13)
+    check_power_floated(LongDecimal("0.0000000000000000000000000000025900000000000000000000000000000000000000000022100000000000000000032"),
+                        LongDecimal("-0.999943403203378688766215832183174473300891276419706031790088430934495839737458766990116492"),
+                        4)
+    check_power_floated(LongDecimal("0.002658925294303146195800785280451092866235470739838791730450519159432915"),
+                        LongDecimal("-87.0000000000000008330000000000000000000000000000000000000000000000000000000000000000000000000092046"),
+                        90)
+    check_power_floated(LongDecimal("0.0014814814814814814812905349794238683127818125285779606767229367555739725854802645575188374989810195213530274617178142875856830586369415448003164084698537116523550097"),
+                        LongDecimal("-52.0000000000000000000000000000000000000000683000000000000000000238000000000228"),
+                        25)
+    check_power_floated(LongDecimal("0.00000000000000000000047400000000000000000084700000892"),
+                        LongDecimal("-17.000000001310000000000000000000000000000000000000000000000000002800000000000000217"),
+                        56)
+    check_power_floated(LongDecimal("0.00000000000000000000005110000000000000000004800000000000000000000000000000163"),
+                        LongDecimal("-37.000000009170000000000000000000000000000000000000000000000000000000000000055800048"),
+                        21)
+
   end
 
   #
@@ -518,6 +620,13 @@ class TestLongDecimal_class < RUNIT::TestCase
     check_log10_floated(LongDecimal("0.0000000000000000000000000000000000000000180000000063000000000000000000000000000000000025"), 74)
     check_log10_floated(LongDecimal("0.0000000000000000000000000006200000000000000000000000000000000000000000000000007940000015"), 74)
     check_log10_floated(LongDecimal("0.00000000000000000000000000000000000000000032900000000000000000000233000000000000000000000000000000254"), 10)
+    check_log10_floated(LongDecimal("0.00000000000000000000000233000000094800000000000000000000000000000000000000000000000000000000000000682"), 100)
+    check_log10_floated(LongDecimal("0.000000000000000000000000000000000000097000000041500000000000000000784"), 97)
+    check_log10_floated(LongDecimal("185.000025300000000000000006320000000000000000000000000000737"), 27)
+    check_log10_floated(LongDecimal("0.00000000000000000000000000000302000000000000000000000000000000000000000000000000000000060673"), 100)
+    check_log10_floated(LongDecimal("442.000000000000045300000000000000000000000000000000000000000000000000000000000000000000000721000000000752"), 97)
+    check_log10_floated(LongDecimal("0.001030927835051546391752577284408545010096715910298651428936221023301883588097777204212461151695109779555577162172"), 62)
+
   end
 
   #
@@ -544,6 +653,37 @@ class TestLongDecimal_class < RUNIT::TestCase
     check_log2_floated(LongDecimal("504.00000000000000000000000000000000000000000000000000000000000000000000000000000000000327400000000000828"), 1)
     check_log2_floated(LongDecimal("0.0033222591362126245847176079734219269102990032888157967351353737817463383406363175903135730345286354858609181999523961456225622835123748782987926188031081"), 48)
     check_log2_floated(LongDecimal("0.000802000000000000000000197000000000000000000000302"), 84)
+    check_log2_floated(LongDecimal("0.00000000000000000000000000000000000000000000000000000000000000000000000452000000000069480"), 3)
+    check_log2_floated(LongDecimal("0.0000000000000000000000000000000000000000000000000000930000000000000000000000000983000000000000300"), 61)
+    check_log2_floated(LongDecimal("0.000000000000000000000000000000000000000000000000000000000086000133000000000000000000000000947"), 106)
+    check_log2_floated(LongDecimal("0.00000000000000000000000000000276000000000000000000000000000000000008560000000000000000000000000000161"), 81)
+
+  end
+
+  #
+  # test the calculation of the base-x-logarithm of sqrt(x)
+  #
+  def test_log_of_sqrt
+    # n = 125
+    n = 30
+    m = 5
+    xe  = LongMath.sqrt(LongMath.exp(1, 2*n), n)
+    x2  = LongMath.sqrt(2, n)
+    x10 = LongMath.sqrt(10, n)
+
+    (2*m).times do |i|
+      check_log_floated(xe, n+m-i)
+      check_log2_floated(x2, n+m-i)
+      check_log10_floated(x10, n+m-i)
+    end
+
+    ye  = check_log_floated(xe, n)
+    assert((ye*2).one?, "xe=#{xe} ye=#{ye}")
+    y2  = check_log2_floated(x2, n)
+    assert((y2*2).one?, "xe=#{x2} ye=#{y2}")
+    y10 = check_log10_floated(x10, n)
+    assert((y10*2).one?, "xe=#{x10} ye=#{y10}")
+
   end
 
 
@@ -1068,6 +1208,33 @@ class TestLongDecimal_class < RUNIT::TestCase
   end
 
   #
+  # test LongMath.multiplicity_of_10(n)
+  #
+  def test_lm_multiplicity_of_10
+    assert_equal(0, LongMath.multiplicity_of_10(-999), "-999")
+    assert_equal(0, LongMath.multiplicity_of_10(-1), "-1")
+    assert_equal(0, LongMath.multiplicity_of_10(-5), "-5")
+    assert_equal(0, LongMath.multiplicity_of_10(1), "1")
+    assert_equal(0, LongMath.multiplicity_of_10(2), "2")
+    assert_equal(0, LongMath.multiplicity_of_10(8), "8")
+    assert_equal(0, LongMath.multiplicity_of_10(1024), "1024")
+    assert_equal(0, LongMath.multiplicity_of_10(5), "5")
+    assert_equal(0, LongMath.multiplicity_of_10(625), "625")
+    assert_equal(1, LongMath.multiplicity_of_10(-1230), "-1230")
+    10.times do |i|
+      n = i*i+i+1
+      while (n % 10) == 0 do
+	n /= 10
+      end
+      10.times do |j|
+	m = j*j
+	x = n * 10**m
+	assert_equal(m, LongMath.multiplicity_of_10(x), "x=#{x} i=#{i} j=#{j} n=#{n} m=#{m}")
+      end
+    end
+  end
+
+  #
   # test round_trailing_zeros of LongDecimal
   #
   def test_round_trailing_zeros
@@ -1530,6 +1697,16 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert((l.to_f - 0.224).abs < 0.224 * 0.000001, "l=#{l.inspect}")
     l = LongDecimal(224, 4)
     assert((l.to_f - 0.0224).abs < 0.0224 * 0.000001, "l=#{l.inspect}")
+
+    l = LongDecimal("0." + ("0" * 30) + "1" + ("0" * 500))
+    assert((l.to_f - 1e-31).abs < 1e-32, "l=#{l.inspect}=#{l.to_s}=#{l.to_f}=#{l.to_s.to_f}")
+    l = LongDecimal("0." + ("0" * 200) + "1" + ("0" * 500))
+    assert((l.to_f - 1e-201).abs < 1e-202, "l=#{l.inspect}=#{l.to_s}=#{l.to_f}=#{l.to_s.to_f}")
+    l = LongDecimal("0." + ("0" * 280) + "1" + ("0" * 500))
+    assert((l.to_f - 1e-281).abs < 1e-282, "l=#{l.inspect}=#{l.to_s}=#{l.to_f}=#{l.to_s.to_f}")
+
+    l = LongDecimal("0.00000000000000000000000000000000000000000000000000002090000000000000000000000000332000042999999999999999934478499999999999999999999979183597303900000000000002280678889571719972270000000870125632696979999999999928587104894304210318436999963636067429710015568287618182130517226303011944557351440293760289098908449297658922618709026683663019359834144789263320")
+    assert((l.to_f - 0.0000000000000000000000000000000000000000000000000000209).abs < 1e-60, "l=#{l.inspect}")
   end
 
   #
@@ -2100,6 +2277,498 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(zz, z, "z=#{z.inspect}")
 
   end
+
+  #
+  # test division of LongDecimal
+  #
+  def test_divide
+    x = LongDecimal(224, 2) # 2.24 dx=1 sx=2
+
+    y = LongDecimal(3, 1)   # 0.3  dy=0 sy=1
+    # 2dy+sy+sx-max(dx+sx,dy+sy)-3 = -3 -> use 0
+    z = x.divide(y, LongMath::ROUND_DOWN)
+    zz = Rational(224, 30).to_ld(0, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide(y, LongMath::ROUND_UP)
+    zz = Rational(224, 30).to_ld(0, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # 2dx+sx+sy-max(dx+sx,dy+sy)-3 = -1 -> use 0
+    z = y.divide(x, LongMath::ROUND_DOWN)
+    zz = Rational(30, 224).to_ld(0, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide(x, LongMath::ROUND_UP)
+    zz = Rational(30, 224).to_ld(0, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+                                   # x= 2.24     dx=1 sx=2
+    y = LongDecimal(30000000, 8)   # 0.30000000  dy=0 sy=8
+    # 2dy+sy+sx-max(dx+sx,dy+sy)-3 = -1 -> use 0
+    z = x.divide(y, LongMath::ROUND_DOWN)
+    zz = Rational(224, 30).to_ld(0, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide(y, LongMath::ROUND_UP)
+    zz = Rational(224, 30).to_ld(0, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # 2dx+sx+sy-max(dx+sx,dy+sy)-3 = 1
+    z = y.divide(x, LongMath::ROUND_DOWN)
+    zz = Rational(30, 224).to_ld(1, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide(x, LongMath::ROUND_UP)
+    zz = Rational(30, 224).to_ld(1, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+                            # x= 2.24 dx=1  sx=2
+    y = LongDecimal(3, 4)   # 0.0003  dy=-4 sy=4
+    # 2dy+sy+sx-max(dx+sx,dy+sy)-3 = -8 -> use 0
+    z = x.divide(y, LongMath::ROUND_DOWN)
+    zz = Rational(22400, 3).to_ld(0, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide(y, LongMath::ROUND_UP)
+    zz = Rational(22400, 3).to_ld(0, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # 2dx+sx+sy-max(dx+sx,dy+sy)-3 = 2
+    z = y.divide(x, LongMath::ROUND_DOWN)
+    zz = Rational(3, 22400).to_ld(2, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide(x, LongMath::ROUND_UP)
+    zz = Rational(3, 22400).to_ld(2, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+                             # x= 2.24 dx=1 sx=2
+    y = LongDecimal(3333, 2) # 33.33   dy=2 sy=2
+    # 2dy+sy+sx-max(dx+sx,dy+sy)-3 = 1
+    z = x.divide(y, LongMath::ROUND_DOWN)
+    zz = Rational(224, 3333).to_ld(1, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide(y, LongMath::ROUND_UP)
+    zz = Rational(224, 3333).to_ld(1, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # 2dx+sx+sy-max(dx+sx,dy+sy)-3 = -1 -> use 0
+    z = y.divide(x, LongMath::ROUND_DOWN)
+    zz = Rational(3333, 224).to_ld(0, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide(x, LongMath::ROUND_UP)
+    zz = Rational(3333, 224).to_ld(0, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+                              # x= 2.24 dx=1 sx=2
+    y = LongDecimal(33333, 2) # 333.33  dy=3 sy=2
+    # 2dy+sy+sx-max(dx+sx,dy+sy)-3 = 2
+    z = x.divide(y, LongMath::ROUND_DOWN)
+    zz = Rational(224, 33333).to_ld(2, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide(y, LongMath::ROUND_UP)
+    zz = Rational(224, 33333).to_ld(2, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # 2dx+sx+sy-max(dx+sx,dy+sy)-3 = -2 -> use 0
+    z = y.divide(x, LongMath::ROUND_DOWN)
+    zz = Rational(33333, 224).to_ld(0, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide(x, LongMath::ROUND_UP)
+    zz = Rational(33333, 224).to_ld(0, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+                              # x= 2.24 dx=1 sx=2
+    y = LongDecimal(33333, 3) # 33.333  dy=2 sy=3
+    # 2dy+sy+sx-max(dx+sx,dy+sy)-3 = 1
+    z = x.divide(y, LongMath::ROUND_DOWN)
+    zz = Rational(2240, 33333).to_ld(1, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide(y, LongMath::ROUND_UP)
+    zz = Rational(2240, 33333).to_ld(1, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # 2dx+sx+sy-max(dx+sx,dy+sy)-3 = -1 -> use 0
+    z = y.divide(x, LongMath::ROUND_DOWN)
+    zz = Rational(33333, 2240).to_ld(0, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide(x, LongMath::ROUND_UP)
+    zz = Rational(33333, 2240).to_ld(0, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+                             # x= 2.24 dx=1 sx=2
+    y = LongDecimal(3333, 3) # 3.333   dy=1 sy=3
+    # 2dy+sy+sx-max(dx+sx,dy+sy)-3 = 0
+    z = x.divide(y, LongMath::ROUND_DOWN)
+    zz = Rational(2240, 3333).to_ld(0, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide(y, LongMath::ROUND_UP)
+    zz = Rational(2240, 3333).to_ld(0, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # 2dx+sx+sy-max(dx+sx,dy+sy)-3 = 0
+    z = y.divide(x, LongMath::ROUND_DOWN)
+    zz = Rational(3333, 2240).to_ld(0, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide(x, LongMath::ROUND_UP)
+    zz = Rational(3333, 2240).to_ld(0, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+                                  # x= 2.24    dx=1 sx=2
+    y = LongDecimal(123456789, 3) # 123456.789 dy=6 sy=3
+    # 2dy+sy+sx-max(dx+sx,dy+sy)-3 = 5
+    z = x.divide(y, LongMath::ROUND_DOWN)
+    zz = Rational(2240, 123456789).to_ld(5, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide(y, LongMath::ROUND_UP)
+    zz = Rational(2240, 123456789).to_ld(5, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # 2dx+sx+sy-max(dx+sx,dy+sy)-3 = -5 -> use 0
+    z = y.divide(x, LongMath::ROUND_DOWN)
+    zz = Rational(123456789, 2240).to_ld(0, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide(x, LongMath::ROUND_UP)
+    zz = Rational(123456789, 2240).to_ld(0, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+                 # x= 2.24 dx=1 sx=2
+    y = 5.to_ld  #    5    dy=1 sy=0
+    # 2dy+sy+sx-max(dx+sx,dy+sy)-3 = -2 -> use 0
+    z = x.divide(y, LongMath::ROUND_DOWN)
+    zz = Rational(224, 500).to_ld(0, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide(y, LongMath::ROUND_UP)
+    zz = Rational(224, 500).to_ld(0, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # 2dx+sx+sy-max(dx+sx,dy+sy)-3 = -2 -> use 0
+    z = y.divide(x, LongMath::ROUND_DOWN)
+    zz = Rational(500, 224).to_ld(0, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide(x, LongMath::ROUND_UP)
+    zz = Rational(500, 224).to_ld(0, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+                    # x= 2.24 dx=1 sx=2
+    y = 5.001.to_ld #         dy=1 sy=3
+    # 2dy+sy+sx-max(dx+sx,dy+sy)-3 = 0
+    z = x.divide(y, LongMath::ROUND_DOWN)
+    zz = Rational(224, 500).to_ld(0, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide(y, LongMath::ROUND_UP)
+    zz = Rational(224, 500).to_ld(0, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # 2dx+sx+sy-max(dx+sx,dy+sy)-3 = 0
+    z = y.divide(x, LongMath::ROUND_DOWN)
+    zz = Rational(500, 224).to_ld(0, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide(x, LongMath::ROUND_UP)
+    zz = Rational(500, 224).to_ld(0, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = Rational(5, 3).to_ld
+    # y is has no scale, use scale of x
+    z = x.divide(y, LongMath::ROUND_DOWN)
+    zz = Rational(224*3, 500).to_ld(0, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide(y, LongMath::ROUND_UP)
+    zz = Rational(224*3, 500).to_ld(0, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # y is has no scale, use scale of x
+    z = y.divide(x, LongMath::ROUND_DOWN)
+    zz = Rational(500, 224*3).to_ld(0, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide(x, LongMath::ROUND_UP)
+    zz = Rational(500, 224*3).to_ld(0, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = LongDecimalQuot(Rational(5, 3), 3).to_ld
+    z = x.divide(y, LongMath::ROUND_DOWN)
+    zz = Rational(224*3, 500).to_ld(0, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide(y, LongMath::ROUND_UP)
+    zz = Rational(224*3, 500).to_ld(0, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide(x, LongMath::ROUND_DOWN)
+    zz = Rational(500, 224*3).to_ld(0, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide(x, LongMath::ROUND_UP)
+    zz = Rational(500, 224*3).to_ld(0, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = Complex(5, 3)
+    z = x.divide(y, LongMath::ROUND_DOWN)
+    zz = 2.24 / Complex(5, 3)
+    assert_kind_of(Complex, z, "z=#{z.inspect}")
+    assert((zz-z).abs < 1e-9, "z=#{z.inspect}")
+
+  end # test_divide
+
+  #
+  # test division of LongDecimal
+  #
+  def test_divide_s
+    x = LongDecimal(224, 2) # 2.24
+
+    y = LongDecimal(3, 1)   # 0.3
+    z = x.divide_s(y, 1, LongMath::ROUND_DOWN)
+    zz = Rational(224, 30).to_ld(1, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide_s(y, 1, LongMath::ROUND_UP)
+    zz = Rational(224, 30).to_ld(1, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 1, LongMath::ROUND_DOWN)
+    zz = Rational(30, 224).to_ld(1, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 1, LongMath::ROUND_UP)
+    zz = Rational(30, 224).to_ld(1, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = LongDecimal(30000000, 8)   # 0.30000000
+    z = x.divide_s(y, 1, LongMath::ROUND_DOWN)
+    zz = Rational(224, 30).to_ld(1, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide_s(y, 1, LongMath::ROUND_UP)
+    zz = Rational(224, 30).to_ld(1, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 2, LongMath::ROUND_DOWN)
+    zz = Rational(30, 224).to_ld(2, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 20, LongMath::ROUND_UP)
+    zz = Rational(30, 224).to_ld(20, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = LongDecimal(3, 4)   # 0.0003
+    z = x.divide_s(y, 2, LongMath::ROUND_DOWN)
+    zz = Rational(22400, 3).to_ld(2, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide_s(y, 2, LongMath::ROUND_UP)
+    zz = Rational(22400, 3).to_ld(2, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 3, LongMath::ROUND_DOWN)
+    zz = Rational(3, 22400).to_ld(3, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 2, LongMath::ROUND_UP)
+    zz = Rational(3, 22400).to_ld(2, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = LongDecimal(3333, 2) # 33.33
+    z = x.divide_s(y, 4, LongMath::ROUND_DOWN)
+    zz = Rational(224, 3333).to_ld(4, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide_s(y, 30, LongMath::ROUND_UP)
+    zz = Rational(224, 3333).to_ld(30, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 4, LongMath::ROUND_DOWN)
+    zz = Rational(3333, 224).to_ld(4, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 1, LongMath::ROUND_UP)
+    zz = Rational(3333, 224).to_ld(1, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = LongDecimal(33333, 2) # 333.33
+    z = x.divide_s(y, 3, LongMath::ROUND_DOWN)
+    zz = Rational(224, 33333).to_ld(3, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide_s(y, 3, LongMath::ROUND_UP)
+    zz = Rational(224, 33333).to_ld(3, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 33, LongMath::ROUND_DOWN)
+    zz = Rational(33333, 224).to_ld(33, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 4, LongMath::ROUND_UP)
+    zz = Rational(33333, 224).to_ld(4, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = LongDecimal(33333, 3) # 33.333
+    z = x.divide_s(y, 2, LongMath::ROUND_DOWN)
+    zz = Rational(2240, 33333).to_ld(2, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide_s(y, 2, LongMath::ROUND_UP)
+    zz = Rational(2240, 33333).to_ld(2, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 2, LongMath::ROUND_DOWN)
+    zz = Rational(33333, 2240).to_ld(2, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 1, LongMath::ROUND_UP)
+    zz = Rational(33333, 2240).to_ld(1, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = LongDecimal(3333, 3) # 3.333
+    z = x.divide_s(y, 1, LongMath::ROUND_DOWN)
+    zz = Rational(2240, 3333).to_ld(1, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide_s(y, 1, LongMath::ROUND_UP)
+    zz = Rational(2240, 3333).to_ld(1, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 1, LongMath::ROUND_DOWN)
+    zz = Rational(3333, 2240).to_ld(1, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 1, LongMath::ROUND_UP)
+    zz = Rational(3333, 2240).to_ld(1, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = LongDecimal(123456789, 3) # 123456.789
+    z = x.divide_s(y, 3, LongMath::ROUND_DOWN)
+    zz = Rational(2240, 123456789).to_ld(3, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide_s(y, 7, LongMath::ROUND_UP)
+    zz = Rational(2240, 123456789).to_ld(7, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 0, LongMath::ROUND_DOWN)
+    zz = Rational(123456789, 2240).to_ld(0, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 9, LongMath::ROUND_UP)
+    zz = Rational(123456789, 2240).to_ld(9, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = 5.to_ld  #    5
+    z = x.divide_s(y, 1, LongMath::ROUND_DOWN)
+    zz = Rational(224, 500).to_ld(1, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide_s(y, 1, LongMath::ROUND_UP)
+    zz = Rational(224, 500).to_ld(1, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 1, LongMath::ROUND_DOWN)
+    zz = Rational(500, 224).to_ld(1, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 1, LongMath::ROUND_UP)
+    zz = Rational(500, 224).to_ld(1, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = 5.001.to_ld  # 5.001
+    z = x.divide_s(y, 1, LongMath::ROUND_DOWN)
+    zz = Rational(224, 500).to_ld(1, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide_s(y, 1, LongMath::ROUND_UP)
+    zz = Rational(224, 500).to_ld(1, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 1, LongMath::ROUND_DOWN)
+    zz = Rational(500, 224).to_ld(1, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 1, LongMath::ROUND_UP)
+    zz = Rational(500, 224).to_ld(1, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = Rational(5, 3).to_ld(3) # 1.667
+    z = x.divide_s(y, 4, LongMath::ROUND_DOWN)
+    zz = Rational(2240, 1667).to_ld(4, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "x=#{x} y=#{y} z=#{z} z=#{z.inspect}")
+    z = x.divide_s(y, 1, LongMath::ROUND_UP)
+    zz = Rational(2240, 1667).to_ld(1, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    # y is has no scale, use scale of x
+    z = y.divide_s(x, 1, LongMath::ROUND_DOWN)
+    zz = Rational(1667, 2240).to_ld(1, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 1, LongMath::ROUND_UP)
+    zz = Rational(1667, 2240).to_ld(1, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = LongDecimalQuot(Rational(5, 3), 3).to_ld
+    z = x.divide_s(y, 1, LongMath::ROUND_DOWN)
+    zz = Rational(2240, 1667).to_ld(1, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = x.divide_s(y, 1, LongMath::ROUND_UP)
+    zz = Rational(2240, 1667).to_ld(1, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 2, LongMath::ROUND_DOWN)
+    zz = Rational(1667, 2240).to_ld(2, LongMath::ROUND_DOWN)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+    z = y.divide_s(x, 224, LongMath::ROUND_UP)
+    zz = Rational(1667, 2240).to_ld(224, LongMath::ROUND_UP)
+    assert_kind_of(LongDecimal, z, "z=#{z.inspect}")
+    assert_equal(zz, z, "z=#{z.inspect}")
+
+    y = Complex(5, 3)
+    z = x.divide_s(y, 2, LongMath::ROUND_DOWN)
+    zz = 2.24 / Complex(5, 3)
+    assert_kind_of(Complex, z, "z=#{z.inspect}")
+    assert((zz-z).abs < 1e-9, "z=#{z.inspect}")
+
+  end # test_divide_s
 
   #
   # test square of LongDecimal
@@ -2951,7 +3620,7 @@ class TestLongDecimal_class < RUNIT::TestCase
   end
 
   #
-  # test .unit() of LongDecimal
+  # test unit() of LongDecimal
   #
   def test_unit
     10.times do |i|
@@ -2959,9 +3628,39 @@ class TestLongDecimal_class < RUNIT::TestCase
       u = x.unit
       v = LongDecimal(1, i)
       assert_equal(u, v, "unit i=#{i}")
-      x = i.to_ld(i*i)
+      n = i*i
+      x = i.to_ld(n)
       u = x.unit
-      v = LongDecimal(1, i*i)
+      v = LongDecimal(1, n)
+      assert_equal(u, v, "unit i=#{i}")
+      n = i*i+i
+      x = (-i).to_ld(n)
+      u = x.unit
+      v = LongDecimal(1, n)
+      assert_equal(u, v, "unit i=#{i}")
+    end
+  end
+
+  #
+  # test sunit() of LongDecimal
+  #
+  def test_sunit
+    10.times do |i|
+      x = LongDecimal.zero!(i)
+      u = x.sunit
+      v = LongDecimal(0, i)
+      assert_equal(u, v, "unit i=#{i}")
+      n = i*i
+      k = 2*i+1
+      x = k.to_ld(n)
+      u = x.sunit
+      v = LongDecimal(1, n)
+      assert_equal(u, v, "unit i=#{i}")
+      n = i*i+i
+      k = -2*i-1
+      x = k.to_ld(n)
+      u = x.sunit
+      v = LongDecimal(-1, n)
       assert_equal(u, v, "unit i=#{i}")
     end
   end
@@ -4155,21 +4854,37 @@ class TestLongDecimal_class < RUNIT::TestCase
     assert_equal(x, x, "x equals x")
     assert_equal(y, y, "y equals y")
   end
-  
+
   #
-  # test inverse of RoundingMode
+  # test mul minverse of RoundingMode
   #
-  def test_rm_inverse
-    assert_equal(LongMath::ROUND_UP,           LongMath::ROUND_DOWN.inverse)
-    assert_equal(LongMath::ROUND_DOWN,         LongMath::ROUND_UP.inverse)
-    assert_equal(LongMath::ROUND_CEILING,      LongMath::ROUND_FLOOR.inverse)
-    assert_equal(LongMath::ROUND_FLOOR,        LongMath::ROUND_CEILING.inverse)
-    assert_equal(LongMath::ROUND_HALF_UP,      LongMath::ROUND_HALF_DOWN.inverse)
-    assert_equal(LongMath::ROUND_HALF_DOWN,    LongMath::ROUND_HALF_UP.inverse)
-    assert_equal(LongMath::ROUND_HALF_CEILING, LongMath::ROUND_HALF_FLOOR.inverse)
-    assert_equal(LongMath::ROUND_HALF_FLOOR,   LongMath::ROUND_HALF_CEILING.inverse)
-    assert_equal(LongMath::ROUND_HALF_EVEN,    LongMath::ROUND_HALF_EVEN.inverse)
-    assert_equal(LongMath::ROUND_UNNECESSARY,  LongMath::ROUND_UNNECESSARY.inverse)
+  def test_rm_minverse
+    assert_equal(LongMath::ROUND_UP,           LongMath::ROUND_DOWN.minverse)
+    assert_equal(LongMath::ROUND_DOWN,         LongMath::ROUND_UP.minverse)
+    assert_equal(LongMath::ROUND_CEILING,      LongMath::ROUND_FLOOR.minverse)
+    assert_equal(LongMath::ROUND_FLOOR,        LongMath::ROUND_CEILING.minverse)
+    assert_equal(LongMath::ROUND_HALF_UP,      LongMath::ROUND_HALF_DOWN.minverse)
+    assert_equal(LongMath::ROUND_HALF_DOWN,    LongMath::ROUND_HALF_UP.minverse)
+    assert_equal(LongMath::ROUND_HALF_CEILING, LongMath::ROUND_HALF_FLOOR.minverse)
+    assert_equal(LongMath::ROUND_HALF_FLOOR,   LongMath::ROUND_HALF_CEILING.minverse)
+    assert_equal(LongMath::ROUND_HALF_EVEN,    LongMath::ROUND_HALF_EVEN.minverse)
+    assert_equal(LongMath::ROUND_UNNECESSARY,  LongMath::ROUND_UNNECESSARY.minverse)
+  end
+
+  #
+  # test ainverse of RoundingMode
+  #
+  def test_rm_ainverse
+    assert_equal(LongMath::ROUND_UP,           LongMath::ROUND_UP.ainverse)
+    assert_equal(LongMath::ROUND_DOWN,         LongMath::ROUND_DOWN.ainverse)
+    assert_equal(LongMath::ROUND_CEILING,      LongMath::ROUND_FLOOR.ainverse)
+    assert_equal(LongMath::ROUND_FLOOR,        LongMath::ROUND_CEILING.ainverse)
+    assert_equal(LongMath::ROUND_HALF_UP,      LongMath::ROUND_HALF_UP.ainverse)
+    assert_equal(LongMath::ROUND_HALF_DOWN,    LongMath::ROUND_HALF_DOWN.ainverse)
+    assert_equal(LongMath::ROUND_HALF_CEILING, LongMath::ROUND_HALF_FLOOR.ainverse)
+    assert_equal(LongMath::ROUND_HALF_FLOOR,   LongMath::ROUND_HALF_CEILING.ainverse)
+    assert_equal(LongMath::ROUND_HALF_EVEN,    LongMath::ROUND_HALF_EVEN.ainverse)
+    assert_equal(LongMath::ROUND_UNNECESSARY,  LongMath::ROUND_UNNECESSARY.ainverse)
   end
 
 
