@@ -1,24 +1,31 @@
 Version
 -------
 
-This version ($Name: PRE_ALPHA_0_21 $) is functionally identical with the
-previous pre-alpha-0.20.  Improvements are for speed, because the
-convergence acceleration for logarithm is done in a more efficient
-way.  This influences methods log2, log10 and power of LongMath.
+This version ($Name: PRE_ALPHA_0_22 $) is functionally identical with the previous
+pre-alpha-0.21.  Some minor bugfixes have been made, because the
+exponential function sporadically showed a wrong result in having the
+last digit off by 1 from what would be the correct value.  Some
+runit-tests have been added.  A second runit-testing program that runs
+only tests of exponential function with random numbers for a long time
+has been added.
 
 There are no known bugs and this version can be considered complete in
 terms of functionality.  This version is still a pre-alpha-version,
-but it is expected to move it to alpha within the next weeks, after
-having added some more tests and having fixed potential bugs that
-these tests might reveal.  The first alpha version is not expected to
-be much different from this version.  This version should already be
-usable.  Operations +, -, *, / and sqrt should be working properly.
-Even log, exp and power should be fine, but they might have some
-issues in terms of precision of the last digits provided or in terms
-of speed.  It would be a good idea to do some mathematical analysis on
-how many digits are needed internally to guarantee the correctness of
-the digits that are provided.  Testing as well as rough analysis
-indicate that this might be correct already.
+but it is expected to move it to alpha within the next days of weeks,
+after having added some more tests and having fixed potential bugs
+that these tests might reveal.  The first alpha version is not
+expected to be much different from this version.  This version should
+already be usable.  Operations +, -, *, / and sqrt should be working
+properly and would justify calling this release at least beta.  Even
+log, exp and power should be fine, but they might have some issues in
+terms of precision, so that the last digits of the result might be
+wrong, or in terms of speed.  For this reason they are currently
+considered to be alpha, as soon as significant amount testing with
+random numbers as parameters has been performed.  It would be a good
+idea to do some mathematical analysis on how many digits are needed
+internally to guarantee the correctness of the digits that are
+provided.  But this will not be considered as a requirement for the
+alpha-version.
 
 This software development effort is hosted on RubyForge (
 http://rubyforge.org/ ) under the project name "long-decimal", to be
@@ -34,15 +41,15 @@ correctness of this library and allow changes to be checked in order
 to make sure that what was running before would still work afterwards.
 Tests for a library as complex as long-decimal can never be
 exhaustive, but they give a good indication that methods are working
-correctly.  About 90% of the tests that will be eventually needed are
+correctly.  About 95% of the tests that will be eventually needed are
 already present.  As a policy a release is not created unless all
 tests succeed.  Running the tests can take a few minutes, depending on
 your machine.  It is about 15 minutes on my machine (1300 MHz).
 Whatever is gained by making the software run faster is used up again
 by adding more tests.  This is the result of the test:
 
-Finished in 869.98785 seconds.
-102 tests, 44345 assertions, 0 failures, 0 errors
+Finished in 835.976186 seconds.
+116 tests, 44585 assertions, 0 failures, 0 errors
 
 Install
 -------
