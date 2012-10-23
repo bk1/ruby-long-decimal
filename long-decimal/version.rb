@@ -4,7 +4,7 @@
 # version.rb -- extract version information from files
 #
 # CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/version.rb,v 1.6 2006/04/11 19:45:40 bk1 Exp $
-# CVS-Label: $Name: ALPHA_01_00 $
+# CVS-Label: $Name: ALPHA_01_03 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 

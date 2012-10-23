@@ -2,8 +2,8 @@
 #
 # testrandom.rb -- runit test for long-decimal.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testrandom.rb,v 1.12 2006/05/05 22:15:36 bk1 Exp $
-# CVS-Label: $Name: ALPHA_01_02 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testrandom.rb,v 1.13 2007/08/19 19:25:59 bk1 Exp $
+# CVS-Label: $Name: ALPHA_01_03 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
@@ -12,6 +12,7 @@ require "runit/cui/testrunner"
 require "runit/testsuite"
 require "crypt/ISAAC"
 
+load "lib/long-decimal.rb"
 load "test/testlongdeclib.rb"
 load "test/testrandlib.rb"
 
@@ -22,7 +23,7 @@ class TestRandom_class < RUNIT::TestCase
   include TestLongDecHelper
   include TestRandomHelper
 
-  @RCS_ID='-$Id: testrandom.rb,v 1.12 2006/05/05 22:15:36 bk1 Exp $-'
+  @RCS_ID='-$Id: testrandom.rb,v 1.13 2007/08/19 19:25:59 bk1 Exp $-'
 
   # for how many seconds should this test run? change to different
   # value on demand
@@ -34,13 +35,9 @@ class TestRandom_class < RUNIT::TestCase
       puts("\ncnt=#{cnt} scnt=#{@scnt} x=#{x} ep=#{eprec} lp=#{lprec} sp=#{sprec} pp=#{pprec}\n")
       if (x <= LongMath::MAX_EXP_ABLE) then
 	check_exp_floated(x, eprec)
-	check_exp2_floated(x, pprec)
-	check_exp10_floated(x, pprec)
       end
       if (x > 0)
 	check_log_floated(x, lprec)
-	check_log2_floated(x, lprec)
-	check_log10_floated(x, lprec)
       end
       if (x > 0)
 	xr = x.round_to_scale(sc, LongMath::ROUND_HALF_UP)

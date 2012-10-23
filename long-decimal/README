@@ -1,13 +1,32 @@
 Version
 -------
 
-This version ($Name: ALPHA_01_01 $) is functionally identical with the previous
-alpha-0.01.00.  The runit tests have been extended and further tests
-have been added.  A lot of additional testing has been done using
-random numbers as parameters with testrandom.rb and values for which
-these random tests have failed have been added to the regular tests in
-testlongdecimal.rb .  So this release is mostly bug-fixing, enough to
-justify declaring itself as alpha-version.
+This version ($Name: ALPHA_01_03 $) is functionally mostly identical with the
+previous alpha-0.01.02.  Support for rounding to any given set of last
+digits, for example allowing only 0 and 5 as last digit, has been
+added and tests for this kind of functionality are considered to be
+complete.  This functionality is useful for rounding patterns within
+currencies where the smallest unit is 0.05, not 0.01, like CHF.  In
+this case, remainders 0 and 5 modulo 10 are required.  For currencies
+where the smallest unit is 0.02, it would be 0, 2, 4, 8 modulo 10.
+But this has been implemented in a more general way, so it would also
+be possible to restrict the rounding results to any set modulo any
+integral number >= 2.
+
+Extensive testing has shown that apart from this new functionality
+there seems to be an issue when calculating powers of LongDecimal
+where the base is slightly less than 1 and the exponent is a big
+positive number.  In some cases where this should result in 0, the
+calculations seem to take time forever.  This issue should not stop
+long-decimal from becoming beta, so its solution will be postponed and
+it will be resolved temporarily by moving it to a different library.
+Ideas how to solve these issues are there, so eventually this
+power-functionality will be working even for these cases.
+
+All other functionality did not show any bugs during intensive
+testing, so it could be assumed that the whole library is good for
+beta and maybe even production/stable, apart from the issues
+mentioned above, which are being separated into another library.
 
 This software development effort is hosted on RubyForge (
 http://rubyforge.org/ ) under the project name "long-decimal", to be
@@ -15,25 +34,26 @@ found directly with http://rubyforge.org/projects/long-decimal/ .  So
 you should feel encouraged to look if there is a newer version, when
 you install long-decimal.
 
-This version is an alpha-version.  Operations +, -, *, / and sqrt
-should be working properly and would justify calling this release at
-least beta.  Even log, exp and power should be fine.  log, log2, log10
-and exp have been tested for about a million random values and the
-current version should cover all of these correctly.  But it is still
-possible,that in some cases the result deviates in the last digit by 1
-or 2 from the real result.  A deviation of slightly more than half of
-the unit of the last digit is already present.  Improving on this
-would require an extensive extension of internal functionality to
-provide rounding information in case of last digits being 50000...,
-where additional digits would reveal if this really needs to be
-rounded up or down.  Because these functions are transcendental, at
-least exp and log will always have either one of these true, it will
-never be exactly ....5.  Speed could be improved as well.
+This version is an alpha-version, which might also be called
+"pre-beta".  Operations +, -, *, / and sqrt should be working properly
+and would justify calling this release at least beta.  Even log and exp
+should be fine.  log, log2, log10 and exp have been tested
+for more than a million random values and the current version should
+cover all of these correctly.  But it is still possible, that in some
+cases the result deviates in the last digit by 1 or 2 from the real
+result.  A deviation of slightly more than half of the unit of the
+last digit is already present.  Improving on this would require an
+extensive extension of internal functionality to provide rounding
+information in case of last digits being 50000..., where additional
+digits would reveal if this really needs to be rounded up or down.
+Because these functions are transcendental, at least exp and log will
+always have either one of these true, it will never be exactly ....5.
+Speed could be improved as well.
 
 It would be a good idea to do some more mathematical analysis on how
 many digits are needed internally to guarantee the correctness of the
 digits that are provided.  But this will not be considered as a
-requirement for the alpha-version.
+requirement for the beta-version.
 
 Test
 ----
@@ -43,12 +63,12 @@ correctness of this library and allow changes to be checked in order
 to make sure that what was running before would still work afterwards.
 Tests for a library as complex as long-decimal can never be
 exhaustive, but they give a good indication that methods are working
-correctly.  About 95% of the tests that will be eventually needed are
-already present.  As a policy a release is not created unless all
-tests succeed.  Running the tests can take a few minutes, depending on
-your machine.  It is about 15 minutes on my machine (1300 MHz).
-Whatever is gained by making the software run faster is used up again
-by adding more tests.  This is the result of the test:
+correctly.  The set of tests that is available now is considered to be
+complete.  As a policy a release is not created unless all tests
+succeed.  Running all tests can take a few minutes or even hours,
+depending on your machine.  Whatever is gained by making the software
+run faster is used up again by adding more tests.  This is the result
+of the test:
 
 Finished in 1160.808707 seconds.
 
@@ -90,7 +110,7 @@ ruby 1.8.4 and on Windows XP with Cygwin and ruby 1.8.4 and on Windows
 - Usage from your ruby-programs:
 
   require "rubygems"
-  require_gem "long-decimal"
+  require "long-decimal"
 
 - documentation will be found in HTML-format in the directory
   $RUBY_DIR/gems/$RUBY_VERSION/doc/long-decimal-$LONG_DECIMAL_VERSION/rdoc/index.html
@@ -106,14 +126,14 @@ ruby 1.8.4 and on Windows XP with Cygwin and ruby 1.8.4 and on Windows
 2. Installing from the sources (it is preferred to use the
    gem-installation, but since long-decimal is open-source-software you
    are off course granted the right to download the source and change
-   it and install your own version.
+   it and install your own version.)
 
 - download the newest source-tar.gz-file from long-decimal project at rubyforge
   which can be found by
   http://rubyforge.org/projects/long-decimal/ -> Files
   ( http://rubyforge.org/frs/?group_id=1334 )
 - open a shell window
-  cd to the directory where you have downloaded the gem-file
+  cd to the directory where you have downloaded the .tar.gz-file
   unpack the file using tar
   tar xfzvv long-decimal-alpha-1_00.tar.gz
   cd long-decimal
@@ -134,8 +154,13 @@ in the gem-file.  It is not provided as a separate file any more.
 Bugs
 ----
 
-There are no known bugs against the current specification and bugs
-that occur are usually fixed within a few days.
+Calculations of the kind
+0.99999999999 ** 12423153125316415423512345234
+that are performed using LongMath.power tend to take forever, if the
+exponent is really big.
+
+Method round_to_allowed_remainders() of LongDecimal has not been
+tested enough.
 
 It is considered somewhat arbitrary to disallow calculation
 exponential functions if the result could not be expressed as Float.

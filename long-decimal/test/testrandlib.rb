@@ -3,7 +3,7 @@
 # testrandlib.rb -- runit test for long-decimal.rb
 #
 # CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testrandlib.rb,v 1.7 2006/05/07 20:00:24 bk1 Exp $
-# CVS-Label: $Name: ALPHA_01_02 $
+# CVS-Label: $Name: ALPHA_01_03 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 

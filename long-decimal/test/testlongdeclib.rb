@@ -2,19 +2,19 @@
 #
 # library for testlongdecimal.rb
 #
-# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdeclib.rb,v 1.18 2007/06/19 01:36:23 bk1 Exp $
-# CVS-Label: $Name: ALPHA_01_02 $
+# CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdeclib.rb,v 1.19 2007/08/19 19:25:59 bk1 Exp $
+# CVS-Label: $Name: ALPHA_01_03 $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
-load "lib/long-decimal.rb"
+# load "lib/long-decimal.rb"
 
 #
 # test class for LongDecimal and LongDecimalQuot
 #
 module TestLongDecHelper
 
-  @RCS_ID='-$Id: testlongdeclib.rb,v 1.18 2007/06/19 01:36:23 bk1 Exp $-'
+  @RCS_ID='-$Id: testlongdeclib.rb,v 1.19 2007/08/19 19:25:59 bk1 Exp $-'
 
 
   #
