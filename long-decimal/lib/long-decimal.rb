@@ -731,7 +731,7 @@ class LongDecimal < LongDecimalBase
       raise TypeError, "1st arg must not be empty string. \"#{num_str.inspect}\"" if len == 0
 
       # remove spaces and underscores
-      num_str.gsub!(/\s/, "")
+      num_str = num_str.gsub(/\s/, "")
       num_str.gsub!(/_/, "")
 
       # handle sign
