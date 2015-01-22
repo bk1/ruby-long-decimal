@@ -26,7 +26,103 @@ BYTE_SIZE_OF_ONE = 1.size
 #
 module LongDecimalRoundingMode
 
-  RoundingModeClass = Struct.new(:name, :num)
+  private
+
+  RoundingMinorMode = Struct.new(:name, :part)
+
+  # exactly on the boundary round away from zero
+  MINOR_UP = RoundingMinorMode.new(:MINOR_UP, :_UP)
+  # exactly on the boundary round towards zero
+  MINOR_DOWN = RoundingMinorMode.new(:MINOR_DOWN, :_DOWN)
+  # exactly on the boundary round towards positive infinitiy (to the higher of the two possible values)
+  MINOR_CEILING = RoundingMinorMode.new(:MINOR_CEILING, :_CEILING)
+  # exactly on the boundary round towards negative infinitiy (to the lower of the two possible values)
+  MINOR_FLOOR = RoundingMinorMode.new(:MINOR_FLOOR, :_FLOOR)
+  # exactly on the boundary pick the one with even end digit
+  MINOR_EVEN = RoundingMinorMode.new(:MINOR_EVEN, :_EVEN)
+  # for major modes that are completely defined by themselves and do not need to rely on minor modes for the boundary stuff
+  MINOR_UNUSED = RoundingMinorMode.new(:MINOR_UNUSED, "")
+
+  private
+
+  ALL_MINOR = [ MINOR_UP, MINOR_DOWN, MINOR_CEILING, MINOR_FLOOR, MINOR_EVEN ]
+  # puts(ALL_MINOR)
+  # puts
+
+  NO_MINOR = [ MINOR_UNUSED ]
+
+  # which mode is to be used instead when we do an multiplicative inversion?
+  MUL_INVERSE_MINOR_MODE = {
+    MINOR_UNUSED  =>   MINOR_UNUSED,
+    MINOR_UP      =>   MINOR_DOWN,
+    MINOR_DOWN    =>   MINOR_UP,
+    MINOR_CEILING =>   MINOR_FLOOR,
+    MINOR_FLOOR   =>   MINOR_CEILING,
+    MINOR_EVEN    =>   MINOR_EVEN,
+  }
+
+  # which mode is to be used instead when we do an additive inversion?
+  ADD_INVERSE_MINOR_MODE = {
+    MINOR_UNUSED  =>   MINOR_UNUSED,
+    MINOR_UP      =>   MINOR_UP,
+    MINOR_DOWN    =>   MINOR_DOWN,
+    MINOR_CEILING =>   MINOR_FLOOR,
+    MINOR_FLOOR   =>   MINOR_CEILING,
+    MINOR_EVEN    =>   MINOR_EVEN,
+  }
+
+  RoundingMajorMode = Struct.new(:name, :part, :minor)
+
+  # round away from zero
+  MAJOR_UP = RoundingMajorMode.new(:MAJOR_UP, :UP, NO_MINOR)
+  # round towards zero
+  MAJOR_DOWN = RoundingMajorMode.new(:MAJOR_DOWN, :DOWN, NO_MINOR)
+  # pick the higher of the two possible values
+  MAJOR_CEILING = RoundingMajorMode.new(:MAJOR_CEILING, :CEILING, NO_MINOR)
+  # pick the lower of the two possible values
+  MAJOR_FLOOR = RoundingMajorMode.new(:MAJOR_FLOOR, :FLOOR, NO_MINOR)
+  # use the original value, if it is not already rounded, raise an error
+  MAJOR_UNNECESSARY = RoundingMajorMode.new(:MAJOR_UNNECESSARY, :UNNECESSARY, NO_MINOR)
+
+  # the arithmetic mean of two adjacent rounded values is the boundary
+  MAJOR_HALF = RoundingMajorMode.new(:MAJOR_HALF, :HALF, ALL_MINOR)
+  # the arithmetic mean of two adjacent rounded values is the boundary
+  MAJOR_GEOMETRIC = RoundingMajorMode.new(:MAJOR_GEOMETRIC, :GEOMETRIC, ALL_MINOR)
+  # the harmonic mean of two adjacent rounded values is the boundary
+  MAJOR_HARMONIC = RoundingMajorMode.new(:MAJOR_HARMONIC, :HARMONIC, ALL_MINOR)
+  # the quadratic mean of two adjacent rounded values is the boundary
+  MAJOR_QUADRATIC = RoundingMajorMode.new(:MAJOR_QUADRATIC, :QUADRATIC, ALL_MINOR)
+  # the cubic mean of two adjacent rounded values is the boundary
+  MAJOR_CUBIC = RoundingMajorMode.new(:MAJOR_CUBIC, :CUBIC, ALL_MINOR)
+
+  private
+
+  ALL_MAJOR_MODES = [  MAJOR_UP, MAJOR_DOWN, MAJOR_CEILING, MAJOR_FLOOR, MAJOR_UNNECESSARY, MAJOR_HALF, MAJOR_GEOMETRIC, MAJOR_HARMONIC, MAJOR_QUADRATIC, MAJOR_CUBIC ]
+
+  # puts("ALL_MAJOR_MODES:")
+  # puts(ALL_MAJOR_MODES)
+  # puts
+
+  MUL_INVERSE_MAJOR_MODE = {
+    MAJOR_UP           =>   MAJOR_DOWN,
+    MAJOR_DOWN         =>   MAJOR_UP,
+    MAJOR_CEILING      =>   MAJOR_FLOOR,
+    MAJOR_FLOOR        =>   MAJOR_CEILING,
+    MAJOR_HALF         =>   MAJOR_HALF,
+    MAJOR_UNNECESSARY  =>   MAJOR_UNNECESSARY
+  }
+
+  # which mode is to be used instead when we do an additive inversion?
+  ADD_INVERSE_MAJOR_MODE = {
+    MAJOR_UP           =>   MAJOR_UP,
+    MAJOR_DOWN         =>   MAJOR_DOWN,
+    MAJOR_CEILING      =>   MAJOR_FLOOR,
+    MAJOR_FLOOR        =>   MAJOR_CEILING,
+    MAJOR_HALF         =>   MAJOR_HALF,
+    MAJOR_UNNECESSARY  =>   MAJOR_UNNECESSARY
+  }
+
+  RoundingModeClass = Struct.new(:name, :major, :minor, :num)
 
   #
   # enumeration class to express the possible rounding modes that are
@@ -63,53 +159,278 @@ module LongDecimalRoundingMode
       LongDecimalRoundingMode::ADD_INVERSE_MODE[self]
     end
 
+    # internal use
+    # no special checks included
+    # we assume: lower <= unrounded <= upper
+    # we assume: sign = sgn(unrounded)
+    def pick_value(unrounded, sign, lower, upper, even)
+      if (sign == 0 || major == MAJOR_UNNECESSARY)
+        if (lower == unrounded)
+          return lower
+        elsif (upper == unrounded)
+          return upper
+        end
+      end
+      if (major == MAJOR_UP && sign > 0)
+        return upper
+      elsif (major == MAJOR_UP && sign < 0)
+        return lower
+      elsif (major == MAJOR_DOWN && sign > 0)
+        return lower
+      elsif (major == MAJOR_DOWN && sign < 0)
+        return upper
+      elsif (major == MAJOR_CEILING)
+        return upper
+      elsif (major == MAJOR_FLOOR)
+        return lower
+      elsif (major == MAJOR_UNNECESSARY)
+        rails ArgumentError, "rounding #{name} of unrounded=#{unrounded} is not applicable for lower=#{lower} and upper=#{upper}"
+      end
+      on_boundary = false
+      if (major == MAJOR_HALF)
+        d = unrounded - lower <=> upper - unrounded
+        if (d < 0)
+          # unrounded is below half
+          return lower
+        elsif (d > 0)
+          # unrounded is below half
+          return upper
+        else
+          on_boundary = true
+        end
+      elsif (major == MAJOR_GEOMETRIC)
+        prod = lower * upper
+        if (prod < 0)
+          raise ArgumentError, "geometric rounding #{name} of unrounded=#{unrounded} is not applicable for lower=#{lower} and upper=#{upper} with different signs"
+        elsif (prod == 0)
+          # lower or upper is 0
+          # we only round 0 to 0
+          if (sign == 0)
+            raise ArgumentError, "geometric rounding #{name} of unrounded=#{unrounded} is not applicable for lower=#{lower} and upper=#{upper} with 0 cannot be decided"
+          elsif (sign < 0)
+            return lower
+          else
+            return upper
+          end
+        end
+        # now prod > 0
+        square = unrounded * unrounded
+        d = square <=> prod
+        if (d < 0)
+          # |unrounded| < sqrt(lower*upper)
+          if (sign < 0)
+            # lower < unrounded < upper < 0
+            return upper
+          else
+            # (sign > 0)
+            return lower
+          end
+        elsif (d > 0)
+          # |unrounded| > sqrt(lower*upper)
+          if (sign < 0)
+            # lower < unrounded < upper < 0
+            return lower
+          else
+            # (sign > 0)
+            return upper
+          end
+        else
+          # (d == 0)
+          on_boundary = true
+        end
+      elsif (major == MAJOR_HARMONIC)
+        prod = lower * upper
+        if (prod < 0)
+          raise ArgumentError, "harmonic rounding #{name} of unrounded=#{unrounded} is not applicable for lower=#{lower} and upper=#{upper} with different signs"
+        elsif (prod == 0)
+          # lower or upper is 0
+          # we only round 0 to 0
+          if (sign == 0)
+            raise ArgumentError, "harmonic rounding #{name} of unrounded=#{unrounded} is not applicable for lower=#{lower} and upper=#{upper} with 0 cannot be decided"
+          elsif (sign < 0)
+            return lower
+          else
+            return upper
+          end
+        end
+        # now prod > 0
+        # so either lower < unrounded < upper < 0
+        # or 0 < lower < unrounded < upper
+        sum = lower + upper
+        lhs = unrounded * sum
+        rhs = 2*prod
+        d = lhs <=> rhs
+        if (sign < 0)
+          # lower + upper < 0
+          d = -d
+        end
+        if (d < 0)
+          # unrounded < 2*upper*lower/(upper+lower)
+          return lower
+        elsif (d > 0)
+          # unrounded > 2*upper*lower/(upper+lower)
+          return upper
+        else
+          # (d == 0)
+          on_boundary = true
+        end
+      elsif (major == MAJOR_QUADRATIC)
+        square = unrounded * unrounded
+        lhs = 2 * square
+        rhs = lower * lower + upper * upper
+        d = lhs <=> rhs
+        if (sign < 0)
+          # lower <= unrounded <= upper <= 0
+          # lower^2 >= unrounded >= upper^2 >= 0
+          d = -d
+        end
+        if (d < 0)
+          # unrounded < sqrt(...)
+          return lower
+        elsif (d > 0)
+          # unrounded > sqrt(...)
+          return upper
+        else
+          # (d == 0)
+          on_boundary = true
+        end
+      elsif (major == MAJOR_CUBIC)
+        cube = unrounded * unrounded * unrounded
+        lhs = 2 * cube
+        rhs = lower * lower * lower + upper * upper * upper
+        d = lhs <=> rhs
+        if (d < 0)
+          # unrounded < x_cubic(lower, upper)
+          return lower
+        elsif (d > 0)
+          # unrounded > x_cubic(lower, upper)
+          return upper
+        else
+          # (d == 0)
+          on_boundary = true
+        end
+      else
+        raise ArgumentError, "unsupported rounding mode (#{name}: major=#{major})"
+      end
+      if (! on_boundary)
+        raise ArgumentError, "rounding #{name} of unrounded=#{unrounded} failed for lower=#{lower} and upper=#{upper}: not on boundary"
+      end
+      if (minor == MINOR_UP)
+        return ROUND_UP.pick_value(unrounded, sign, lower, upper, even)
+      elsif (minor == MINOR_DOWN)
+        return ROUND_DOWN.pick_value(unrounded, sign, lower, upper, even)
+      elsif (minor == MINOR_CEILING)
+        return ROUND_CEILING.pick_value(unrounded, sign, lower, upper, even)
+      elsif (minor == MINOR_FLOOR)
+        return ROUND_FLOOR.pick_value(unrounded, sign, lower, upper, even)
+      elsif (minor == MINOR_UNUSED)
+        raise ArgumentError, "rounding #{name} of unrounded=#{unrounded} failed for lower=#{lower} and upper=#{upper}: on boundary but no applicable minor mode"
+      elsif (minor == MINOR_EVEN)
+        return even
+      else
+        raise ArgumentError, "rounding #{name} of unrounded=#{unrounded} failed for lower=#{lower} and upper=#{upper}: on boundary but no applicable minor mode"
+      end
+    end
+
     def hash
       num
     end
 
+    def to_long_s
+      "RM(#{name} major=#{major.name} minor=#{minor.name} num=#{num})"
+    end
+
+    def to_s
+      "#{name}"
+    end
+
   end
+
+  MODE_LOOKUP = {}
+  
+  rounding_mode_counter = 0
+
+  public
+
+  ALL_ROUNDING_MODES = []
+
+  MUL_INVERSE_MODE = {}
+
+  ADD_INVERSE_MODE = {}
+
+
+  ALL_MAJOR_MODES.each do |majm|
+    majm_str = majm.part.to_s
+    majm.minor.each do |minm|
+      minm_str = minm.part.to_s
+      const_str = "ROUND_" + majm_str + minm_str
+      class_eval("#{const_str} = RoundingModeClass.new(:#{const_str}, #{majm.name}, #{minm.name}, rounding_mode_counter)")
+      class_eval("#{const_str}.freeze")
+      rounding_mode_counter += 1
+      class_eval("ALL_ROUNDING_MODES.push(#{const_str})")
+      class_eval("MODE_LOOKUP[[#{majm.name}, #{minm.name}]] = #{const_str}")
+    end
+  end
+
+  ALL_ROUNDING_MODES.freeze
+  # puts(ALL_ROUNDING_MODES)
+  MODE_LOOKUP.freeze
+  # puts(MODE_LOOKUP)
+
+  ALL_ROUNDING_MODES.each do |rm|
+    majm = rm.major
+    minm = rm.minor
+    mul_inv = MODE_LOOKUP[[ MUL_INVERSE_MAJOR_MODE[majm], MUL_INVERSE_MINOR_MODE[minm]]]
+    MUL_INVERSE_MODE[rm] = mul_inv
+    add_inv = MODE_LOOKUP[[ ADD_INVERSE_MAJOR_MODE[majm], ADD_INVERSE_MINOR_MODE[minm]]]
+    ADD_INVERSE_MODE[rm] = add_inv
+    # puts("rm=#{rm} mul_inv=#{mul_inv} add_inv=#{add_inv}")
+  end
+
+  MUL_INVERSE_MODE.freeze
+  ADD_INVERSE_MODE.freeze
 
   #
   # rounding modes as constants
   #
-  ROUND_UP           = RoundingModeClass.new(:ROUND_UP, 0)
-  ROUND_DOWN         = RoundingModeClass.new(:ROUND_DOWN, 1)
-  ROUND_CEILING      = RoundingModeClass.new(:ROUND_CEILING, 2)
-  ROUND_FLOOR        = RoundingModeClass.new(:ROUND_FLOOR, 3)
-  ROUND_HALF_UP      = RoundingModeClass.new(:ROUND_HALF_UP, 4)
-  ROUND_HALF_DOWN    = RoundingModeClass.new(:ROUND_HALF_DOWN, 5)
-  ROUND_HALF_CEILING = RoundingModeClass.new(:ROUND_HALF_CEILING, 6)
-  ROUND_HALF_FLOOR   = RoundingModeClass.new(:ROUND_HALF_FLOOR, 7)
-  ROUND_HALF_EVEN    = RoundingModeClass.new(:ROUND_HALF_EVEN, 8)
-  ROUND_UNNECESSARY  = RoundingModeClass.new(:ROUND_UNNECESSARY, 9)
+  # ROUND_UP           = RoundingModeClass.new(:ROUND_UP, 0)
+  # ROUND_DOWN         = RoundingModeClass.new(:ROUND_DOWN, 1)
+  # ROUND_CEILING      = RoundingModeClass.new(:ROUND_CEILING, 2)
+  # ROUND_FLOOR        = RoundingModeClass.new(:ROUND_FLOOR, 3)
+  # ROUND_HALF_UP      = RoundingModeClass.new(:ROUND_HALF_UP, 4)
+  # ROUND_HALF_DOWN    = RoundingModeClass.new(:ROUND_HALF_DOWN, 5)
+  # ROUND_HALF_CEILING = RoundingModeClass.new(:ROUND_HALF_CEILING, 6)
+  # ROUND_HALF_FLOOR   = RoundingModeClass.new(:ROUND_HALF_FLOOR, 7)
+  # ROUND_HALF_EVEN    = RoundingModeClass.new(:ROUND_HALF_EVEN, 8)
+  # ROUND_UNNECESSARY  = RoundingModeClass.new(:ROUND_UNNECESSARY, 9)
 
-  # which mode is to be used instead when we do an multiplicative inversion?
-  MUL_INVERSE_MODE = {
-    ROUND_UP           =>   ROUND_DOWN,
-    ROUND_DOWN         =>   ROUND_UP,
-    ROUND_CEILING      =>   ROUND_FLOOR,
-    ROUND_FLOOR        =>   ROUND_CEILING,
-    ROUND_HALF_UP      =>   ROUND_HALF_DOWN,
-    ROUND_HALF_DOWN    =>   ROUND_HALF_UP,
-    ROUND_HALF_CEILING =>   ROUND_HALF_FLOOR,
-    ROUND_HALF_FLOOR   =>   ROUND_HALF_CEILING,
-    ROUND_HALF_EVEN    =>   ROUND_HALF_EVEN,
-    ROUND_UNNECESSARY  =>   ROUND_UNNECESSARY
-  }
+  # # which mode is to be used instead when we do an multiplicative inversion?
+  # MUL_INVERSE_MODE = {
+  #   ROUND_UP           =>   ROUND_DOWN,
+  #   ROUND_DOWN         =>   ROUND_UP,
+  #   ROUND_CEILING      =>   ROUND_FLOOR,
+  #   ROUND_FLOOR        =>   ROUND_CEILING,
+  #   ROUND_HALF_UP      =>   ROUND_HALF_DOWN,
+  #   ROUND_HALF_DOWN    =>   ROUND_HALF_UP,
+  #   ROUND_HALF_CEILING =>   ROUND_HALF_FLOOR,
+  #   ROUND_HALF_FLOOR   =>   ROUND_HALF_CEILING,
+  #   ROUND_HALF_EVEN    =>   ROUND_HALF_EVEN,
+  #   ROUND_UNNECESSARY  =>   ROUND_UNNECESSARY
+  # }
 
-  # which mode is to be used instead when we do an additive inversion?
-  ADD_INVERSE_MODE = {
-    ROUND_UP           =>   ROUND_UP,
-    ROUND_DOWN         =>   ROUND_DOWN,
-    ROUND_CEILING      =>   ROUND_FLOOR,
-    ROUND_FLOOR        =>   ROUND_CEILING,
-    ROUND_HALF_UP      =>   ROUND_HALF_UP,
-    ROUND_HALF_DOWN    =>   ROUND_HALF_DOWN,
-    ROUND_HALF_CEILING =>   ROUND_HALF_FLOOR,
-    ROUND_HALF_FLOOR   =>   ROUND_HALF_CEILING,
-    ROUND_HALF_EVEN    =>   ROUND_HALF_EVEN,
-    ROUND_UNNECESSARY  =>   ROUND_UNNECESSARY
-  }
+  # # which mode is to be used instead when we do an additive inversion?
+  # ADD_INVERSE_MODE = {
+  #   ROUND_UP           =>   ROUND_UP,
+  #   ROUND_DOWN         =>   ROUND_DOWN,
+  #   ROUND_CEILING      =>   ROUND_FLOOR,
+  #   ROUND_FLOOR        =>   ROUND_CEILING,
+  #   ROUND_HALF_UP      =>   ROUND_HALF_UP,
+  #   ROUND_HALF_DOWN    =>   ROUND_HALF_DOWN,
+  #   ROUND_HALF_CEILING =>   ROUND_HALF_FLOOR,
+  #   ROUND_HALF_FLOOR   =>   ROUND_HALF_CEILING,
+  #   ROUND_HALF_EVEN    =>   ROUND_HALF_EVEN,
+  #   ROUND_UNNECESSARY  =>   ROUND_UNNECESSARY
+  # }
 
   ZeroRoundingModeClass = Struct.new(:name, :num)
 
@@ -136,6 +457,14 @@ module LongDecimalRoundingMode
 
     def hash
       num
+    end
+
+    def to_long_s
+      "ZM(#{name} num=#{num})"
+    end
+
+    def to_s
+      "#{name}"
     end
 
   end
@@ -184,6 +513,8 @@ if (RUBY_PLATFORM == 'java')
     end
   end
 end
+
+
 
 #
 # add one method to Integer
@@ -237,7 +568,7 @@ class Integer
     r_self     = self % modulus
     r_self_00  = r_self
     remainders = remainders.collect do |r|
-      raise TypeError, "remainders must be numbers" unless r.kind_of? Integer
+      raise TypeError, "remainders must be integral numbers" unless r.kind_of? Integer
       r % modulus
     end
     remainders.sort!.uniq!
@@ -271,16 +602,16 @@ class Integer
       raise ArgumentError, "mode ROUND_UNNECESSARY not applicable, self=#{self.to_s} is in open interval (#{lower}, #{upper})"
     end
 
-    #     if (rounding_mode == LongDecimalRoundingMode::ROUND_FLOOR) then
-    #       return lower
-    #     elsif (rounding_mode == LongDecimalRoundingMode::ROUND_CEILING) then
-    #       return upper
-    #     end
+    if (rounding_mode == LongDecimalRoundingMode::ROUND_FLOOR) then
+      return lower
+    elsif (rounding_mode == LongDecimalRoundingMode::ROUND_CEILING) then
+      return upper
+    end
 
     sign_self = self.sign
     if (sign_self == 0) then
       if (rounding_mode == LongDecimalRoundingMode::ROUND_UP || rounding_mode == LongDecimalRoundingMode::ROUND_DOWN \
-          || lower == -upper && (rounding_mode == LongDecimalRoundingMode::ROUND_HALF_UP || rounding_mode == LongDecimalRoundingMode::ROUND_HALF_DOWN))
+          || lower == -upper && (rounding_mode.minor == LongDecimalRoundingMode::MINOR_UP || rounding_mode.minor == LongDecimalRoundingMode::MINOR_DOWN))
         if (zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY) then
           raise ArgumentError, "self=#{self.to_s} is 0 in open interval (#{lower}, #{upper}) and cannot be resolved with ZERO_ROUND_UNNECESSARY"
         elsif (zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS \
@@ -308,44 +639,47 @@ class Integer
     end
 
     # now we can assume that sign_self (and self) is != 0, which allows to decide on the rounding_mode
+    pick = rounding_mode.pick_value(self, sign_self, lower, upper, nil)
+    # if (rounding_mode == LongDecimalRoundingMode::ROUND_UP)
+    #   # ROUND_UP goes to the closest possible value away from zero
+    #   rounding_mode = (sign_self < 0) ? LongDecimalRoundingMode::ROUND_FLOOR : LongDecimalRoundingMode::ROUND_CEILING
+    # elsif (rounding_mode == LongDecimalRoundingMode::ROUND_DOWN)
+    #   # ROUND_DOWN goes to the closest possible value towards zero or beyond zero
+    #   rounding_mode = (sign_self < 0) ? LongDecimalRoundingMode::ROUND_CEILING : LongDecimalRoundingMode::ROUND_FLOOR
+    # elsif (rounding_mode.minor == LongDecimalRoundingMode::MINOR_UP)
+    #   # ROUND_*_UP goes to the closest possible value preferring away from zero
+    #   rounding_mode_minor = (sign_self < 0) ? LongDecimalRoundingMode::MINOR_FLOOR : LongDecimalRoundingMode::MINOR_CEILING
+    #   rounding_mode = LongDecimalRoundingMode::MODE_LOOKUP[[rounding_mode.major, rounding_mode_minor]]
+    # elsif (rounding_mode.minor == LongDecimalRoundingMode::MINOR_DOWN)
+    #   # ROUND_*_DOWN goes to the closest possible value preferring towards zero or beyond zero
+    #   rounding_mode_minor = (sign_self < 0) ? LongDecimalRoundingMode::MINOR_CEILING : LongDecimalRoundingMode::MINOR_FLOOR
+    #   rounding_mode = LongDecimalRoundingMode::MODE_LOOKUP[[rounding_mode.major, rounding_mode_minor]]
+    # end
+    # if (rounding_mode.minor == LongDecimalRoundingMode::MINOR_FLOOR \
+    #     || rounding_mode.minor == LongDecimalRoundingMode::MINOR_CEILING) then
+    #   d_lower = self - lower
+    #   d_upper = upper - self
+    #   if (d_lower < d_upper) then
+    #     return lower
+    #   elsif (d_upper < d_lower) then
+    #     return upper
+    #   elsif (rounding_mode == LongDecimalRoundingMode::ROUND_HALF_FLOOR) then
+    #     rounding_mode = LongDecimalRoundingMode::ROUND_FLOOR
+    #   elsif (rounding_mode == LongDecimalRoundingMode::ROUND_HALF_CEILING) then
+    #     rounding_mode = LongDecimalRoundingMode::ROUND_CEILING
+    #   else
+    #     raise ArgumentError, "this case can never happen: rounding_mode=#{rounding_mode}"
+    #   end
+    # end
 
-    if (rounding_mode == LongDecimalRoundingMode::ROUND_UP)
-      # ROUND_UP goes to the closest possible value away from zero
-      rounding_mode = (sign_self < 0) ? LongDecimalRoundingMode::ROUND_FLOOR : LongDecimalRoundingMode::ROUND_CEILING
-    elsif (rounding_mode == LongDecimalRoundingMode::ROUND_DOWN)
-      # ROUND_DOWN goes to the closest possible value towards zero or beyond zero
-      rounding_mode = (sign_self < 0) ? LongDecimalRoundingMode::ROUND_CEILING : LongDecimalRoundingMode::ROUND_FLOOR
-    elsif (rounding_mode == LongDecimalRoundingMode::ROUND_HALF_UP)
-      # ROUND_HALF_UP goes to the closest possible value preferring away from zero
-      rounding_mode = (sign_self < 0) ? LongDecimalRoundingMode::ROUND_HALF_FLOOR : LongDecimalRoundingMode::ROUND_HALF_CEILING
-    elsif (rounding_mode == LongDecimalRoundingMode::ROUND_HALF_DOWN)
-      # ROUND_HALF_DOWN goes to the closest possible value preferring towards zero or beyond zero
-      rounding_mode = (sign_self < 0) ? LongDecimalRoundingMode::ROUND_HALF_CEILING : LongDecimalRoundingMode::ROUND_HALF_FLOOR
-    end
-    if (rounding_mode == LongDecimalRoundingMode::ROUND_HALF_FLOOR \
-        || rounding_mode == LongDecimalRoundingMode::ROUND_HALF_CEILING) then
-      d_lower = self - lower
-      d_upper = upper - self
-      if (d_lower < d_upper) then
-        return lower
-      elsif (d_upper < d_lower) then
-        return upper
-      elsif (rounding_mode == LongDecimalRoundingMode::ROUND_HALF_FLOOR) then
-        rounding_mode = LongDecimalRoundingMode::ROUND_FLOOR
-      elsif (rounding_mode == LongDecimalRoundingMode::ROUND_HALF_CEILING) then
-        rounding_mode = LongDecimalRoundingMode::ROUND_CEILING
-      else
-        raise ArgumentError, "this case can never happen: rounding_mode=#{rounding_mode}"
-      end
-    end
-
-    if (rounding_mode == LongDecimalRoundingMode::ROUND_FLOOR) then
-      return lower
-    elsif (rounding_mode == LongDecimalRoundingMode::ROUND_CEILING) then
-      return upper
-    else
-      raise ArgumentError, "this case can never happen: rounding_mode=#{rounding_mode}"
-    end
+    # if (rounding_mode == LongDecimalRoundingMode::ROUND_FLOOR) then
+    #   return lower
+    # elsif (rounding_mode == LongDecimalRoundingMode::ROUND_CEILING) then
+    #   return upper
+    # else
+    #   raise ArgumentError, "this case can never happen: rounding_mode=#{rounding_mode}"
+    # end
+    return pick
   end
 end
 
@@ -2492,9 +2826,11 @@ class Rational
 
     # improved to_f, works better where numerator and denominator are integers beyond the range of float, but their Quotient is still expressable as Float
     def to_f
-      num = @numerator
-      den = @denominator
+      num = numerator
+      den = denominator
+      # puts("num=#{num} den=#{den}")
       sign = num <=> 0
+      # puts("num=#{num} den=#{den} sign=#{sign}")
       if (sign.zero?)
         return 0.0
       elsif sign < 0
@@ -3424,7 +3760,7 @@ module LongMath
     unless (x.kind_of? LongDecimal)
       x = x.to_ld(iprec, mode)
     end
-    
+
     # we use this x_k in the Taylor row:
     x_k = (x / (1 << k)).round_to_scale(iprec, mode)
     # x_k ** j

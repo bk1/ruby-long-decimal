@@ -1653,10 +1653,50 @@ class TestLongDecimal_class < Test::Unit::TestCase # RUNIT::TestCase
         assert_equal(i_rounded, i.round_to_allowed_remainders(remainders, modulus, rounding_mode, zm), "i=#{i} i_r=#{i_rounded} m=#{modulus} zm=#{zm} r=#{r}")
       end
     end
-    assert_equal(0, (i_rounded - r) % modulus)
+    assert_equal(0, (i_rounded - r) % modulus, "i_r=#{i_rounded} i=#{i} m=#{modulus} r=#{r} mode=#{rounding_mode} zm=#{zero_rounding_mode}")
     assert(i - modulus < i_rounded)
     assert(i_rounded < i + modulus)
     i_rounded
+  end
+
+  #
+  # test rounding of int to remainder set
+  #
+  def test_int_round_to_allowed_remainders_i0_r0
+    modulus = 2
+    remainders = [ 0 ]
+    i = 0
+    check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_CEILING, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+  end
+
+  #
+  # test rounding of int to remainder set
+  #
+  def test_int_round_to_allowed_remainders_i0_r1
+    modulus = 2
+    remainders = [ 1 ]
+    i = 0
+    check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_CEILING, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+  end
+
+  #
+  # test rounding of int to remainder set
+  #
+  def test_int_round_to_allowed_remainders_i1_r0
+    modulus = 2
+    remainders = [ 0 ]
+    i = 1
+    check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_CEILING, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+  end
+
+  #
+  # test rounding of int to remainder set
+  #
+  def test_int_round_to_allowed_remainders_i1_r1
+    modulus = 2
+    remainders = [ 1 ]
+    i = 1
+    check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_CEILING, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
   end
 
   #
@@ -1922,7 +1962,7 @@ class TestLongDecimal_class < Test::Unit::TestCase # RUNIT::TestCase
     one_remainder = remainders.select do |r|
       (i_rounded - r) % modulus == 0
     end
-    assert_equal(1, one_remainder.length, "i_r=#{i_rounded} i=#{i} m=#{modulus} r=#{remainders} or=#{one_remainder.to_s}")
+    assert_equal(1, one_remainder.length, "i_r=#{i_rounded} i=#{i} m=#{modulus} r=#{remainders} or=#{one_remainder.to_s} mode=#{rounding_mode} zm=#{zero_rounding_mode}")
     assert(i - modulus < i_rounded)
     assert(i_rounded < i + modulus)
     set = remainders.map do |r|
