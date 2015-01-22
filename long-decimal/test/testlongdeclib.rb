@@ -21,7 +21,6 @@ class Integer
   end
 end
 
-
 #
 # test class for LongDecimal and LongDecimalQuot
 #

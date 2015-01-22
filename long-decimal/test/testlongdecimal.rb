@@ -9,7 +9,16 @@
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
-require 'test/unit'
+$test_type = nil
+if ((RUBY_VERSION.match /^1\./) || (RUBY_VERSION.match /^2\.0/)) then
+  require 'test/unit'
+  $test_type = :v20
+else
+  require 'minitest/autorun'
+  require 'test/unit/assertions'
+  include Test::Unit::Assertions
+  $test_type = :v21
+end
 
 # require "runit/testcase"
 # require "runit/cui/testrunner"
@@ -20,10 +29,18 @@ load "test/testlongdeclib.rb"
 
 LongMath.prec_overflow_handling = :warn_use_max
 
+if ($test_type == :v20)
+  class UnitTest < Test::Unit::TestCase
+  end
+else
+  class UnitTest < MiniTest::Test
+  end
+end
+
 #
 # test class for LongDecimal and LongDecimalQuot
 #
-class TestLongDecimal_class < Test::Unit::TestCase # RUNIT::TestCase
+class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   include TestLongDecHelper
 
   @RCS_ID='-$Id: testlongdecimal.rb,v 1.86 2011/01/16 22:16:59 bk1 Exp $-'
@@ -733,7 +750,12 @@ class TestLongDecimal_class < Test::Unit::TestCase # RUNIT::TestCase
     zb = Complex(BigDecimal("2.4"),BigDecimal("-3.2"))
     zf = Complex(2.4,-3.2)
     zl = Complex(LongDecimal("2.4"),LongDecimal("-3.2"))
-    zi = Complex(2, -4)
+    zi = nil
+    if ($test_type == :v20)
+      zi = Complex(2, -4)
+    else
+      zi = zr
+    end
     twenties.each do |x|
       threes.each do |yr|
         fours.each do |yi|
