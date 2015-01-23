@@ -184,7 +184,7 @@ module LongDecimalRoundingMode
       elsif (major == MAJOR_FLOOR)
         return lower
       elsif (major == MAJOR_UNNECESSARY)
-        rails ArgumentError, "rounding #{name} of unrounded=#{unrounded} is not applicable for lower=#{lower} and upper=#{upper}"
+        rails ArgumentError, "rounding #{name} of unrounded=#{unrounded} (sign=#{sign}) is not applicable for lower=#{lower} and upper=#{upper}"
       end
       on_boundary = false
       if (major == MAJOR_HALF)
@@ -201,12 +201,12 @@ module LongDecimalRoundingMode
       elsif (major == MAJOR_GEOMETRIC)
         prod = lower * upper
         if (prod < 0)
-          raise ArgumentError, "geometric rounding #{name} of unrounded=#{unrounded} is not applicable for lower=#{lower} and upper=#{upper} with different signs"
+          raise ArgumentError, "geometric rounding #{name} of unrounded=#{unrounded} (sign=#{sign}) is not applicable for lower=#{lower} and upper=#{upper} with different signs"
         elsif (prod == 0)
           # lower or upper is 0
           # we only round 0 to 0
           if (sign == 0)
-            raise ArgumentError, "geometric rounding #{name} of unrounded=#{unrounded} is not applicable for lower=#{lower} and upper=#{upper} with 0 cannot be decided"
+            raise ArgumentError, "geometric rounding #{name} of unrounded=#{unrounded} (sign=#{sign}) is not applicable for lower=#{lower} and upper=#{upper} with 0 cannot be decided"
           elsif (sign < 0)
             return lower
           else
@@ -552,19 +552,20 @@ class Integer
   #                            use, zero_rounding_mode has to be used
   #                            to decide.
   #
-  def round_to_allowed_remainders(remainders,
+  def round_to_allowed_remainders(remainders_param,
                                   modulus,
                                   rounding_mode = LongDecimalRoundingMode::ROUND_UNNECESSARY,
                                   zero_rounding_mode = LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
 
-    raise TypeError, "remainders must be Array" unless remainders.kind_of? Array
-    raise TypeError, "remainders must be non-empty Array" unless remainders.length > 0
+    raise TypeError, "remainders must be Array" unless remainders_param.kind_of? Array
+    raise TypeError, "remainders must be non-empty Array" unless remainders_param.length > 0
     raise TypeError, "modulus #{modulus.inspect} must be integer" unless modulus.kind_of? Integer
     raise TypeError, "modulus #{modulus.inspect} must be >= 2" unless modulus >= 2
     raise TypeError, "rounding_mode #{rounding_mode.inspect} must be legal rounding rounding_mode" unless rounding_mode.kind_of? LongDecimalRoundingMode::RoundingModeClass
     raise TypeError, "ROUND_HALF_EVEN is not applicable here" if rounding_mode == LongDecimalRoundingMode::ROUND_HALF_EVEN
     raise TypeError, "zero_rounding_mode #{zero_rounding_mode.inspect} must be legal zero_rounding zero_rounding_mode" unless zero_rounding_mode.kind_of? LongDecimalRoundingMode::ZeroRoundingModeClass
 
+    remainders = remainders_param.clone
     r_self     = self % modulus
     r_self_00  = r_self
     remainders = remainders.collect do |r|
@@ -592,11 +593,17 @@ class Integer
         break
       end
     end
+    if (r_lower < 0) 
+      raise ArgumentError, "self=#{self} r_self=#{r_self} r_lower=#{r_lower} r_upper=#{r_upper}"
+    end
+    if (r_upper < 0) 
+      raise ArgumentError, "self=#{self} r_self=#{r_self} r_lower=#{r_lower} r_upper=#{r_upper}"
+    end
     lower = self - (r_self - r_lower)
     upper = self + (r_upper - r_self)
 
     unless (lower < self && self < upper)
-      raise ArgumentError, "self=#{self} not in (#{lower}, #{upper})"
+      raise ArgumentError, "self=#{self} not in (#{lower}, #{upper}) with r_self=#{r_self} r_lower=#{r_lower} r_upper=#{r_upper}"
     end
     if (rounding_mode == LongDecimalRoundingMode::ROUND_UNNECESSARY) then
       raise ArgumentError, "mode ROUND_UNNECESSARY not applicable, self=#{self.to_s} is in open interval (#{lower}, #{upper})"
@@ -611,6 +618,8 @@ class Integer
     sign_self = self.sign
     if (sign_self == 0) then
       if (rounding_mode == LongDecimalRoundingMode::ROUND_UP || rounding_mode == LongDecimalRoundingMode::ROUND_DOWN \
+          || rounding_mode.major == LongDecimalRoundingMode::MAJOR_GEOMETRIC \
+          || rounding_mode.major == LongDecimalRoundingMode::MAJOR_HARMONIC \
           || lower == -upper && (rounding_mode.minor == LongDecimalRoundingMode::MINOR_UP || rounding_mode.minor == LongDecimalRoundingMode::MINOR_DOWN))
         if (zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY) then
           raise ArgumentError, "self=#{self.to_s} is 0 in open interval (#{lower}, #{upper}) and cannot be resolved with ZERO_ROUND_UNNECESSARY"
@@ -4081,6 +4090,23 @@ module LongMath
 
     y -= ((s * factor) * sum).round_to_scale(iprec, mode.ainverse)
     return y
+  end
+
+  # arithmetic mean
+  def LongMath.average(new_scale, rounding_mode, *args)
+    if (args.empty?)
+      raise ArgumentError, "cannot calculate average of empty array"
+    end
+    sum = args.inject(0) do |psum,x| 
+      psum + x
+    end
+    raw_result if (sum.kind_of? Integer)
+        Rational(sum, args.size)
+    else
+        sum / args.size
+    end
+    result = raw_result.to_ld(new_scale, rounding_mode)
+    return result
   end
 
   @@standard_mode = ROUND_HALF_UP

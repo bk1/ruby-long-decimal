@@ -1114,6 +1114,40 @@ module LongMath
     end
   end
 
+  # geometric mean
+  def LongMath.geometric_mean(new_scale, rounding_mode, *args)
+    if (args.empty?)
+      raise ArgumentError, "cannot calculate average of empty array"
+    end
+    prod = args.inject(1) do |pprod,x| 
+      pprod * x
+    end
+    unless(prod.kind_of? LongDecimalBase)
+      prod = prod.to_ld(new_scale * 3 + 6, rounding_mode)
+    end
+    result = LongMath.power(prod, Rational(1, args.size), new_scale, rounding_mode)
+    return result
+  end
+
+  # harmonic mean
+  def LongMath.harmonic_mean(new_scale, rounding_mode, *args)
+    if (args.empty?)
+      raise ArgumentError, "cannot calculate average of empty array"
+    end
+    sum = args.inject(0) do |psum, x| 
+      psum + if (x.kindof? Integer)
+               Rational(1, x)
+             else
+               1/x
+             end
+    end
+    raw_result = args.size / sum
+    result = raw_result.to_ld(new_scale, rounding_mode)
+    return result
+  end
+
+  # quadratic & cubic means
+
 end # LongMath
 
 # to be removed again, but needed now to investigate problems with ./usr/lib/ruby/1.8/rational.rb:547: warning: in a**b, b may be too big
