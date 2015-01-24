@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 #
 # Rakefile for long-decimal project
 #
@@ -7,6 +9,20 @@
 # CVS-Label: $Name:  $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
+
+require 'rubygems'
+require 'bundler'
+
+begin
+  Bundler.setup(:default, :development)
+rescue Bundler::BundlerError => e
+  $stderr.puts e.message
+  $stderr.puts "Run `bundle install` to install missing gems"
+  exit e.status_code
+end
+
+require 'rake'
+require 'jeweler'
 
 require 'rake/gempackagetask'
 require 'rbconfig'
