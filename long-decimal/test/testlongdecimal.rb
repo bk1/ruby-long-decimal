@@ -2020,11 +2020,11 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   # any subset of 0..m-1 with rounding of 0
   #
   # ROUND_UNNECESSARY/ROUND_HALF_EVEN
-  
+
   # test remainder rounding geometric
   #
   def test_int_round_geometric_to_two_allowed_remainders
-    print "\ntest_zero_round_to_allowed_remainders [#{Time.now}] (long): "
+    print "\ntest_int_round_geometric_to_two_allowed_remainders [#{Time.now}] (long): "
     $stdout.flush
 
     10.upto 15 do |modulus|
@@ -2084,11 +2084,11 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
       end
     end
   end
-  
+
   # test remainder rounding harmonic
   #
   def test_int_round_harmonic_to_two_allowed_remainders
-    print "\ntest_zero_round_to_allowed_remainders [#{Time.now}] (long): "
+    print "\ntest_int_round_harmonic_to_two_allowed_remainders [#{Time.now}] (long): "
     $stdout.flush
 
     10.upto 15 do |modulus|
@@ -2525,7 +2525,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     print "\ntest_int_mul [#{Time.now}] (90 sec): "
     $stdout.flush
     65.times do |i|
-      x0 = (1<<i)-1
+      x0 = (1 << i)-1
       3.times do |k|
         x = x0+k
         65.times do |j|
