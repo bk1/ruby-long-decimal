@@ -952,7 +952,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     f = 224.225
     l = LongDecimal(f, 4)
     assert_equal("0.0224225", l.to_s, "l=#{l.inspect} f=#{f.inspect}")
-    assert_equal(l, (f/10000).to_ld(7), "to_ld")
+    assert_equal(l, (f/10000).to_ld(7), "to_ld l=#{l} f=#{f}")
   end
 
   #
@@ -5449,7 +5449,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     y = x.to_ld
     assert_kind_of(LongDecimal, y, "must be ld")
     assert_equal(10, y.scale, "scale is 10")
-    assert_equal(LongDecimal("1.5555555556"), y, "1.55...")
+    assert_equal(LongDecimal("1.5555555556"), y, "1.55... y=#{y} x=#{x}")
     x = LongDecimalQuot(Rational(7, 20), 1)
     y = x.to_ld
     assert_kind_of(LongDecimal, y, "must be ld")
