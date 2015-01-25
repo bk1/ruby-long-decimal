@@ -184,7 +184,7 @@ module LongDecimalRoundingMode
       elsif (major == MAJOR_FLOOR)
         return lower
       elsif (major == MAJOR_UNNECESSARY)
-        rails ArgumentError, "rounding #{name} of unrounded=#{unrounded} (sign=#{sign}) is not applicable for lower=#{lower} and upper=#{upper}"
+        raise ArgumentError, "rounding #{name} of unrounded=#{unrounded} (sign=#{sign}) is not applicable for lower=#{lower} and upper=#{upper}"
       end
       on_boundary = false
       if (major == MAJOR_HALF)
@@ -870,7 +870,53 @@ class LongDecimalBase < Numeric
       return LongDecimal(0, new_scale)
     end
 
-    divisor   = divisor
+    quot, rem = dividend.divmod(divisor)
+    sign_rem  = rem  <=> 0
+    if (sign_rem == 0)
+      # if self can be expressed without loss as LongDecimal with
+      # new_scale digits after the decimal point, just do it.
+      return LongDecimal(quot, new_scale)
+    end
+
+    # we do not expect negative signs of remainder.  To make sure that
+    # this does not cause problems in further code, we just throw an
+    # exception.  This should never happen (and did not happen during
+    # testing).
+    raise ArgumentError, "signs do not match self=#{self.to_s} f=#{factor} dividend=#{dividend} divisor=#{divisor} quot=#{quot} rem=#{rem}" if sign_rem <= 0
+
+    # now we have
+    # dividend == quot * divisor + rem
+    # where 0 < rem < quot (the case rem == 0 has already been handled
+    # so
+    # quot < divisor/dividend < quot+1
+    lower = quot
+    upper = quot+1
+    even = if (mode.minor == MINOR_EVEN)
+             even = if (lower[0] == 1)
+                      upper
+                    else
+                      lower
+                    end
+           else
+             nil
+           end
+    value = mode.pick_value(Rational(dividend, divisor), sign_quot, lower, upper, even)
+    LongDecimal(value, new_scale)
+
+  end
+
+  #
+  # helper method for round_to_scale
+  # will be replaced by shorter implementation
+  #
+  def round_to_scale_helper_old(dividend, divisor, new_scale, mode)
+
+    sign_quot = dividend <=> 0
+    if sign_quot == 0 then
+      # finish zero without long calculations at once
+      return LongDecimal(0, new_scale)
+    end
+
     quot, rem = dividend.divmod(divisor)
     sign_rem  = rem  <=> 0
     if (sign_rem == 0)
@@ -917,33 +963,35 @@ class LongDecimalBase < Numeric
 
     else
 
-      if (mode == ROUND_HALF_CEILING)
+      if (mode.minor == MINOR_CEILING)
         # ROUND_HALF_CEILING goes to the closest allowed number >= self, even
         # for negative numbers.  Since sign is handled separately, it is
         # more conveniant to use ROUND_HALF_UP or ROUND_HALF_DOWN depending on the
         # sign.
-        mode = (sign_quot > 0) ? ROUND_HALF_UP : ROUND_HALF_DOWN
-
-      elsif (mode == ROUND_HALF_FLOOR)
+        minor_mode = (sign_quot > 0) ? MINOR_UP : MINOR_DOWN
+        mode = MODE_LOOKUP[[mode.major, minor_mode]]
+      elsif (mode.minor == MINOR_FLOOR)
         # ROUND_HALF_FLOOR goes to the closest allowed number <= self, even
         # for negative numbers.  Since sign is handled separately, it is
         # more conveniant to use ROUND_HALF_UP or ROUND_HALF_DOWN depending on the
         # sign.
-        mode = (sign_quot < 0) ? ROUND_HALF_UP : ROUND_HALF_DOWN
-
+        minor_mode = (sign_quot < 0) ? MINOR_UP : MINOR_DOWN
+        mode = MODE_LOOKUP[[mode.major, minor_mode]]
       end
 
       # handle the ROUND_HALF_... stuff and find the adequate ROUND_UP
       # or ROUND_DOWN to use
       abs_rem = rem.abs
-      half    = (abs_rem << 1) <=> divisor
-      if (mode == ROUND_HALF_UP || mode == ROUND_HALF_DOWN || mode == ROUND_HALF_EVEN) then
-        if (half < 0) then
+      direction_criteria    = nil
+      if (mode.major == MAJOR_HALF)
+        direction_criteria = (abs_rem << 1) <=> divisor
+        
+        if (direction_criteria < 0) then
           mode = ROUND_DOWN
-        elsif half > 0 then
+        elsif direction_criteria > 0 then
           mode = ROUND_UP
         else
-          # half == 0
+          # direction_criteria == 0
           if (mode == ROUND_HALF_UP) then
             mode = ROUND_UP
           elsif (mode == ROUND_HALF_DOWN) then
