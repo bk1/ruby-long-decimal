@@ -478,6 +478,12 @@ module LongDecimalRoundingMode
   ZERO_ROUND_TO_CLOSEST_PREFER_MINUS = ZeroRoundingModeClass.new(:ZERO_ROUND_TO_CLOSEST_PREFER_MINUS, 3)
   ZERO_ROUND_UNNECESSARY             = ZeroRoundingModeClass.new(:ZERO_ROUND_UNNECESSARY, 4)
 
+  ALL_ZERO_MODES = [ LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS,\
+      LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS,\
+      LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS,\
+      LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS,\
+      LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY ];
+
 end # LongDecimalRoundingMode
 
 # JRuby has a bug to be fixed in version > 1.2 that implies results of
@@ -562,7 +568,7 @@ class Integer
     raise TypeError, "modulus #{modulus.inspect} must be integer" unless modulus.kind_of? Integer
     raise TypeError, "modulus #{modulus.inspect} must be >= 2" unless modulus >= 2
     raise TypeError, "rounding_mode #{rounding_mode.inspect} must be legal rounding rounding_mode" unless rounding_mode.kind_of? LongDecimalRoundingMode::RoundingModeClass
-    raise TypeError, "ROUND_HALF_EVEN is not applicable here" if rounding_mode == LongDecimalRoundingMode::ROUND_HALF_EVEN
+    raise TypeError, "#{rounding_mode} is not applicable here" if rounding_mode.minor == LongDecimalRoundingMode::MINOR_EVEN
     raise TypeError, "zero_rounding_mode #{zero_rounding_mode.inspect} must be legal zero_rounding zero_rounding_mode" unless zero_rounding_mode.kind_of? LongDecimalRoundingMode::ZeroRoundingModeClass
 
     remainders = remainders_param.clone
@@ -610,16 +616,24 @@ class Integer
     end
 
     if (rounding_mode == LongDecimalRoundingMode::ROUND_FLOOR) then
+      if (lower.nil?)
+        raise ArgumentError, "remainders=#{remainders} modulus=#{modulus} rounding_mode=#{rounding_mode} zero_rounding_mode=#{zero_rounding_mode}"
+      end
       return lower
     elsif (rounding_mode == LongDecimalRoundingMode::ROUND_CEILING) then
+      if (upper.nil?)
+        raise ArgumentError, "remainders=#{remainders} modulus=#{modulus} rounding_mode=#{rounding_mode} zero_rounding_mode=#{zero_rounding_mode}"
+      end
       return upper
     end
 
-    sign_self = self.sign
+    sign_self = self.sgn
     if (sign_self == 0) then
-      if (rounding_mode == LongDecimalRoundingMode::ROUND_UP || rounding_mode == LongDecimalRoundingMode::ROUND_DOWN \
+      if (rounding_mode == LongDecimalRoundingMode::ROUND_UP \
+          || rounding_mode == LongDecimalRoundingMode::ROUND_DOWN \
           || rounding_mode.major == LongDecimalRoundingMode::MAJOR_GEOMETRIC \
           || rounding_mode.major == LongDecimalRoundingMode::MAJOR_HARMONIC \
+          || rounding_mode.major == LongDecimalRoundingMode::MAJOR_QUADRATIC \
           || lower == -upper && (rounding_mode.minor == LongDecimalRoundingMode::MINOR_UP || rounding_mode.minor == LongDecimalRoundingMode::MINOR_DOWN))
         if (zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY) then
           raise ArgumentError, "self=#{self.to_s} is 0 in open interval (#{lower}, #{upper}) and cannot be resolved with ZERO_ROUND_UNNECESSARY"
@@ -627,23 +641,56 @@ class Integer
                || zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS) then
           diff = lower.abs <=> upper.abs
           if (diff < 0) then
+            if (lower.nil?)
+              raise ArgumentError, "remainders=#{remainders} modulus=#{modulus} rounding_mode=#{rounding_mode} zero_rounding_mode=#{zero_rounding_mode}"
+            end
             return lower
           elsif (diff > 0) then
+            if (upper.nil?)
+              raise ArgumentError, "remainders=#{remainders} modulus=#{modulus} rounding_mode=#{rounding_mode} zero_rounding_mode=#{zero_rounding_mode}"
+            end
             return upper
           elsif (zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS) then
+            if (upper.nil?)
+              raise ArgumentError, "remainders=#{remainders} modulus=#{modulus} rounding_mode=#{rounding_mode} zero_rounding_mode=#{zero_rounding_mode}"
+            end
             return upper
           elsif (zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS) then
+            if (lower.nil?)
+              raise ArgumentError, "remainders=#{remainders} modulus=#{modulus} rounding_mode=#{rounding_mode} zero_rounding_mode=#{zero_rounding_mode}"
+            end
             return lower
           else
             raise ArgumentError, "this case can never happen: zero_rounding_mode=#{zero_rounding_mode}"
           end
         elsif (zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS) then
+          if (upper.nil?)
+            raise ArgumentError, "remainders=#{remainders} modulus=#{modulus} rounding_mode=#{rounding_mode} zero_rounding_mode=#{zero_rounding_mode}"
+          end
           return upper
         elsif (zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS) then
+          if (lower.nil?)
+            raise ArgumentError, "remainders=#{remainders} modulus=#{modulus} rounding_mode=#{rounding_mode} zero_rounding_mode=#{zero_rounding_mode}"
+          end
           return lower
         else
           raise ArgumentError, "this case can never happen: zero_rounding_mode=#{zero_rounding_mode}"
         end
+      end
+    end
+
+    # for geometric and harmonic never round across 0
+    if (rounding_mode.major == LongDecimalRoundingMode::MAJOR_GEOMETRIC || rounding_mode.major == LongDecimalRoundingMode::MAJOR_HARMONIC || rounding_mode.major == LongDecimalRoundingMode::MAJOR_QUADRATIC)
+      if (sign_self > 0 && lower < 0)
+        if (upper.nil?)
+          raise ArgumentError, "remainders=#{remainders} modulus=#{modulus} rounding_mode=#{rounding_mode} zero_rounding_mode=#{zero_rounding_mode}"
+        end
+        return upper
+      elsif (sign_self < 0 && upper > 0)
+        if (lower.nil?)
+          raise ArgumentError, "remainders=#{remainders} modulus=#{modulus} rounding_mode=#{rounding_mode} zero_rounding_mode=#{zero_rounding_mode}"
+        end
+        return lower
       end
     end
 
@@ -688,6 +735,9 @@ class Integer
     # else
     #   raise ArgumentError, "this case can never happen: rounding_mode=#{rounding_mode}"
     # end
+    if (pick.nil?)
+      raise ArgumentError, "remainders=#{remainders} modulus=#{modulus} rounding_mode=#{rounding_mode} zero_rounding_mode=#{zero_rounding_mode}"
+    end
     return pick
   end
 end
@@ -2729,6 +2779,17 @@ class Numeric
     (self - 1).zero?
   end
 
+  def sgn
+    raw_sign = self <=> 0
+    if (raw_sign < 0)
+      -1
+    elsif (raw_sign == 0)
+      0
+    else
+      +1
+    end
+  end
+
 end # Numeric
 
 class Complex
@@ -2924,9 +2985,9 @@ module LongMath
     if (power.nil?)
       power = powers_big_base ** n1
       @@powers_of_big_base[n1] = power
-      puts "npower_of_big_base(n1=#{n1}) c->#{power.size}"
+      # puts "npower_of_big_base(n1=#{n1}) c->#{power.size}"
     else
-      puts "npower_of_big_base(n1=#{n1}) c<-#{power.size}"
+      # puts "npower_of_big_base(n1=#{n1}) c<-#{power.size}"
    end
     power
   end
@@ -3131,11 +3192,11 @@ module LongMath
     n1 = n >> POWERS_MED_EXP_PARAM
     p  = npower10_cached(n0)
     if (n1 > 0) then
-      puts "n0=#{n0} n1=#{n1}"
+      # puts "n0=#{n0} n1=#{n1}"
       p1 = npower_of_big_base(n1)
-      puts "n0=#{n0} n1=#{n1} p1"
+      # puts "n0=#{n0} n1=#{n1} p1"
       p *= p1
-      puts "n0=#{n0} n1=#{n1} p"
+      # puts "n0=#{n0} n1=#{n1} p"
     end
     return p
   end
@@ -4551,7 +4612,7 @@ module LongMath
     raise TypeError, "x=#{x.inspect} must not negative" unless x >= 0
     prec = check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
-    puts "LongMath.power(x=#{x} y=#{y} prec=#{prec} mode=#{mode})"
+    # puts "LongMath.power(x=#{x} y=#{y} prec=#{prec} mode=#{mode})"
 
     # handle the special cases where base or exponent are 0 or 1 explicitely
     if y.zero? then
@@ -4568,10 +4629,10 @@ module LongMath
     # x ** y <= 10**-s/2  <=> y * log(x) <= -s log(10) - log(2)
 
     iprec, iprec_x, iprec_y, logx_y_f = calc_iprec_for_power(x, y, prec)
-    puts "x=#{x} y=#{y} prec=#{prec} iprec=#{iprec} iprec_x=#{iprec_x} iprec_y=#{iprec_y} logx_y_f=#{logx_y_f}: checking x < 1 && y > 0 || x > 1 && y < 0=#{x < 1 && y > 0 || x > 1 && y < 0}"
+    # puts "x=#{x} y=#{y} prec=#{prec} iprec=#{iprec} iprec_x=#{iprec_x} iprec_y=#{iprec_y} logx_y_f=#{logx_y_f}: checking x < 1 && y > 0 || x > 1 && y < 0=#{x < 1 && y > 0 || x > 1 && y < 0}"
     $stdout.flush
     if (x < 1 && y > 0 || x > 1 && y < 0) then
-      puts "checking if zero logx_y_f=#{logx_y_f} <= #{- prec * LOG10 - LOG2}"
+      # puts "checking if zero logx_y_f=#{logx_y_f} <= #{- prec * LOG10 - LOG2}"
       if (logx_y_f <= - prec * LOG10 - LOG2) then
         return LongDecimal.zero!(prec)
       end
@@ -4621,10 +4682,10 @@ module LongMath
       y = -y
       x = (1/x).round_to_scale(iprec_x*2, mode)
       iprec, iprec_x, iprec_y, logx_y_f = calc_iprec_for_power(x, y, prec)
-      puts "x=#{x} y=#{y} prec=#{prec} iprec=#{iprec} iprec_x=#{iprec_x} iprec_y=#{iprec_y} logx_y_f=#{logx_y_f}: checking x < 1 && y > 0 || x > 1 && y < 0=#{x < 1 && y > 0 || x > 1 && y < 0}"
+      # puts "x=#{x} y=#{y} prec=#{prec} iprec=#{iprec} iprec_x=#{iprec_x} iprec_y=#{iprec_y} logx_y_f=#{logx_y_f}: checking x < 1 && y > 0 || x > 1 && y < 0=#{x < 1 && y > 0 || x > 1 && y < 0}"
       $stdout.flush
       if (x < 1 && y > 0 || x > 1 && y < 0) then
-        puts "checking if zero logx_y_f=#{logx_y_f} <= #{- prec * LOG10 - LOG2}"
+        # puts "checking if zero logx_y_f=#{logx_y_f} <= #{- prec * LOG10 - LOG2}"
         if (logx_y_f <= - prec * LOG10 - LOG2) then
           return LongDecimal.zero!(prec)
         end
@@ -4636,14 +4697,14 @@ module LongMath
     y0 = y.round_to_scale(0, LongMath.standard_imode).to_i
     x0 = x
     point_shift = 0
-    puts "x0=#{x0} y0=#{y0}"
+    # puts "x0=#{x0} y0=#{y0}"
     while x0 > LongMath::MAX_FLOATABLE
       x0 = x0.move_point_left(100)
       point_shift += 100
     end
     iprec2 = 2 * (iprec + point_shift)
     iprec3 = [ iprec2, LongMath.prec_limit() - 24 ].min
-    puts "x0=#{x0} y0=#{y0} point_shift=#{point_shift} iprec=#{iprec} iprec2=#{iprec2} iprec3=#{iprec3}"
+    # puts "x0=#{x0} y0=#{y0} point_shift=#{point_shift} iprec=#{iprec} iprec2=#{iprec2} iprec3=#{iprec3}"
     z0 = LongMath.ipower(x0, y0, iprec3, mode)
     if (point_shift > 0)
       unless z0.kind_of? LongDecimal
@@ -4678,12 +4739,12 @@ module LongMath
     raise TypeError, "exponent y=#{y.inspect} must not be greater MAX_FLOATABLE=#{MAX_FLOATABLE}" unless y.abs <= MAX_FLOATABLE
     prec = check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
-    puts "LongMath.ipower(x=#{x} y=#{y} prec=#{prec} mode=#{mode})"
+    # puts "LongMath.ipower(x=#{x} y=#{y} prec=#{prec} mode=#{mode})"
 
     if (y.zero?)
       return 1
     elsif ! (x.kind_of? LongDecimalBase) || x.scale * y.abs <= prec
-      puts "x=#{x} y=#{y} using **"
+      # puts "x=#{x} y=#{y} using **"
       return x ** y
     elsif (y < 0)
       l = Math.log10(x.abs.to_f)
@@ -4692,12 +4753,12 @@ module LongMath
       end
       # return (1/LongMath.ipower(x, -y, prec + 2, mode)).round_to_scale(prec, mode)
       xi = 1/x
-      puts "x=#{x} y=#{y} prec=#{prec} using (1/x)**y xi=#{xi}"
+      # puts "x=#{x} y=#{y} prec=#{prec} using (1/x)**y xi=#{xi}"
       xr = xi.round_to_scale(prec + 6, mode)
       return LongMath.ipower(xr, -y, prec, mode)
     else
       # y > 0
-      puts "x=#{x} y=#{y} regular"
+      # puts "x=#{x} y=#{y} regular"
       cnt = 0
       z  = x
       y0 = y
@@ -4718,7 +4779,7 @@ module LongMath
             x = x.round_to_scale(prec+4, mode)
           end
           if (cnt > 1000)
-            puts("ipower x=#{x} y=#{y} cnt=#{cnt} z=#{z} t=#{Time.now - t0}")
+            # puts("ipower x=#{x} y=#{y} cnt=#{cnt} z=#{z} t=#{Time.now - t0}")
             cnt = 0
           end
 
@@ -4731,9 +4792,9 @@ module LongMath
           end
         end
       end
-      puts "z=#{z} rounding prec=#{prec}"
+      # puts "z=#{z} rounding prec=#{prec}"
       z = z.round_to_scale(prec, mode)
-      puts "rounded -> z=#{z}"
+      # puts "rounded -> z=#{z}"
       return z
     end
   end
@@ -4794,6 +4855,44 @@ module LongMath
 
   end # power_internal
 
+  # helper for means
+  def LongMath.sign_check_for_mean(allow_different_signs, *args)
+    if (args.empty?)
+      raise ArgumentError, "cannot calculate mean of empty array"
+    end
+    first = args[0]
+    has_neg = false
+    has_pos = false
+    has_zero = false
+    all_same = true
+    result_sign = 0
+    args.each do |x|
+      if (! (x.kind_of? Numeric))
+        raise ArgumentError, "cannot calculate mean of a non-numeric array #{args.inspect}"
+      end
+      if (x.kind_of? Complex)
+        raise ArgumentError, "mean not supported for complex numbers args=#{args.inspect}"
+      end
+      if (all_same && x != first)
+        all_same = false
+      end
+      sign = x.sgn
+      if (sign < 0)
+        has_neg = true
+        result_sign = sign
+      elsif (sign > 0)
+        has_pos = true
+        result_sign = sign
+      else
+        has_zero = true
+      end
+      if (has_neg && has_pos && !allow_different_signs)
+        raise ArgumentError, "signs of parameters have to match for quadratic mean args=#{args.inspect}"
+      end
+    end
+    return result_sign, all_same, has_neg, has_zero, has_pos
+  end
+
   public
 
   # arithmetic mean
@@ -4819,19 +4918,20 @@ module LongMath
 
   # geometric mean
   def LongMath.geometric_mean(new_scale, rounding_mode, *args)
-    if (args.empty?)
-      raise ArgumentError, "cannot calculate average of empty array"
+    result_sign, all_same, has_neg, has_zero, has_pos = sign_check_for_mean(true, *args)
+    if (all_same)
+      return args[0].to_ld(new_scale, rounding_mode)
+    end
+    if (has_zero)
+      return LongDecimal.zero!(new_scale)
     end
     prod = args.inject(1) do |pprod,x| 
-      pprod * x
-    end
-    unless(prod.kind_of? LongDecimalBase)
-      prod = prod.to_ld(new_scale * 3 + 6, rounding_mode)
+      pprod * x.abs
     end
     result = nil
     n = args.size
     if (n == 0 || n == 1)
-      result = prod
+      result = prod.to_ld(new_scale, rounding_mode)
     elsif (n == 2)
       result = LongMath.sqrt(prod, new_scale, rounding_mode)
     elsif (n == 3) 
@@ -4839,16 +4939,23 @@ module LongMath
     else
       result = LongMath.power(prod, Rational(1, args.size), new_scale, rounding_mode)
     end
+    if (has_neg)
+      result = -result
+    end
     return result
   end
 
   # harmonic mean
   def LongMath.harmonic_mean(new_scale, rounding_mode, *args)
-    if (args.empty?)
-      raise ArgumentError, "cannot calculate average of empty array"
+    result_sign, all_same, has_neg, has_zero, has_pos = sign_check_for_mean(true, *args)
+    if (all_same)
+      return args[0].to_ld(new_scale, rounding_mode)
+    end
+    if (has_zero)
+      raise ArgumentError, "cannot calculate harmonic mean of argument list containing zero #{args.inspect}"
     end
     sum = args.inject(0) do |psum, x| 
-      psum + if (x.kindof? Integer)
+      psum + if (x.kind_of? Integer)
                Rational(1, x)
              else
                1/x
@@ -4861,25 +4968,43 @@ module LongMath
 
   # quadratic mean
   def LongMath.quadratic_mean(new_scale, rounding_mode, *args)
-    if (args.empty?)
-      raise ArgumentError, "cannot calculate average of empty array"
+    result_sign, all_same, has_neg, has_zero, has_pos = sign_check_for_mean(true, *args)
+    if (all_same)
+      return args[0].to_ld(new_scale, rounding_mode)
     end
     sum = args.inject(0) do |psum, x| 
       psum + x*x
     end
-    result = LongMath.sqrt(sum /args.size, new_scale, rounding_mode)
+    quot = if (sum.kind_of? Integer)
+             Rational(sum, args.size)
+           else
+             sum / args.size
+           end
+    result = LongMath.sqrt(quot, new_scale, rounding_mode)
+    if (has_neg)
+      result = -result
+    end
     return result
   end
 
   # cubic mean
   def LongMath.cubic_mean(new_scale, rounding_mode, *args)
-    if (args.empty?)
-      raise ArgumentError, "cannot calculate average of empty array"
+    result_sign, all_same, has_neg, has_zero, has_pos = sign_check_for_mean(false, *args)
+    if (all_same)
+      return args[0].to_ld(new_scale, rounding_mode)
     end
     sum = args.inject(0) do |psum, x| 
+      if (x.kind_of? Complex)
+        raise ArgumentError, "cubic mean not supported for complex numbers args=#{args.inspect}"
+      end
       psum + x*x*x
     end
-    result = LongMath.cbrt(sum /args.size, new_scale, rounding_mode)
+    quot = if (sum.kind_of? Integer)
+             Rational(sum, args.size)
+           else
+             sum / args.size
+           end
+    result = LongMath.cbrt(quot, new_scale, rounding_mode)
     return result
   end
 

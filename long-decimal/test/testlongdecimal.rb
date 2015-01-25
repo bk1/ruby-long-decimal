@@ -1540,7 +1540,43 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
           if (i_rounded > i && i != 0)
             assert(dd < modulus, "i_r=#{i_rounded} " + text)
           end
+
+          LongDecimalRoundingMode::ALL_ROUNDING_MODES.each do |rounding_mode|
+            unless (rounding_mode.major == LongDecimalRoundingMode::MAJOR_GEOMETRIC \
+                    || rounding_mode.major == LongDecimalRoundingMode::MAJOR_HARMONIC \
+                    || rounding_mode.major == LongDecimalRoundingMode::MAJOR_QUADRATIC \
+                    || rounding_mode.major == LongDecimalRoundingMode::MAJOR_CUBIC)
+              next;
+            end
+            if (rounding_mode.minor == LongDecimalRoundingMode::MINOR_EVEN)
+              next
+            end
+            i_rounded = check_round_to_one_remainder(i, r, modulus, rounding_mode, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          end
         end
+      end
+    end
+  end
+
+  #
+  # test rounding of int to remainder set
+  #
+  def test_zero_round_to_zero_as_allowed_remainder
+    print "\ntest_zero_round_to_zero_as_allowed_remainder [#{Time.now}]: "
+
+    2.upto 20 do |modulus|
+      text = "m=#{modulus}"
+      LongDecimalRoundingMode::ALL_ROUNDING_MODES.each do |rounding_mode|
+        if (rounding_mode.minor == LongDecimalRoundingMode::MINOR_EVEN)
+          next
+        end
+        if (rounding_mode.major == LongDecimalRoundingMode::MAJOR_UNNECESSARY)
+          next
+        end
+        LongDecimalRoundingMode::ALL_ZERO_MODES.each do |zero_mode|
+          zero_rounded = 0.round_to_allowed_remainders([0], modulus, rounding_mode, zero_mode)
+          assert_equal(0, zero_rounded)
+        end       
       end
     end
   end
@@ -1588,60 +1624,47 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
           assert(dd < modulus, "0_r=#{zero_r} " + text)
         end
 
+        # ceiling always rounds toward positive infinity, so 0 does not need any special handling and zero_rounding_mode is ignored
         zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_CEILING, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
         assert(zero_r >= 0, "0_r=#{zero_r} " + text)
 
+        # ceiling always rounds toward negative infinity, so 0 does not need any special handling and zero_rounding_mode is ignored
         zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_FLOOR, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
         assert(zero_r <= 0, "0_r=#{zero_r} " + text)
 
-        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_HALF_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
-        dd = 2*zero_r.abs
-        assert(dd <= modulus, "0_r=#{zero_r} " + text)
-        if (zero_r < 0)
-          assert(dd < modulus, "0_r=#{zero_r} " + text)
-        end
-        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_HALF_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
-        dd = 2*zero_r.abs
-        assert(dd <= modulus, "0_r=#{zero_r} " + text)
-        if (zero_r < 0)
-          assert(dd < modulus, "0_r=#{zero_r} " + text)
-        end
-        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_HALF_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
-        dd = 2*zero_r.abs
-        assert(dd <= modulus, "0_r=#{zero_r} " + text)
-        if (zero_r > 0)
-          assert(dd < modulus, "0_r=#{zero_r} " + text)
-        end
-        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_HALF_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS)
-        dd = 2*zero_r.abs
-        assert(dd <= modulus, "0_r=#{zero_r} " + text)
-        if (zero_r > 0)
-          assert(dd < modulus, "0_r=#{zero_r} " + text)
-        end
-
-        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_HALF_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
-        dd = 2*zero_r.abs
-        assert(dd <= modulus, "0_r=#{zero_r} " + text)
-        if (zero_r < 0)
-          assert(dd < modulus, "0_r=#{zero_r} " + text)
-        end
-        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_HALF_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
-        dd = 2*zero_r.abs
-        assert(dd <= modulus, "0_r=#{zero_r} " + text)
-        if (zero_r < 0)
-          assert(dd < modulus, "0_r=#{zero_r} " + text)
-        end
-        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_HALF_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
-        dd = 2*zero_r.abs
-        assert(dd <= modulus, "0_r=#{zero_r} " + text)
-        if (zero_r > 0)
-          assert(dd < modulus, "0_r=#{zero_r} " + text)
-        end
-        zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_HALF_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS)
-        dd = 2*zero_r.abs
-        assert(dd <= modulus, "0_r=#{zero_r} " + text)
-        if (zero_r > 0)
-          assert(dd < modulus, "0_r=#{zero_r} " + text)
+        LongDecimalRoundingMode::ALL_ROUNDING_MODES.each do |rounding_mode|
+          unless (rounding_mode.minor == LongDecimalRoundingMode::MINOR_UP || rounding_mode.minor == LongDecimalRoundingMode::MINOR_DOWN)
+            next
+          end
+          unless (rounding_mode.major == LongDecimalRoundingMode::MAJOR_HALF \
+                  || rounding_mode.major == LongDecimalRoundingMode::MAJOR_HARMONIC \
+                  || rounding_mode.major == LongDecimalRoundingMode::MAJOR_GEOMETRIC \
+                  || rounding_mode.major == LongDecimalRoundingMode::MAJOR_QUADRATIC \
+                  || rounding_mode.major == LongDecimalRoundingMode::MAJOR_CUBIC)
+            next
+          end
+          [LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS,LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS].each do |zero_rounding_mode|
+            zero_r = check_round_to_one_remainder(0, r, modulus, rounding_mode, zero_rounding_mode)
+            if (rounding_mode.major == LongDecimalRoundingMode::MAJOR_HALF)
+              dd = 2*zero_r.abs
+              text2 = text + " dd=#{dd} rm=#{rounding_mode} zm=#{zero_rounding_mode}"
+              assert(dd <= modulus, "0_r=#{zero_r} " + text2)
+              if (zero_r < 0)
+                assert(dd < modulus, "0_r=#{zero_r} " + text2)
+              end
+            end
+          end
+          [LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS,LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS].each do |zero_rounding_mode|
+            zero_r = check_round_to_one_remainder(0, r, modulus, rounding_mode, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
+            if (rounding_mode.major == LongDecimalRoundingMode::MAJOR_HALF)
+              dd = 2*zero_r.abs
+              text2 = text + " dd=#{dd} rm=#{rounding_mode}"
+              assert(dd <= modulus, "0_r=#{zero_r} " + text2)
+              if (zero_r > 0)
+                assert(dd < modulus, "0_r=#{zero_r} " + text2)
+              end
+            end
+          end
         end
 
         zero_r = check_round_to_one_remainder(0, r, modulus, LongDecimalRoundingMode::ROUND_HALF_CEILING, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
@@ -1663,19 +1686,20 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
 
   def check_round_to_one_remainder(i, r, modulus, rounding_mode, zero_rounding_mode)
 
-    zero_modes = [ LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS,\
-      LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS,\
-      LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS,\
-      LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS,\
-      LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY ];
     remainders = [ r ]
     i_rounded = i.round_to_allowed_remainders(remainders, modulus, rounding_mode, zero_rounding_mode)
+    text = "i_r=#{i_rounded} i=#{i} m=#{modulus} r=#{r} mode=#{rounding_mode} zm=#{zero_rounding_mode}"
+
+    # if i is not zero or zero_rounding_mode is ZERO_ROUND_UNNECESSARY, using another zero_rounding_mode should not influence the result:
     if (i != 0 || zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
-      zero_modes.each do |zm|
+      LongDecimalRoundingMode::ALL_ZERO_MODES.each do |zm|
         assert_equal(i_rounded, i.round_to_allowed_remainders(remainders, modulus, rounding_mode, zm), "i=#{i} i_r=#{i_rounded} m=#{modulus} zm=#{zm} r=#{r}")
       end
     end
-    assert_equal(0, (i_rounded - r) % modulus, "i_r=#{i_rounded} i=#{i} m=#{modulus} r=#{r} mode=#{rounding_mode} zm=#{zero_rounding_mode}")
+    
+    # make sure that the result is congruent r modulo the modulus and within less than modulus away from i:
+    assert(! (i_rounded.nil?), text)
+    assert_equal(0, (i_rounded - r) % modulus, text)
     assert(i - modulus < i_rounded)
     assert(i_rounded < i + modulus)
     i_rounded
@@ -1684,48 +1708,8 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   #
   # test rounding of int to remainder set
   #
-  def test_int_round_to_allowed_remainders_i0_r0
-    modulus = 2
-    remainders = [ 0 ]
-    i = 0
-    check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_CEILING, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
-  end
-
-  #
-  # test rounding of int to remainder set
-  #
-  def test_int_round_to_allowed_remainders_i0_r1
-    modulus = 2
-    remainders = [ 1 ]
-    i = 0
-    check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_CEILING, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
-  end
-
-  #
-  # test rounding of int to remainder set
-  #
-  def test_int_round_to_allowed_remainders_i1_r0
-    modulus = 2
-    remainders = [ 0 ]
-    i = 1
-    check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_CEILING, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
-  end
-
-  #
-  # test rounding of int to remainder set
-  #
-  def test_int_round_to_allowed_remainders_i1_r1
-    modulus = 2
-    remainders = [ 1 ]
-    i = 1
-    check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_CEILING, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
-  end
-
-  #
-  # test rounding of int to remainder set
-  #
   def test_int_round_to_allowed_remainders
-    print "\ntest_int_round_to_allowed_remainders [#{Time.now}] (45 min): "
+    print "\ntest_int_round_to_allowed_remainders [#{Time.now}] (15 sec): "
     $stdout.flush
     # 2.upto 8 do |modulus|
     2.upto 7 do |modulus|
@@ -1822,7 +1806,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   # test rounding of 0 to remainder set
   #
   def test_zero_round_to_allowed_remainders
-    print "\ntest_zero_round_to_allowed_remainders [#{Time.now}] (long): "
+    print "\ntest_zero_round_to_allowed_remainders [#{Time.now}]: "
     $stdout.flush
 
     2.upto 7 do |modulus|
@@ -1969,27 +1953,32 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
 
   def check_round_to_remainders(i, remainders, modulus, rounding_mode, zero_rounding_mode)
 
-    zero_modes = [ LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS,\
-      LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS,\
-      LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS,\
-      LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS,\
-      LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY ];
-
+    # do the rounding
     i_rounded = i.round_to_allowed_remainders(remainders, modulus, rounding_mode, zero_rounding_mode)
+
+    # make sure that the zero_rounding_mode does not matter if i is not zero or if ZERO_ROUND_UNNECESSARY is provided
     if (i != 0 || zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
-      zero_modes.each do |zm|
+      LongDecimalRoundingMode::ALL_ZERO_MODES.each do |zm|
         assert_equal(i_rounded, i.round_to_allowed_remainders(remainders, modulus, rounding_mode, zm), "i=#{i} i_r=#{i_rounded} m=#{modulus} zm=#{zm}")
       end
     end
+
+    # make sure there is exactly one remainder matching
     one_remainder = remainders.select do |r|
       (i_rounded - r) % modulus == 0
     end
-    assert_equal(1, one_remainder.length, "i_r=#{i_rounded} i=#{i} m=#{modulus} r=#{remainders} or=#{one_remainder.to_s} mode=#{rounding_mode} zm=#{zero_rounding_mode}")
+    assert_equal(1, one_remainder.length, "i_r=#{i_rounded} i=#{i} m=#{modulus} r=#{remainders} or=#{one_remainder.to_s} rm=#{rounding_mode} zm=#{zero_rounding_mode}")
+
+    # make sure that i_rounded is less than modulus away from i
     assert(i - modulus < i_rounded)
     assert(i_rounded < i + modulus)
+
+    # run the test with each single remainder:
     set = remainders.map do |r|
       check_round_to_one_remainder(i, r, modulus, rounding_mode, zero_rounding_mode)
     end
+
+    # find members which are closer than i_rounded above and below from the results of rounding to a single remainder
     closer_above = []
     closer_below = []
     found = false
@@ -2002,13 +1991,15 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
         if (i < i_r)
           assert(i_rounded < i_r)
           if closer
-            closer_above.push(i_r)
+            # closer_above.push(i_r)
+            raise ArgumentError, "i=#{i} ir=#{i_r} i_rounded=#{i_rounded} remainders=#{remainders.inspect} m=#{modulus} rm=#{rounding_mode} zm=#{zero_rounding_mode} closer_above"
           end
         else
           # i_r < i
           assert(i_r < i_rounded)
           if closer
-            closer_below.push(i_r)
+            # closer_below.push(i_r)
+            raise ArgumentError, "i=#{i} ir=#{i_r} i_rounded=#{i_rounded} remainders=#{remainders.inspect} m=#{modulus} rm=#{rounding_mode} zm=#{zero_rounding_mode} closer_below"
           end
         end
       end
@@ -2021,122 +2012,217 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   #
   # ROUND_UNNECESSARY/ROUND_HALF_EVEN
 
-  # test remainder rounding geometric
-  #
-  def test_int_round_geometric_to_two_allowed_remainders
-    print "\ntest_int_round_geometric_to_two_allowed_remainders [#{Time.now}] (long): "
+  def test_minor_major_rounding_modes
+    print "\ntest_minor_major_rounding_modes [#{Time.now}]: "
     $stdout.flush
-
-    10.upto 15 do |modulus|
-      [[1,4], [1,9]].each do |remainders|
-        text = "m=#{modulus} x=#{0} s=#{remainders.inspect}"
-        # puts text
-        print "."
-        $stdout.flush
-
-        zero_r1 = 0.round_to_allowed_remainders(remainders, modulus, LongDecimalRoundingMode::ROUND_GEOMETRIC_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
-        zero_r2 = 0.round_to_allowed_remainders(remainders, modulus, LongDecimalRoundingMode::ROUND_GEOMETRIC_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
-        assert_equal(1, zero_r1, text)
-        assert_equal(1, zero_r2, text)
-        zero_r2 = 0.round_to_allowed_remainders(remainders, modulus, LongDecimalRoundingMode::ROUND_GEOMETRIC_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
-        assert_equal(1, zero_r2, text)
-        zero_r2 = 0.round_to_allowed_remainders(remainders, modulus, LongDecimalRoundingMode::ROUND_GEOMETRIC_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
-        assert_equal(1, zero_r2, text)
-
-        zero_r1 = 0.round_to_allowed_remainders(remainders, modulus, LongDecimalRoundingMode::ROUND_GEOMETRIC_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
-        zero_r2 = 0.round_to_allowed_remainders(remainders, modulus, LongDecimalRoundingMode::ROUND_GEOMETRIC_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
-        assert_equal(zero_r1, zero_r2, text)
-        assert(zero_r1 < 0, text)
-
-        zero_r0 = 0.round_to_allowed_remainders(remainders, modulus, LongDecimalRoundingMode::ROUND_GEOMETRIC_CEILING, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
-        assert_equal(1, zero_r0, text)
-
-        zero_r0 = 0.round_to_allowed_remainders(remainders, modulus, LongDecimalRoundingMode::ROUND_GEOMETRIC_FLOOR, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
-        assert(zero_r0 < 0, "zero_r0=#{zero_r0} < 0 " + text)
-
-        other_remainder = remainders[1]
-        param = LongMath.sqrtw(other_remainder)
-        1.upto param-1 do |x|
-          LongDecimalRoundingMode::ALL_ROUNDING_MODES.each do |rm|
-            if (rm.major == LongDecimalRoundingMode::MAJOR_GEOMETRIC)
-              text = "m=#{modulus} x=#{x} rm=#{rm} s=#{remainders.inspect}"
-              one_r0 = x.round_to_allowed_remainders(remainders, modulus, rm, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
-              assert_equal(1, one_r0, text)
-            end
-          end
-        end
-        LongDecimalRoundingMode::ALL_ROUNDING_MODES.each do |rm|
-          if (rm.major == LongDecimalRoundingMode::MAJOR_GEOMETRIC && rm.minor != LongDecimalRoundingMode::MINOR_EVEN)
-            text = "m=#{modulus} x=#{param} rm=#{rm} s=#{remainders.inspect}"
-            x_r0 = param.round_to_allowed_remainders(remainders, modulus, rm, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
-            assert(remainders.member?(x_r0), "x_r0=#{x_r0} " + text)
-          end
-        end
-        (param+1).upto other_remainder do |x|
-          LongDecimalRoundingMode::ALL_ROUNDING_MODES.each do |rm|
-            if (rm.major == LongDecimalRoundingMode::MAJOR_GEOMETRIC)
-              text = "m=#{modulus} x=#{x} rm=#{rm} s=#{remainders.inspect}"
-              other_r0 = x.round_to_allowed_remainders(remainders, modulus, rm, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
-              assert_equal(other_remainder, other_r0, text)
-            end
-          end
-        end
-      end
+    [[  LongDecimalRoundingMode::ROUND_CEILING, LongDecimalRoundingMode::MAJOR_CEILING, LongDecimalRoundingMode::MINOR_UNUSED ],
+     [  LongDecimalRoundingMode::ROUND_UNNECESSARY, LongDecimalRoundingMode::MAJOR_UNNECESSARY, LongDecimalRoundingMode::MINOR_UNUSED ],
+     [  LongDecimalRoundingMode::ROUND_UP, LongDecimalRoundingMode::MAJOR_UP, LongDecimalRoundingMode::MINOR_UNUSED ],
+     [  LongDecimalRoundingMode::ROUND_DOWN, LongDecimalRoundingMode::MAJOR_DOWN, LongDecimalRoundingMode::MINOR_UNUSED ],
+     [  LongDecimalRoundingMode::ROUND_FLOOR, LongDecimalRoundingMode::MAJOR_FLOOR, LongDecimalRoundingMode::MINOR_UNUSED ],
+     [  LongDecimalRoundingMode::ROUND_CUBIC_CEILING, LongDecimalRoundingMode::MAJOR_CUBIC, LongDecimalRoundingMode::MINOR_CEILING ],
+     [  LongDecimalRoundingMode::ROUND_CUBIC_DOWN, LongDecimalRoundingMode::MAJOR_CUBIC, LongDecimalRoundingMode::MINOR_DOWN ],
+     [  LongDecimalRoundingMode::ROUND_CUBIC_EVEN, LongDecimalRoundingMode::MAJOR_CUBIC, LongDecimalRoundingMode::MINOR_EVEN ],
+     [  LongDecimalRoundingMode::ROUND_CUBIC_FLOOR, LongDecimalRoundingMode::MAJOR_CUBIC, LongDecimalRoundingMode::MINOR_FLOOR ],
+     [  LongDecimalRoundingMode::ROUND_CUBIC_UP, LongDecimalRoundingMode::MAJOR_CUBIC, LongDecimalRoundingMode::MINOR_UP ],
+     [  LongDecimalRoundingMode::ROUND_GEOMETRIC_CEILING, LongDecimalRoundingMode::MAJOR_GEOMETRIC, LongDecimalRoundingMode::MINOR_CEILING ],
+     [  LongDecimalRoundingMode::ROUND_GEOMETRIC_DOWN, LongDecimalRoundingMode::MAJOR_GEOMETRIC, LongDecimalRoundingMode::MINOR_DOWN ],
+     [  LongDecimalRoundingMode::ROUND_GEOMETRIC_EVEN, LongDecimalRoundingMode::MAJOR_GEOMETRIC, LongDecimalRoundingMode::MINOR_EVEN ],
+     [  LongDecimalRoundingMode::ROUND_GEOMETRIC_FLOOR, LongDecimalRoundingMode::MAJOR_GEOMETRIC, LongDecimalRoundingMode::MINOR_FLOOR ],
+     [  LongDecimalRoundingMode::ROUND_GEOMETRIC_UP, LongDecimalRoundingMode::MAJOR_GEOMETRIC, LongDecimalRoundingMode::MINOR_UP ],
+     [  LongDecimalRoundingMode::ROUND_HALF_CEILING, LongDecimalRoundingMode::MAJOR_HALF, LongDecimalRoundingMode::MINOR_CEILING ],
+     [  LongDecimalRoundingMode::ROUND_HALF_DOWN, LongDecimalRoundingMode::MAJOR_HALF, LongDecimalRoundingMode::MINOR_DOWN ],
+     [  LongDecimalRoundingMode::ROUND_HALF_EVEN, LongDecimalRoundingMode::MAJOR_HALF, LongDecimalRoundingMode::MINOR_EVEN ],
+     [  LongDecimalRoundingMode::ROUND_HALF_FLOOR, LongDecimalRoundingMode::MAJOR_HALF, LongDecimalRoundingMode::MINOR_FLOOR ],
+     [  LongDecimalRoundingMode::ROUND_HALF_UP, LongDecimalRoundingMode::MAJOR_HALF, LongDecimalRoundingMode::MINOR_UP ],
+     [  LongDecimalRoundingMode::ROUND_HARMONIC_CEILING, LongDecimalRoundingMode::MAJOR_HARMONIC, LongDecimalRoundingMode::MINOR_CEILING ],
+     [  LongDecimalRoundingMode::ROUND_HARMONIC_DOWN, LongDecimalRoundingMode::MAJOR_HARMONIC, LongDecimalRoundingMode::MINOR_DOWN ],
+     [  LongDecimalRoundingMode::ROUND_HARMONIC_EVEN, LongDecimalRoundingMode::MAJOR_HARMONIC, LongDecimalRoundingMode::MINOR_EVEN ],
+     [  LongDecimalRoundingMode::ROUND_HARMONIC_FLOOR, LongDecimalRoundingMode::MAJOR_HARMONIC, LongDecimalRoundingMode::MINOR_FLOOR ],
+     [  LongDecimalRoundingMode::ROUND_HARMONIC_UP, LongDecimalRoundingMode::MAJOR_HARMONIC, LongDecimalRoundingMode::MINOR_UP ],
+     [  LongDecimalRoundingMode::ROUND_QUADRATIC_CEILING, LongDecimalRoundingMode::MAJOR_QUADRATIC, LongDecimalRoundingMode::MINOR_CEILING ],
+     [  LongDecimalRoundingMode::ROUND_QUADRATIC_DOWN, LongDecimalRoundingMode::MAJOR_QUADRATIC, LongDecimalRoundingMode::MINOR_DOWN ],
+     [  LongDecimalRoundingMode::ROUND_QUADRATIC_EVEN, LongDecimalRoundingMode::MAJOR_QUADRATIC, LongDecimalRoundingMode::MINOR_EVEN ],
+     [  LongDecimalRoundingMode::ROUND_QUADRATIC_FLOOR, LongDecimalRoundingMode::MAJOR_QUADRATIC, LongDecimalRoundingMode::MINOR_FLOOR ],
+     [  LongDecimalRoundingMode::ROUND_QUADRATIC_UP, LongDecimalRoundingMode::MAJOR_QUADRATIC, LongDecimalRoundingMode::MINOR_UP ]].each do |triple|
+      mode = triple[0]
+      major = triple[1]
+      minor = triple[2]
+      found = LongDecimalRoundingMode::MODE_LOOKUP[[major, minor]]
+      assert_equal(mode, found)
+      assert_same(mode, found)
+      assert_equal(major, mode.major)
+      assert_equal(major, found.major)
+      assert_equal(minor, mode.minor)
+      assert_equal(minor, found.minor)
     end
   end
 
-  # test remainder rounding harmonic
+  # test remainder rounding half with exact boundary
   #
-  def test_int_round_harmonic_to_two_allowed_remainders
+  def test_int_round_half_int_param_to_two_allowed_remainders
+    print "\ntest_int_round_half_to_two_allowed_remainders [#{Time.now}]: "
+    $stdout.flush
+    check_int_round_major_to_two_allowed_remainders([[1, 3], [1, 5], [2, 4], [2, 6], [3, 5], [3, 7]], true, LongDecimalRoundingMode::MAJOR_HALF) do |x, y|
+      LongMath.arithmetic_mean(0, LongDecimalRoundingMode::ROUND_FLOOR, x, y).to_i
+    end
+  end
+
+  # test remainder rounding half with exact boundary
+  #
+  def test_int_round_half_non_int_param_to_two_allowed_remainders
+    print "\ntest_int_round_half_to_two_allowed_remainders [#{Time.now}] (long): "
+    $stdout.flush
+    check_int_round_major_to_two_allowed_remainders([[1, 2], [1, 4], [1, 6], [2, 3], [2, 5], [2, 7], [3, 4], [3, 6], [3, 8], [4, 5], [4, 7]], false, LongDecimalRoundingMode::MAJOR_HALF) do |x, y|
+      LongMath.arithmetic_mean(0, LongDecimalRoundingMode::ROUND_FLOOR, x, y).to_i
+    end
+  end
+
+  # test remainder rounding geometric with exact boundary
+  #
+  def test_int_round_geometric_int_param_to_two_allowed_remainders
+    print "\ntest_int_round_geometric_to_two_allowed_remainders [#{Time.now}]: "
+    $stdout.flush
+    check_int_round_major_to_two_allowed_remainders([[1, 4], [1, 9], [2, 8]], true, LongDecimalRoundingMode::MAJOR_GEOMETRIC) do |x, y|
+      LongMath.geometric_mean(0, LongDecimalRoundingMode::ROUND_FLOOR, x, y).to_i
+    end
+  end
+
+  # test remainder rounding geometric with exact boundary
+  #
+  def test_int_round_geometric_non_int_param_to_two_allowed_remainders
+    print "\ntest_int_round_geometric_to_two_allowed_remainders [#{Time.now}] (long): "
+    $stdout.flush
+    check_int_round_major_to_two_allowed_remainders([[1, 2], [1, 3], [1, 5], [1, 6], [1, 7], [1, 8], [2, 3], [2, 4], [2, 5], [2, 6], [2, 7]], false, LongDecimalRoundingMode::MAJOR_GEOMETRIC) do |x, y|
+      LongMath.geometric_mean(0, LongDecimalRoundingMode::ROUND_FLOOR, x, y).to_i
+    end
+  end
+
+  # test remainder rounding harmonic with exact boundary
+  #
+  def test_int_round_harmonic_int_param_to_two_allowed_remainders
+    print "\ntest_int_round_harmonic_to_two_allowed_remainders [#{Time.now}]: "
+    $stdout.flush
+    check_int_round_major_to_two_allowed_remainders([[2, 6], [3, 6]], true, LongDecimalRoundingMode::MAJOR_HARMONIC) do |x, y|
+      LongMath.harmonic_mean(0, LongDecimalRoundingMode::ROUND_FLOOR, x, y).to_i
+    end
+  end
+
+  # test remainder rounding harmonic with exact boundary
+  #
+  def test_int_round_harmonic_non_int_param_to_two_allowed_remainders
     print "\ntest_int_round_harmonic_to_two_allowed_remainders [#{Time.now}] (long): "
     $stdout.flush
+    check_int_round_major_to_two_allowed_remainders([[1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 7], [1, 8], [2, 3], [2, 4], [2, 5], [2, 7]], false, LongDecimalRoundingMode::MAJOR_HARMONIC) do |x, y|
+      LongMath.harmonic_mean(0, LongDecimalRoundingMode::ROUND_FLOOR, x, y).to_i
+    end
+  end
 
-    10.upto 15 do |modulus|
-      [[1,5], [1,7], [1,9]].each do |remainders|
-        text = "m=#{modulus} x=#{0} s=#{remainders.inspect}"
+  # test remainder rounding quadratic with exact boundary
+  #
+  def test_int_round_quadratic_int_param_to_two_allowed_remainders
+    print "\ntest_int_round_quadratic_to_two_allowed_remainders [#{Time.now}]: "
+    $stdout.flush
+    check_int_round_major_to_two_allowed_remainders([[1, 7]], true, LongDecimalRoundingMode::MAJOR_QUADRATIC) do |x, y|
+      LongMath.quadratic_mean(0, LongDecimalRoundingMode::ROUND_FLOOR, x, y).to_i
+    end
+  end
+
+  # test remainder rounding quadratic with exact boundary
+  #
+  def test_int_round_quadratic_non_int_param_to_two_allowed_remainders
+    print "\ntest_int_round_quadratic_to_two_allowed_remainders [#{Time.now}] (long): "
+    $stdout.flush
+    check_int_round_major_to_two_allowed_remainders([[1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 8], [2, 3], [2, 4], [2, 5], [2, 6], [2, 7], [3, 4], [3, 5], [3, 6], [3, 7]], false, LongDecimalRoundingMode::MAJOR_QUADRATIC) do |x, y|
+      LongMath.quadratic_mean(0, LongDecimalRoundingMode::ROUND_FLOOR, x, y).to_i
+    end
+  end
+
+  # test remainder rounding cubic with exact boundary
+  #
+  def test_int_round_cubic_non_int_param_to_two_allowed_remainders
+    print "\ntest_int_round_cubic_non_int_param_to_two_allowed_remainders [#{Time.now}]: "
+    $stdout.flush
+    check_int_round_major_to_two_allowed_remainders([[1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [1, 7], [1, 8], [2, 3], [2, 4], [2, 5], [2, 7]], false, LongDecimalRoundingMode::MAJOR_CUBIC) do |x, y|
+      LongMath.cubic_mean(0, LongDecimalRoundingMode::ROUND_FLOOR, x, y).to_i
+    end
+  end
+
+  # TODO: round to zero, away from zero to negative, away from zero to positive, across zero to negative, across zero to positive
+                                                    
+  # test remainder rounding geometric
+  #
+  def check_int_round_major_to_two_allowed_remainders(remainder_sets, boundary_exact_integral, major_mode, &block)
+
+    mode_up = LongDecimalRoundingMode::MODE_LOOKUP[[major_mode, LongDecimalRoundingMode::MINOR_UP]]
+    mode_down = LongDecimalRoundingMode::MODE_LOOKUP[[major_mode, LongDecimalRoundingMode::MINOR_DOWN]]
+    mode_floor = LongDecimalRoundingMode::MODE_LOOKUP[[major_mode, LongDecimalRoundingMode::MINOR_FLOOR]]
+    mode_ceiling = LongDecimalRoundingMode::MODE_LOOKUP[[major_mode, LongDecimalRoundingMode::MINOR_CEILING]]
+
+    20.upto 25 do |modulus|
+      remainder_sets.each do |remainders|
         # puts text
         print "."
         $stdout.flush
 
-        zero_r1 = 0.round_to_allowed_remainders(remainders, modulus, LongDecimalRoundingMode::ROUND_HARMONIC_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
-        zero_r2 = 0.round_to_allowed_remainders(remainders, modulus, LongDecimalRoundingMode::ROUND_HARMONIC_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
-        assert_equal(1, zero_r1, text)
-        assert_equal(1, zero_r2, text)
-        zero_r2 = 0.round_to_allowed_remainders(remainders, modulus, LongDecimalRoundingMode::ROUND_HARMONIC_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
-        assert_equal(1, zero_r2, text)
-        zero_r2 = 0.round_to_allowed_remainders(remainders, modulus, LongDecimalRoundingMode::ROUND_HARMONIC_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
-        assert_equal(1, zero_r2, text)
+        lower_remainder = remainders[0]
+        upper_remainder = remainders[1]
 
-        zero_r1 = 0.round_to_allowed_remainders(remainders, modulus, LongDecimalRoundingMode::ROUND_HARMONIC_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
-        zero_r2 = 0.round_to_allowed_remainders(remainders, modulus, LongDecimalRoundingMode::ROUND_HARMONIC_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
-        assert_equal(zero_r1, zero_r2, text)
-        assert(zero_r1 < 0, text)
+        text = "m=#{modulus} x=#{0} s=#{remainders.inspect}"
 
-        zero_r0 = 0.round_to_allowed_remainders(remainders, modulus, LongDecimalRoundingMode::ROUND_HARMONIC_CEILING, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
-        assert_equal(1, zero_r0, text)
+        zero_rounded = 0.round_to_allowed_remainders(remainders, modulus, mode_up, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+        assert_equal(lower_remainder, zero_rounded, text + " zero_rounded=#{zero_rounded}")
+        zero_rounded = 0.round_to_allowed_remainders(remainders, modulus, mode_down, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+        assert_equal(lower_remainder, zero_rounded, text + " zero_rounded=#{zero_rounded}")
+        zero_rounded = 0.round_to_allowed_remainders(remainders, modulus, mode_up, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
+        assert_equal(lower_remainder, zero_rounded, text + " zero_rounded=#{zero_rounded}")
+        zero_rounded = 0.round_to_allowed_remainders(remainders, modulus, mode_down, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
+        assert_equal(lower_remainder, zero_rounded, text + " zero_rounded=#{zero_rounded}")
+        zero_rounded = 0.round_to_allowed_remainders(remainders, modulus, mode_ceiling, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+        assert_equal(lower_remainder, zero_rounded, text)
 
-        zero_r0 = 0.round_to_allowed_remainders(remainders, modulus, LongDecimalRoundingMode::ROUND_HARMONIC_FLOOR, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
-        assert(zero_r0 < 0, "zero_r0=#{zero_r0} < 0 " + text)
+        # zero_r1 = 0.round_to_allowed_remainders(remainders, modulus, mode_up, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
+        # zero_r2 = 0.round_to_allowed_remainders(remainders, modulus, mode_down, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
+        # assert_equal(zero_r1, zero_r2, text + " zero_r1=#{zero_r1} zero_r2=#{zero_r2}")
+        # assert_equal(upper_remainder - modulus, zero_r1, text + " zero_r1=#{zero_r1} zero_r2=#{zero_r2}")
 
-        other_remainder = remainders[1]
-        param = Rational(2*other_remainder, 1+other_remainder)
-        paraml = param.to_i
-        paramu = paraml+1
-        1.upto paraml do |x|
+        # zero_r0 = 0.round_to_allowed_remainders(remainders, modulus, mode_floor, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
+        # assert_equal(upper_remainder - modulus, zero_r0, "zero_r0=#{zero_r0} < 0 " + text)
+
+        param = block.yield(lower_remainder, upper_remainder)
+        boundary_lower = nil
+        boundary_upper = nil
+        if (boundary_exact_integral)
+          boundary_lower = param - 1
+        else
+          boundary_lower = param
+        end
+        boundary_upper = param +1
+          
+        1.upto boundary_lower do |x|
           LongDecimalRoundingMode::ALL_ROUNDING_MODES.each do |rm|
-            if (rm.major == LongDecimalRoundingMode::MAJOR_HARMONIC)
-              text = "m=#{modulus} x=#{x} rm=#{rm} s=#{remainders.inspect}"
+            if (rm.major == major_mode && rm.minor != LongDecimalRoundingMode::MINOR_EVEN)
+              text = "m=#{modulus} x=#{x} rm=#{rm} s=#{remainders.inspect} param=#{param}"
               one_r0 = x.round_to_allowed_remainders(remainders, modulus, rm, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
-              assert_equal(1, one_r0, text)
+              assert_equal(lower_remainder, one_r0, text)
             end
           end
         end
-        paramu.upto other_remainder do |x|
+        if (boundary_exact_integral)
           LongDecimalRoundingMode::ALL_ROUNDING_MODES.each do |rm|
-            if (rm.major == LongDecimalRoundingMode::MAJOR_HARMONIC)
+            if (rm.major == major_mode && rm.minor != LongDecimalRoundingMode::MINOR_EVEN)
+              text = "m=#{modulus} x=#{param} rm=#{rm} s=#{remainders.inspect}"
+              x_r0 = param.round_to_allowed_remainders(remainders, modulus, rm, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
+              assert(remainders.member?(x_r0), "x_r0=#{x_r0} " + text)
+            end
+          end
+        end
+        boundary_upper.upto upper_remainder do |x|
+          LongDecimalRoundingMode::ALL_ROUNDING_MODES.each do |rm|
+            if (rm.major == major_mode && rm.minor != LongDecimalRoundingMode::MINOR_EVEN)
               text = "m=#{modulus} x=#{x} rm=#{rm} s=#{remainders.inspect}"
               other_r0 = x.round_to_allowed_remainders(remainders, modulus, rm, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
-              assert_equal(other_remainder, other_r0, text)
+              assert_equal(upper_remainder, other_r0, text)
             end
           end
         end
@@ -2529,7 +2615,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
       3.times do |k|
         x = x0+k
         65.times do |j|
-          y0 = (1<<j)-1
+          y0 = (1 << j)-1
           3.times do |l|
             y = y0+l
             z = x*y
@@ -2551,7 +2637,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   # test multiplication which uses internally multiplication of fixnum, which is buggy in JRuby and has been fixed here.
   #
   def test_mul2
-    print "\ntest_mul2 [#{Time.now}] (25 min): "
+    print "\ntest_mul2 [#{Time.now}]: "
     $stdout.flush
 
     map = {}
@@ -5773,6 +5859,149 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     assert(! (y.eql? x), "! #{y.inspect} eql? #{x.inspect}")
   end
 
+  def test_means_one_param
+    print "\ntest_means_one_param [#{Time.now}]: "
+    [ -1, 0, 1, 7, -1.0, 0.0, 1.0, Math::PI, Rational(-1, 1), Rational(0, 1), Rational(1,1), Rational(2,3), LongDecimal(-10000000000, 10), LongDecimal(-1, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ].each do |x|
+      # , Complex(-1, -2), Complex(0,0), Complex(Rational(3, 2), LongDecimal(4, 3))
+      12.times do |prec|
+        LongDecimalRoundingMode::ALL_ROUNDING_MODES.each do |rm|
+          if (rm == LongDecimalRoundingMode::ROUND_UNNECESSARY)
+            next
+          end
+          xx = x.to_ld(prec, rm)
+          text = "x=#{x} xx=#{xx} rm=#{rm} prec=#{prec}"
+          assert_equal(xx, LongMath.arithmetic_mean(prec, rm, x), text)
+          assert_equal(xx, LongMath.geometric_mean(prec, rm, x), text)
+          if (x.sgn != 0)
+            assert_equal(xx, LongMath.harmonic_mean(prec, rm, x), text)
+          end
+          assert_equal(xx, LongMath.quadratic_mean(prec, rm, x), text)
+          assert_equal(xx, LongMath.cubic_mean(prec, rm, x), text)
+        end
+      end
+    end
+  end
+
+  def test_means_two_param
+    print "\ntest_means_two_param [#{Time.now}]: "
+    arr = [ 0, 1, 2, 7, 0.0, 1.0, 2.0, Math::PI, Rational(40, 9), Rational(0, 1), Rational(1,1), Rational(2,3), LongDecimal(3333333333333333, 10), LongDecimal(33, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ]
+    arr.each do |x|
+      arr.each do |y|
+        12.times do |prec|
+          LongDecimalRoundingMode::ALL_ROUNDING_MODES.each do |rm|
+            if (rm == LongDecimalRoundingMode::ROUND_UNNECESSARY)
+              next
+            end
+            xx = x.to_ld(prec, rm)
+            yy = y.to_ld(prec, rm)
+            mi = [xx, yy].min
+            am = LongMath.arithmetic_mean(prec, rm, x, y)
+            gm = LongMath.geometric_mean(prec, rm, x, y)
+            if (x.sgn == 0 || y.sgn == 0)
+              hm = gm
+            else
+              hm = LongMath.harmonic_mean(prec, rm, x, y)
+            end
+            qm = LongMath.quadratic_mean(prec, rm, x, y)
+            cm = LongMath.cubic_mean(prec, rm, x, y)
+            ma = [xx, yy].max
+            text = "mi=#{mi} hm=#{hm} gm=#{gm} am=#{am} qm=#{qm} cm=#{cm} ma=#{ma} prec=#{prec} rm=#{rm} x=#{x} y=#{y}"
+            assert(mi <= hm.succ, text)
+            assert(hm <= gm.succ, text)
+            assert(gm <= am.succ, text)
+            assert(am <= qm.succ, text)
+            assert(qm <= cm.succ, text)
+            assert(cm <= ma.succ, text)
+            if (x == y)
+              assert_equal(mi, hm, text)
+              assert_equal(hm, gm, text)
+              assert_equal(gm, am, text)
+              assert_equal(am, qm, text)
+              assert_equal(qm, cm, text)
+              assert_equal(cm, ma, text)
+            end
+          end
+        end
+      end
+    end
+  end
+
+  def _test_means_three_param
+    print "\ntest_means_three_param [#{Time.now}] (4 min): "
+    arr = [ 0, 1, 2, 0.0, 1.0, Math::PI, Rational(40, 9), Rational(0, 1), Rational(1,1), LongDecimal(3333333333333333, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ]
+    arr.each do |x|
+      arr.each do |y|
+        print ":"
+        arr.each do |z|
+          print "."
+          12.times do |prec|
+            LongDecimalRoundingMode::ALL_ROUNDING_MODES.each do |rm|
+              if (rm == LongDecimalRoundingMode::ROUND_UNNECESSARY)
+                next
+              end
+              xx = x.to_ld(prec, rm)
+              yy = y.to_ld(prec, rm)
+              zz = z.to_ld(prec, rm)
+              mi = [xx, yy, zz].min
+              am = LongMath.arithmetic_mean(prec, rm, x, y, z)
+              gm = LongMath.geometric_mean(prec, rm, x, y, z)
+              if (x.sgn == 0 || y.sgn == 0 || z.sgn == 0)
+                hm = gm
+              else
+                hm = LongMath.harmonic_mean(prec, rm, x, y, z)
+              end
+              qm = LongMath.quadratic_mean(prec, rm, x, y, z)
+              cm = LongMath.cubic_mean(prec, rm, x, y, z)
+              ma = [xx, yy, zz].max
+              text = "mi=#{mi} hm=#{hm} gm=#{gm} am=#{am} qm=#{qm} cm=#{cm} ma=#{ma} prec=#{prec} rm=#{rm} x=#{x} y=#{y} z=#{z}"
+              assert(mi <= hm.succ, text)
+              assert(hm <= gm.succ, text)
+              assert(gm <= am.succ, text)
+              assert(am <= qm.succ, text)
+              assert(qm <= cm.succ, text)
+              assert(cm <= ma.succ, text)
+              if (x == y && y == z)
+                assert_equal(mi, hm, text)
+                assert_equal(hm, gm, text)
+                assert_equal(gm, am, text)
+                assert_equal(am, qm, text)
+                assert_equal(qm, cm, text)
+                assert_equal(cm, ma, text)
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+
+  def test_arithmetic_means_two_param_known_result
+    assert_equal(1, LongMath.arithmetic_mean(0, LongDecimalRoundingMode::ROUND_UNNECESSARY, 0, 2))
+    assert_equal(0, LongMath.arithmetic_mean(0, LongDecimalRoundingMode::ROUND_UNNECESSARY, -1, 1))
+    assert_equal(3, LongMath.arithmetic_mean(0, LongDecimalRoundingMode::ROUND_UNNECESSARY, 1, 5))
+  end
+
+  def test_geometric_means_two_param_known_result
+    assert_equal(2, LongMath.geometric_mean(0, LongDecimalRoundingMode::ROUND_UNNECESSARY, 1, 4))
+    assert_equal(10, LongMath.geometric_mean(0, LongDecimalRoundingMode::ROUND_UNNECESSARY, 4, 25))
+    assert_equal(-3, LongMath.geometric_mean(0, LongDecimalRoundingMode::ROUND_UNNECESSARY, -1, -9))
+  end
+
+  def test_harmonic_means_two_param_known_result
+    assert_equal(3, LongMath.harmonic_mean(0, LongDecimalRoundingMode::ROUND_UNNECESSARY, 2, 6))
+    assert_equal(4, LongMath.harmonic_mean(0, LongDecimalRoundingMode::ROUND_UNNECESSARY, 3, 6))
+    assert_equal(-3, LongMath.harmonic_mean(0, LongDecimalRoundingMode::ROUND_UNNECESSARY, -2, -6))
+  end
+
+  def test_quadratic_means_two_param_known_result
+    assert_equal(5, LongMath.quadratic_mean(0, LongDecimalRoundingMode::ROUND_UNNECESSARY, 1, 7))
+    assert_equal(10, LongMath.quadratic_mean(0, LongDecimalRoundingMode::ROUND_UNNECESSARY, 2, 14))
+    assert_equal(15, LongMath.quadratic_mean(0, LongDecimalRoundingMode::ROUND_UNNECESSARY, 3, 21))
+    assert_equal(13, LongMath.quadratic_mean(0, LongDecimalRoundingMode::ROUND_UNNECESSARY, 7, 17))
+    assert_equal(-5, LongMath.quadratic_mean(0, LongDecimalRoundingMode::ROUND_UNNECESSARY, -1, -7))
+  end
+
+
   #
   # test mul minverse of RoundingMode
   #
@@ -5827,7 +6056,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
         @powers_of_10[x] = zz
       end
       assert_equal(z, zz)
-      puts("exp=" + x.to_s)
+      # puts("exp=" + x.to_s)
       $stdout.flush
     else
       @powers_of_10[x] ||= z
@@ -5847,12 +6076,12 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
 
     12.times do |i|
       check_npower10(3**i)
-      puts(3**i)
+      # puts(3**i)
     end
 
     12.times do |i|
       check_npower10(3**i)
-      puts(3**i)
+      # puts(3**i)
     end
 
     y = 1
@@ -5867,7 +6096,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     x0 = 2046
     y0 = 10**x0
     60.times do |i|
-      puts "i=" + i.to_s
+      # puts "i=" + i.to_s
       $stdout.flush
       y = y0
       x = x0
