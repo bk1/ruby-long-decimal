@@ -607,6 +607,7 @@ class Integer
     end
     lower = self - (r_self - r_lower)
     upper = self + (r_upper - r_self)
+    # puts "round_to_allowed_remainders(remainders_param=#{remainders_param} modulus=#{modulus} rounding_mode=#{rounding_mode} zero_rounding_mode=#{zero_rounding_mode}) remainders=#{remainders} lower=#{lower} upper=#{upper} r_lower=#{r_lower} r_upper=#{r_upper} r_self=#{r_self}"
 
     unless (lower < self && self < upper)
       raise ArgumentError, "self=#{self} not in (#{lower}, #{upper}) with r_self=#{r_self} r_lower=#{r_lower} r_upper=#{r_upper}"
@@ -636,7 +637,7 @@ class Integer
           || rounding_mode.major == LongDecimalRoundingMode::MAJOR_QUADRATIC \
           || lower == -upper && (rounding_mode.minor == LongDecimalRoundingMode::MINOR_UP || rounding_mode.minor == LongDecimalRoundingMode::MINOR_DOWN))
         if (zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY) then
-          raise ArgumentError, "self=#{self.to_s} is 0 in open interval (#{lower}, #{upper}) and cannot be resolved with ZERO_ROUND_UNNECESSARY"
+          raise ArgumentError, "self=#{self.to_s} is 0 in open interval (#{lower}, #{upper}) and cannot be resolved with ZERO_ROUND_UNNECESSARY (rounding_mode=#{rounding_mode} modulus=#{modulus} remainders=#{remainders}"
         elsif (zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS \
                || zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS) then
           diff = lower.abs <=> upper.abs
