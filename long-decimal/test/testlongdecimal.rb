@@ -1480,14 +1480,14 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   # test rounding of int to remainder set
   #
   def test_int_round_to_one_allowed_remainder
-    print "\ntest_int_round_to_one_allowed_remainder [#{Time.now}] (20min): "
+    print "\ntest_int_round_to_one_allowed_remainder [#{Time.now}] (20sec): "
     $stdout.flush
     2.upto 20 do |modulus|
       0.upto modulus-1 do |r|
+        print "."
         n = 3*modulus
         (-n).upto n do |i|
           text = "i=#{i} n=#{n} m=#{modulus} r=#{r}"
-          print ":"
           $stdout.flush
 
           i_rounded = check_round_to_one_remainder(i, r, modulus, LongDecimalRoundingMode::ROUND_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
@@ -1716,87 +1716,142 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
       xx = (1<< modulus) - 1
       xx.times do |x|
         remainders = make_set(x + 1, modulus)
+        min_remainder = remainders.min
+        max_remainder = remainders.max
+        max_neg_remainder = max_remainder - modulus
+        closest_remainder_prefer_plus = nil
+        closest_remainder_prefer_minus = nil
+        minus_remainder = if (min_remainder == 0)
+                            min_remainder
+                          else
+                            max_neg_remainder
+                          end
+        if (-max_neg_remainder > min_remainder) 
+          closest_remainder_prefer_minus = min_remainder
+          closest_remainder_prefer_plus = min_remainder
+        elsif (-max_neg_remainder < min_remainder)
+          closest_remainder_prefer_minus = max_neg_remainder
+          closest_remainder_prefer_plus = max_neg_remainder
+        else
+          closest_remainder_prefer_minus = max_neg_remainder
+          closest_remainder_prefer_plus = min_remainder
+        end
+
         text0 = "m=#{modulus} x=#{x} s=#{remainders.inspect}"
         # puts text0
-        print ":"
+        print "."
         $stdout.flush
         n = 3*modulus
         (-n).upto n do |i|
           text = "i=#{i} n=#{n} " + text0
           i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          assert(above.empty?)
+          assert(below.empty?)
           assert(i_rounded.abs >= i.abs, "i_r=#{i_rounded} " + text)
           if (i == 0) then
             assert(i_rounded >= 0, "i_r=#{i_rounded} " + text)
-            assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
+            assert_equal(min_remainder, i_rounded)
+            # assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
           elsif (i > 0) then
             # rounded away from 0, so for positive i to value >= i
-            assert_equal(above.length, 0, text)
+            # assert_equal(above.length, 0, text)
             assert(i_rounded >= i, "i_r=#{i_rounded} " + text)
+            assert(i_rounded >= min_remainder)
           else
             # i < 0
-            # rounded away from 0, so for positive i to value <= i
+            # rounded away from 0, so for negative i to value <= i
             assert_equal(below.length, 0, text)
             assert(i_rounded <= i, "i_r=#{i_rounded} " + text)
+            assert(i_rounded <= max_neg_remainder)
           end
 
           i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          assert(above.empty?)
+          assert(below.empty?)
           if (i > 0)
             assert(i_rounded <= i, "i_r=#{i_rounded} " + text)
-            assert_equal(below.length, 0, "i_r=#{i_rounded} " + text)
+            assert(i_rounded >= max_neg_remainder, "i_r=#{i_rounded} " + text)
+            # assert_equal(below.length, 0, "i_r=#{i_rounded} " + text)
           elsif (i < 0)
             assert(i_rounded >= i, "i_r=#{i_rounded} " + text)
-            assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
+            assert(i_rounded <= min_remainder, "i_r=#{i_rounded} " + text)
+            # assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
           elsif (i == 0) then
             assert(i_rounded >= 0, "i_r=#{i_rounded} " + text)
-            assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
+            assert_equal(min_remainder, i_rounded, "i_r=#{i_rounded} " + text)
+            # assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
           else
             raise("i=#{i} i_r=#{i_rounded}")
           end
 
           i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_CEILING, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          assert(above.empty?)
+          assert(below.empty?)
           assert(i_rounded >= i, "i_r=#{i_rounded} " + text)
-          assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
+          # assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
 
           i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_FLOOR, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          assert(above.empty?)
+          assert(below.empty?)
           assert(i_rounded <= i, "i_r=#{i_rounded} " + text)
-          assert_equal(below.length, 0, "i_r=#{i_rounded} " + text)
+          # assert_equal(below.length, 0, "i_r=#{i_rounded} " + text)
 
           i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          assert(above.empty?)
+          assert(below.empty?)
           dd = 2*(i_rounded - i).abs
           assert(dd <= modulus, "i_r=#{i_rounded} " + text)
           if (i_rounded.abs < i.abs || i_rounded.sgn == - i.sgn)
             assert(dd < modulus, "i_r=#{i_rounded} " + text)
           end
-          assert_equal(below.length, 0, "i_r=#{i_rounded} " + text)
-          assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
 
           i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          assert(above.empty?)
+          assert(below.empty?)
           dd = 2*(i_rounded - i).abs
           assert(dd <= modulus, "i_r=#{i_rounded} " + text)
           if (i_rounded.abs > i.abs && i_rounded.sgn == i.sgn)
             assert(dd < modulus, "i_r=#{i_rounded} " + text)
           end
-          assert_equal(below.length, 0, "i_r=#{i_rounded} " + text)
-          assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
 
           i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_CEILING, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          assert(above.empty?)
+          assert(below.empty?)
           dd = 2*(i_rounded - i).abs
           assert(dd <= modulus, "i_r=#{i_rounded} " + text)
           if (i_rounded < i)
             assert(dd < modulus, "i_r=#{i_rounded} " + text)
           end
-          assert_equal(below.length, 0, "i_r=#{i_rounded} " + text)
-          assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
 
           i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_FLOOR, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+          assert(above.empty?)
+          assert(below.empty?)
           dd = 2*(i_rounded - i).abs
           assert(dd <= modulus, "i_r=#{i_rounded} " + text)
           if (i_rounded > i && i != 0)
             assert(dd < modulus, "i_r=#{i_rounded} " + text)
           end
-          assert_equal(below.length, 0, "i_r=#{i_rounded} " + text)
-          assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
 
+          LongDecimalRoundingMode::ALL_ROUNDING_MODES.each do |rounding_mode|
+            unless (rounding_mode.major == LongDecimalRoundingMode::MAJOR_GEOMETRIC \
+                    || rounding_mode.major == LongDecimalRoundingMode::MAJOR_HARMONIC \
+                    || rounding_mode.major == LongDecimalRoundingMode::MAJOR_QUADRATIC \
+                    || rounding_mode.major == LongDecimalRoundingMode::MAJOR_CUBIC)
+              next;
+            end
+            if (rounding_mode.minor == LongDecimalRoundingMode::MINOR_EVEN)
+              next
+            end
+            i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus, rounding_mode, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+            if (rounding_mode.major != LongDecimalRoundingMode::MAJOR_CUBIC)
+              if (i < 0)
+                assert(i_rounded <= 0, "i_r=#{i_rounded} " + text)
+              end
+              if (i > 0)
+                assert(i_rounded >= 0, "i_r=#{i_rounded} " + text)
+              end
+            end
+          end
         end
       end
     end
@@ -1813,6 +1868,28 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
       xx = (1<< modulus) - 1
       xx.times do |x|
         remainders = make_set(x + 1, modulus)
+
+        min_remainder = remainders.min
+        max_remainder = remainders.max
+        max_neg_remainder = max_remainder - modulus
+        closest_remainder_prefer_plus = nil
+        closest_remainder_prefer_minus = nil
+        minus_remainder = if (min_remainder == 0)
+                            min_remainder
+                          else
+                            max_neg_remainder
+                          end
+        if (-max_neg_remainder > min_remainder) 
+          closest_remainder_prefer_minus = min_remainder
+          closest_remainder_prefer_plus = min_remainder
+        elsif (-max_neg_remainder < min_remainder)
+          closest_remainder_prefer_minus = max_neg_remainder
+          closest_remainder_prefer_plus = max_neg_remainder
+        else
+          closest_remainder_prefer_minus = max_neg_remainder
+          closest_remainder_prefer_plus = min_remainder
+        end
+          
         text = "m=#{modulus} x=#{x} s=#{remainders.inspect}"
         # puts text
         print "."
@@ -1821,119 +1898,235 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
         # ROUND_UP and ROUND_DOWN have the same effect for 0
         zero_r1, set1, above1, below1 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
         zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+        assert(above1.empty?)
+        assert(below1.empty?)
+        assert(above2.empty?)
+        assert(below2.empty?)
         assert_equal(zero_r1, zero_r2, text)
-        assert_equal(above1, above2, text)
-        assert_equal(below1, below2, text)
         assert(zero_r1 >= 0, "0_r=#{zero_r1} " + text)
-        assert_equal(above1.length, 0, text)
+        assert_equal(min_remainder, zero_r1, "0_r=#{zero_r1} " + text)
 
         zero_r1, set1, above1, below1 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
         zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
+        assert(above1.empty?)
+        assert(below1.empty?)
+        assert(above2.empty?)
+        assert(below2.empty?)
         assert_equal(zero_r1, zero_r2, text)
-        assert_equal(above1, above2, text)
-        assert_equal(below1, below2, text)
         assert(zero_r1 <= 0, "0_r=#{zero_r1} " + text)
-        assert_equal(below1.length, 0, text)
+        assert_equal(minus_remainder, zero_r1, "0_r=#{zero_r1} " + text)
 
         zero_r1, set1, above1, below1 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
         zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
+        assert(above1.empty?)
+        assert(below1.empty?)
+        assert(above2.empty?)
+        assert(below2.empty?)
         assert_equal(zero_r1, zero_r2, text)
-        assert_equal(above1, above2, text)
-        assert_equal(below1, below2, text)
+        assert_equal(closest_remainder_prefer_plus, zero_r1, text)
         dd = 2*zero_r1.abs
         assert(dd <= modulus, "0_r=#{zero_r1} dd=#{dd} " + text)
         if (zero_r1 < 0)
           assert(dd < modulus, "0_r=#{zero_r1} dd=#{dd} " + text)
         end
-        if (below1.length > 0)
-          assert(below1.max.abs >= zero_r1.abs, text)
-        end
-        if (above1.length > 0)
-          assert(above1.min.abs >= zero_r1.abs, text)
-        end
+        #if (below1.length > 0)
+        #  assert(below1.max.abs >= zero_r1.abs, text)
+        #end
+        #if (above1.length > 0)
+        #  assert(above1.min.abs >= zero_r1.abs, text)
+        #end
 
         zero_r1, set1, above1, below1 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS)
         zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS)
+        assert(above1.empty?)
+        assert(below1.empty?)
+        assert(above2.empty?)
+        assert(below2.empty?)
         assert_equal(zero_r1, zero_r2, text)
-        assert_equal(above1, above2, text)
-        assert_equal(below1, below2, text)
+        assert_equal(closest_remainder_prefer_minus, zero_r1, text)
+        # assert_equal(above1, above2, text)
+        # assert_equal(below1, below2, text)
         dd = 2*zero_r1.abs
         assert(dd <= modulus, "0_r=#{zero_r1} dd=#{dd} " + text)
         if (zero_r1 > 0)
           assert(dd < modulus, "0_r=#{zero_r1} dd=#{dd} " + text)
         end
-        if (below1.length > 0)
-          assert(below1.max.abs >= zero_r1.abs, text)
-        end
-        assert_equal(above1.length, 0, text)
+        #if (below1.length > 0)
+        #  assert(below1.max.abs >= zero_r1.abs, text)
+        #end
+        #assert_equal(above1.length, 0, text)
 
-        zero_r0, set0, above0, below0 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_CEILING, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
-        assert(zero_r0 >= 0, "0_r=#{zero_r0} " + text)
-        assert_equal(above0.length, 0, text)
+        zero_rounded, set0, above0, below0 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_CEILING, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
+        assert(above0.empty?)
+        assert(below0.empty?)
+        assert(zero_rounded >= 0, "0_r=#{zero_rounded} " + text)
+        assert_equal(min_remainder, zero_rounded, text)
+        # assert_equal(above0.length, 0, text)
 
-        zero_r0, set0, above0, below0 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_FLOOR, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
-        assert(zero_r0 <= 0, "0_r=#{zero_r0} " + text)
-        assert_equal(below0.length, 0, text)
+        zero_rounded, set0, above0, below0 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_FLOOR, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
+        assert(above0.empty?)
+        assert(below0.empty?)
+        assert(zero_rounded <= 0, "0_r=#{zero_rounded} " + text)
+        assert_equal(minus_remainder, zero_rounded, text)
+        # assert_equal(below0.length, 0, text)
 
         zero_r1, set1, above1, below1 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
         zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+        assert(above1.empty?)
+        assert(below1.empty?)
+        assert(above2.empty?)
+        assert(below2.empty?)
         assert_equal(zero_r1, zero_r2, text)
-        assert_equal(above1, above2, text)
-        assert_equal(below1, below2, text)
+        if (zero_r1 < 0)
+          assert_equal(max_neg_remainder, zero_r1)
+        else
+          assert_equal(min_remainder, zero_r1)
+        end
+        # assert_equal(above1, above2, text)
+        # assert_equal(below1, below2, text)
         zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
+        assert(above1.empty?)
+        assert(below1.empty?)
+        assert(above2.empty?)
+        assert(below2.empty?)
         assert_equal(zero_r1, zero_r2, text)
-        assert_equal(above1, above2, text)
-        assert_equal(below1, below2, text)
+        if (zero_r1 < 0)
+          assert_equal(max_neg_remainder, zero_r1)
+        else
+          assert_equal(min_remainder, zero_r1)
+        end
+        #assert_equal(above1, above2, text)
+        #assert_equal(below1, below2, text)
         zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
+        assert(above1.empty?)
+        assert(below1.empty?)
+        assert(above2.empty?)
+        assert(below2.empty?)
         assert_equal(zero_r1, zero_r2, text)
-        assert_equal(above1, above2, text)
-        assert_equal(below1, below2, text)
+        # assert_equal(above1, above2, text)
+        # assert_equal(below1, below2, text)
         dd = 2*zero_r1.abs
         assert(dd <= modulus, "0_r=#{zero_r1} dd=#{dd} " + text)
         if (zero_r1 < 0)
           assert(dd < modulus, "0_r=#{zero_r1} dd=#{dd} " + text)
+          assert_equal(max_neg_remainder, zero_r1)
+        else
+          assert_equal(min_remainder, zero_r1)
         end
-        assert_equal(below1.length, 0, text)
-        assert_equal(above1.length, 0, text)
+        # assert_equal(below1.length, 0, text)
+        # assert_equal(above1.length, 0, text)
 
         zero_r1, set1, above1, below1 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
         zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
+        assert(above1.empty?)
+        assert(below1.empty?)
+        assert(above2.empty?)
+        assert(below2.empty?)
         assert_equal(zero_r1, zero_r2, text)
-        assert_equal(above1, above2, text)
-        assert_equal(below1, below2, text)
+        if (zero_r1 < 0)
+          assert_equal(max_neg_remainder, zero_r1)
+        else
+          assert_equal(min_remainder, zero_r1)
+        end
+        # assert_equal(above1, above2, text)
+        # assert_equal(below1, below2, text)
         zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_UP, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS)
+        assert(above1.empty?)
+        assert(below1.empty?)
+        assert(above2.empty?)
+        assert(below2.empty?)
         assert_equal(zero_r1, zero_r2, text)
-        assert_equal(above1, above2, text)
-        assert_equal(below1, below2, text)
+        # assert_equal(above1, above2, text)
+        # assert_equal(below1, below2, text)
         zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_DOWN, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS)
+        assert(above1.empty?)
+        assert(below1.empty?)
+        assert(above2.empty?)
+        assert(below2.empty?)
         assert_equal(zero_r1, zero_r2, text)
-        assert_equal(above1, above2, text)
-        assert_equal(below1, below2, text)
+        # assert_equal(above1, above2, text)
+        # assert_equal(below1, below2, text)
         dd = 2*zero_r1.abs
         assert(dd <= modulus, "0_r=#{zero_r1} dd=#{dd} " + text)
         if (zero_r1 > 0)
           assert(dd < modulus, "0_r=#{zero_r1} dd=#{dd} " + text)
+          assert_equal(min_remainder, zero_r1)
+        else
+          assert_equal(minus_remainder, zero_r1)
         end
-        assert_equal(below1.length, 0, text)
-        assert_equal(above1.length, 0, text)
+        # assert_equal(below1.length, 0, text)
+        # assert_equal(above1.length, 0, text)
 
-        zero_r0, set0, above0, below0 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_CEILING, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
-        dd = 2*zero_r0.abs
-        assert(dd <= modulus, "0_r=#{zero_r0} dd=#{dd} " + text)
-        if (zero_r0 < 0)
-          assert(dd < modulus, "0_r=#{zero_r0} dd=#{dd} " + text)
+        zero_rounded, set0, above0, below0 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_CEILING, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
+        assert(above0.empty?)
+        assert(below0.empty?)
+        dd = 2*zero_rounded.abs
+        assert(dd <= modulus, "0_r=#{zero_rounded} dd=#{dd} " + text)
+        if (zero_rounded < 0)
+          assert_equal(max_neg_remainder, zero_rounded)
+          assert(dd < modulus, "0_r=#{zero_rounded} dd=#{dd} " + text)
+        else
+          assert_equal(min_remainder, zero_rounded)
         end
-        assert_equal(below0.length, 0, text)
-        assert_equal(above0.length, 0, text)
+        # assert_equal(below0.length, 0, text)
+        # assert_equal(above0.length, 0, text)
 
-        zero_r0, set0, above0, below0 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_FLOOR, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
-        dd = 2*zero_r0.abs
-        assert(dd <= modulus, "0_r=#{zero_r0} " + text)
-        if (zero_r0 > 0)
-          assert(dd < modulus, "0_r=#{zero_r0} " + text)
+        zero_rounded, set0, above0, below0 = check_round_to_remainders(0, remainders, modulus, LongDecimalRoundingMode::ROUND_HALF_FLOOR, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
+        assert(above0.empty?)
+        assert(below0.empty?)
+        dd = 2*zero_rounded.abs
+        assert(dd <= modulus, "0_r=#{zero_rounded} " + text)
+        if (zero_rounded > 0)
+          assert_equal(min_remainder, zero_r1)
+          assert(dd < modulus, "0_r=#{zero_rounded} " + text)
+        else
+          assert_equal(minus_remainder, zero_r1)
         end
-        assert_equal(below0.length, 0, text)
-        assert_equal(above0.length, 0, text)
+        # assert_equal(below0.length, 0, text)
+        # assert_equal(above0.length, 0, text)
+
+        LongDecimalRoundingMode::ALL_ROUNDING_MODES.each do |rounding_mode|
+          unless (rounding_mode.major == LongDecimalRoundingMode::MAJOR_GEOMETRIC \
+                  || rounding_mode.major == LongDecimalRoundingMode::MAJOR_HARMONIC \
+                  || rounding_mode.major == LongDecimalRoundingMode::MAJOR_QUADRATIC \
+                  || rounding_mode.major == LongDecimalRoundingMode::MAJOR_CUBIC)
+            next;
+          end
+          if (rounding_mode.minor == LongDecimalRoundingMode::MINOR_EVEN)
+            next
+          end
+          
+          if (rounding_mode == LongDecimalRoundingMode::ROUND_CUBIC_CEILING)
+            i_rounded, set, above, below = check_round_to_remainders(0, remainders, modulus, rounding_mode, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
+            if (min_remainder+max_neg_remainder > 0)
+              assert_equal(minus_remainder, i_rounded, text+" i_rounded=#{i_rounded} rounding_mode=#{rounding_mode}")
+            else
+              assert_equal(min_remainder, i_rounded, text+" i_rounded=#{i_rounded} rounding_mode=#{rounding_mode}")
+            end
+          elsif (rounding_mode == LongDecimalRoundingMode::ROUND_CUBIC_FLOOR)
+            i_rounded, set, above, below = check_round_to_remainders(0, remainders, modulus, rounding_mode, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
+            if (min_remainder+max_neg_remainder < 0)
+              assert_equal(min_remainder, i_rounded, text+" i_rounded=#{i_rounded} rounding_mode=#{rounding_mode}")
+            else
+              assert_equal(minus_remainder, i_rounded, text+" i_rounded=#{i_rounded} rounding_mode=#{rounding_mode}")
+            end
+          elsif ((rounding_mode == LongDecimalRoundingMode::ROUND_CUBIC_DOWN || rounding_mode == LongDecimalRoundingMode::ROUND_CUBIC_UP) && min_remainder+max_neg_remainder != 0)
+            assert_equal(closest_remainder_prefer_minus, closest_remainder_prefer_plus)
+            i_rounded = 0.round_to_allowed_remainders(remainders, modulus, rounding_mode, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
+            assert_equal(closest_remainder_prefer_plus, i_rounded, text+" i_rounded=#{i_rounded} rounding_mode=#{rounding_mode}")
+            i_rounded, set, above, below = check_round_to_remainders(0, remainders, modulus, rounding_mode, LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
+            assert_equal(closest_remainder_prefer_plus, i_rounded, text+" i_rounded=#{i_rounded} rounding_mode=#{rounding_mode}")
+          else
+            i_rounded, set, above, below = check_round_to_remainders(0, remainders, modulus, rounding_mode, LongDecimalRoundingMode::ZERO_ROUND_TO_PLUS)
+            assert_equal(min_remainder, i_rounded, text+" i_rounded=#{i_rounded} rounding_mode=#{rounding_mode}")
+            i_rounded, set, above, below = check_round_to_remainders(0, remainders, modulus, rounding_mode, LongDecimalRoundingMode::ZERO_ROUND_TO_MINUS)
+            assert_equal(minus_remainder, i_rounded, text+" i_rounded=#{i_rounded} rounding_mode=#{rounding_mode}")
+            i_rounded, set, above, below = check_round_to_remainders(0, remainders, modulus, rounding_mode, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
+            assert_equal(closest_remainder_prefer_plus, i_rounded, text+" i_rounded=#{i_rounded} rounding_mode=#{rounding_mode}")
+            i_rounded, set, above, below = check_round_to_remainders(0, remainders, modulus, rounding_mode, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_MINUS)
+            assert_equal(closest_remainder_prefer_minus, i_rounded, text+" i_rounded=#{i_rounded} rounding_mode=#{rounding_mode}")
+          end
+        end
 
       end
     end
@@ -1954,12 +2147,12 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   def check_round_to_remainders(i, remainders, modulus, rounding_mode, zero_rounding_mode)
 
     # do the rounding
-    i_rounded = i.round_to_allowed_remainders(remainders, modulus, rounding_mode, zero_rounding_mode)
+    i_rounded = i.round_to_allowed_remainders(remainders.clone, modulus, rounding_mode, zero_rounding_mode)
 
     # make sure that the zero_rounding_mode does not matter if i is not zero or if ZERO_ROUND_UNNECESSARY is provided
     if (i != 0 || zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
       LongDecimalRoundingMode::ALL_ZERO_MODES.each do |zm|
-        assert_equal(i_rounded, i.round_to_allowed_remainders(remainders, modulus, rounding_mode, zm), "i=#{i} i_r=#{i_rounded} m=#{modulus} zm=#{zm}")
+        assert_equal(i_rounded, i.round_to_allowed_remainders(remainders.clone, modulus, rounding_mode, zm), "i=#{i} i_r=#{i_rounded} m=#{modulus} zm=#{zm}")
       end
     end
 
@@ -1975,7 +2168,11 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
 
     # run the test with each single remainder:
     set = remainders.map do |r|
-      check_round_to_one_remainder(i, r, modulus, rounding_mode, zero_rounding_mode)
+      if (zero_rounding_mode == LongDecimalRoundingMode::ZERO_ROUND_UNNECESSARY)
+        check_round_to_one_remainder(i, r, modulus, rounding_mode, LongDecimalRoundingMode::ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
+      else
+        check_round_to_one_remainder(i, r, modulus, rounding_mode, zero_rounding_mode)
+      end
     end
 
     # find members which are closer than i_rounded above and below from the results of rounding to a single remainder
@@ -1991,19 +2188,21 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
         if (i < i_r)
           assert(i_rounded < i_r)
           if closer
-            # closer_above.push(i_r)
-            raise ArgumentError, "i=#{i} ir=#{i_r} i_rounded=#{i_rounded} remainders=#{remainders.inspect} m=#{modulus} rm=#{rounding_mode} zm=#{zero_rounding_mode} closer_above"
+            closer_above.push(i_r)
+            # raise ArgumentError, "i=#{i} ir=#{i_r} i_rounded=#{i_rounded} remainders=#{remainders.inspect} m=#{modulus} rm=#{rounding_mode} zm=#{zero_rounding_mode} closer_above"
           end
         else
           # i_r < i
           assert(i_r < i_rounded)
           if closer
-            # closer_below.push(i_r)
-            raise ArgumentError, "i=#{i} ir=#{i_r} i_rounded=#{i_rounded} remainders=#{remainders.inspect} m=#{modulus} rm=#{rounding_mode} zm=#{zero_rounding_mode} closer_below"
+            closer_below.push(i_r)
+            # raise ArgumentError, "i=#{i} ir=#{i_r} i_rounded=#{i_rounded} remainders=#{remainders.inspect} m=#{modulus} rm=#{rounding_mode} zm=#{zero_rounding_mode} closer_below"
           end
         end
       end
     end
+    # assert(closer_below.empty?)
+    # assert(closer_above.empty?)
     return i_rounded, set, closer_above, closer_below
 
   end # check_round_to_remainders
@@ -5883,10 +6082,11 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   end
 
   def test_means_two_param
-    print "\ntest_means_two_param [#{Time.now}]: "
+    print "\ntest_means_two_param [#{Time.now}] (20 sec): "
     arr = [ 0, 1, 2, 7, 0.0, 1.0, 2.0, Math::PI, Rational(40, 9), Rational(0, 1), Rational(1,1), Rational(2,3), LongDecimal(3333333333333333, 10), LongDecimal(33, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ]
     arr.each do |x|
       arr.each do |y|
+        print "."
         12.times do |prec|
           LongDecimalRoundingMode::ALL_ROUNDING_MODES.each do |rm|
             if (rm == LongDecimalRoundingMode::ROUND_UNNECESSARY)
@@ -5926,7 +6126,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     end
   end
 
-  def _test_means_three_param
+  def test_means_three_param
     print "\ntest_means_three_param [#{Time.now}] (4 min): "
     arr = [ 0, 1, 2, 0.0, 1.0, Math::PI, Rational(40, 9), Rational(0, 1), Rational(1,1), LongDecimal(3333333333333333, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ]
     arr.each do |x|
