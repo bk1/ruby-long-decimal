@@ -9,18 +9,37 @@
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
-require "runit/testcase"
-require "runit/cui/testrunner"
-require "runit/testsuite"
+$test_type = nil
+if ((RUBY_VERSION.match /^1\./) || (RUBY_VERSION.match /^2\.0/)) then
+  require 'test/unit'
+  $test_type = :v20
+else
+  require 'minitest/autorun'
+  require 'test/unit/assertions'
+  include Test::Unit::Assertions
+  $test_type = :v21
+end
 
 load "lib/long-decimal.rb"
 load "lib/long-decimal-extra.rb"
 load "test/testlongdeclib.rb"
 
+if ($test_type == :v20)
+  class UnitTest < Test::Unit::TestCase
+  end
+else
+  class UnitTest < MiniTest::Test
+  end
+end
+
 #
 # test class for LongDecimal and LongDecimalQuot
 #
-class TestLongDecimalExperimental_class < RUNIT::TestCase
+class TestLongDecimalExperimental_class < UnitTest
+  include TestLongDecHelper
+  include LongDecimalRoundingMode
+
+  MAX_FLOAT_I = (Float::MAX).to_i
 
   def test_to_f2
     x = 1

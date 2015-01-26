@@ -36,11 +36,13 @@ module TestLongDecHelper
   end
 
   def assert_equal_rbo(lhs, rhs, msg="", lhsname="lhs", rhsname="rhs", delta=0)
-    msg2 = "#{lhsname}=#{lhs} #{rhsname}=#{rhs} " + msg
+    msg2 = "#{lhsname}=#{lhs} (#{lhs.class}) #{rhsname}=#{rhs} (#{rhs.class}) " + msg
     if (lhs.kind_of? Rational) && (rhs.kind_of? BigDecimal) || (lhs.kind_of? BigDecimal) && (rhs.kind_of? Rational)
       assert_equal(lhs.to_ld, rhs.to_ld, msg2)
     elsif (delta > 0 && ((lhs.kind_of? Float) || (rhs.kind_of? Float)))
       assert_equal_float(lhs, rhs, delta, msg2 + " d=#{delta}")
+    elsif ((lhs.kind_of? Rational) && (rhs.kind_of? Rational))
+      assert_equal(lhs.numerator*rhs.denominator, lhs.denominator*rhs.numerator, msg)
     else
       assert_equal(lhs, rhs, msg2)
     end

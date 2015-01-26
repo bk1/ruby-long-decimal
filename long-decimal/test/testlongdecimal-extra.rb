@@ -9,7 +9,16 @@
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
-require 'test/unit'
+$test_type = nil
+if ((RUBY_VERSION.match /^1\./) || (RUBY_VERSION.match /^2\.0/)) then
+  require 'test/unit'
+  $test_type = :v20
+else
+  require 'minitest/autorun'
+  require 'test/unit/assertions'
+  include Test::Unit::Assertions
+  $test_type = :v21
+end
 
 # require "runit/testcase"
 # require "runit/cui/testrunner"
@@ -19,12 +28,20 @@ load "lib/long-decimal.rb"
 load "lib/long-decimal-extra.rb"
 load "test/testlongdeclib.rb"
 
+if ($test_type == :v20)
+  class UnitTest < Test::Unit::TestCase
+  end
+else
+  class UnitTest < MiniTest::Test
+  end
+end
+
 LongMath.prec_overflow_handling = :warn_use_max
 
 #
 # test class for LongDecimal and LongDecimalQuot
 #
-class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
+class TestLongDecimalExtra_class < UnitTest # Test::Unit::TestCase # RUNIT::TestCase
   include TestLongDecHelper
 
   @RCS_ID='-$Id: testlongdecimal-extra.rb,v 1.29 2011/02/03 00:22:38 bk1 Exp $-'

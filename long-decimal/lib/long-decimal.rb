@@ -40,12 +40,14 @@ module LongDecimalRoundingMode
   MINOR_FLOOR = RoundingMinorMode.new(:MINOR_FLOOR, :_FLOOR)
   # exactly on the boundary pick the one with even end digit
   MINOR_EVEN = RoundingMinorMode.new(:MINOR_EVEN, :_EVEN)
+  # exactly on the boundary pick the one with even end digit
+  MINOR_ODD = RoundingMinorMode.new(:MINOR_ODD, :_ODD)
   # for major modes that are completely defined by themselves and do not need to rely on minor modes for the boundary stuff
   MINOR_UNUSED = RoundingMinorMode.new(:MINOR_UNUSED, "")
 
   private
 
-  ALL_MINOR = [ MINOR_UP, MINOR_DOWN, MINOR_CEILING, MINOR_FLOOR, MINOR_EVEN ]
+  ALL_MINOR = [ MINOR_UP, MINOR_DOWN, MINOR_CEILING, MINOR_FLOOR, MINOR_EVEN, MINOR_ODD ]
   # puts(ALL_MINOR)
   # puts
 
@@ -59,6 +61,7 @@ module LongDecimalRoundingMode
     MINOR_CEILING =>   MINOR_FLOOR,
     MINOR_FLOOR   =>   MINOR_CEILING,
     MINOR_EVEN    =>   MINOR_EVEN,
+    MINOR_ODD     =>   MINOR_ODD,
   }
 
   # which mode is to be used instead when we do an additive inversion?
@@ -69,6 +72,7 @@ module LongDecimalRoundingMode
     MINOR_CEILING =>   MINOR_FLOOR,
     MINOR_FLOOR   =>   MINOR_CEILING,
     MINOR_EVEN    =>   MINOR_EVEN,
+    MINOR_ODD     =>   MINOR_ODD,
   }
 
   RoundingMajorMode = Struct.new(:name, :part, :minor)
@@ -327,6 +331,12 @@ module LongDecimalRoundingMode
         raise ArgumentError, "rounding #{name} of unrounded=#{unrounded} failed for lower=#{lower} and upper=#{upper}: on boundary but no applicable minor mode"
       elsif (minor == MINOR_EVEN)
         return even
+      elsif (minor == MINOR_ODD)
+        if (lower == even)
+          return upper
+        else
+          return lower
+        end
       else
         raise ArgumentError, "rounding #{name} of unrounded=#{unrounded} failed for lower=#{lower} and upper=#{upper}: on boundary but no applicable minor mode"
       end
@@ -569,6 +579,7 @@ class Integer
     raise TypeError, "modulus #{modulus.inspect} must be >= 2" unless modulus >= 2
     raise TypeError, "rounding_mode #{rounding_mode.inspect} must be legal rounding rounding_mode" unless rounding_mode.kind_of? LongDecimalRoundingMode::RoundingModeClass
     raise TypeError, "#{rounding_mode} is not applicable here" if rounding_mode.minor == LongDecimalRoundingMode::MINOR_EVEN
+    raise TypeError, "#{rounding_mode} is not applicable here" if rounding_mode.minor == LongDecimalRoundingMode::MINOR_ODD
     raise TypeError, "zero_rounding_mode #{zero_rounding_mode.inspect} must be legal zero_rounding zero_rounding_mode" unless zero_rounding_mode.kind_of? LongDecimalRoundingMode::ZeroRoundingModeClass
 
     remainders = remainders_param.clone
@@ -891,7 +902,7 @@ class LongDecimalBase < Numeric
     # quot < divisor/dividend < quot+1
     lower = quot
     upper = quot+1
-    even = if (mode.minor == MINOR_EVEN)
+    even = if (mode.minor == MINOR_EVEN || mode.minor == MINOR_ODD)
              even = if (lower[0] == 1)
                       upper
                     else
@@ -1336,6 +1347,7 @@ class LongDecimal < LongDecimalBase
     raise TypeError, "modulus #{modulus.inspect} must be >= 2" unless modulus >= 2
     raise TypeError, "rounding_mode #{rounding_mode.inspect} must be legal rounding rounding_mode" unless rounding_mode.kind_of? RoundingModeClass
     raise TypeError, "ROUND_HALF_EVEN is not applicable here" if rounding_mode == LongDecimalRoundingMode::ROUND_HALF_EVEN
+    raise TypeError, "ROUND_HALF_ODD is not applicable here" if rounding_mode == LongDecimalRoundingMode::ROUND_HALF_ODD
     raise TypeError, "zero_rounding_mode #{zero_rounding_mode.inspect} must be legal zero_rounding zero_rounding_mode" unless zero_rounding_mode.kind_of? ZeroRoundingModeClass
 
     if @scale < new_scale then
@@ -3199,6 +3211,14 @@ module LongMath
   def LongMath.calc_iprec_for_power(x, y, prec)
 
     logx_f = LongMath.log_f(x.abs)
+    x1 = (x.abs - 1).abs
+    logx1_f = 0
+    if (x1 > 0)
+      logx1_f = LongMath.log_f(x1).abs
+    end
+    if (logx1_f > 5)
+      prec = (prec * Math.log(logx1_f) + 5)
+    end
 
     y_f = nil
     if (y.abs <= LongMath::MAX_FLOATABLE) then
@@ -3223,6 +3243,15 @@ module LongMath
     if (y_f.abs < 1)
       logy_f = LongMath.log_f(y.abs)
       iprec_y -= (- 1.5 + logy_f/LOG10).round
+    end
+    if (iprec > prec_limit)
+      iprec = prec_limit
+    end
+    if (iprec_x > prec_limit)
+      iprec_x = prec_limit
+    end
+    if (iprec_y > prec_limit)
+      iprec_y = prec_limit
     end
     [ iprec, iprec_x, iprec_y, logx_y_f ]
 
@@ -4046,7 +4075,7 @@ module LongMath
       return y_arr
     else
       y, r = y_arr
-      if ((mode == ROUND_HALF_EVEN || mode == ROUND_HALF_DOWN) && r > 0) then
+      if ((mode == ROUND_HALF_EVEN || mode == ROUND_HALF_ODD || mode == ROUND_HALF_DOWN) && r > 0) then
         mode = ROUND_HALF_UP
       end
       y = y.round_to_scale(prec, mode)
@@ -4114,7 +4143,7 @@ module LongMath
       return y_arr
     else
       y, r = y_arr
-      if ((mode == ROUND_HALF_EVEN || mode == ROUND_HALF_DOWN) && r > 0) then
+      if ((mode == ROUND_HALF_EVEN || mode == ROUND_HALF_ODD || mode == ROUND_HALF_DOWN) && r > 0) then
         mode = ROUND_HALF_UP
       end
       y = y.round_to_scale(prec, mode)
