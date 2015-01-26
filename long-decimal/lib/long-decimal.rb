@@ -5057,6 +5057,94 @@ module LongMath
     return result
   end
 
+  private
+
+  # helper class for round_sum
+  class RawElement
+    include LongDecimalRoundingMode
+
+    def initialize(element, new_scale, rounding_mode=ROUND_FLOOR)
+      @element = element
+      @rounded = element.to_ld(new_scale, rounding_mode)
+      @delta   = @element-@rounded
+    end
+
+    def add(epsilon)
+      @rounded += epsilon
+    end
+
+    attr_reader :element, :rounded, :delta
+
+    def <=>(other)
+      delta <=> other.delta
+    end
+  end
+
+  public
+
+  # round elements in such a way that round(new_scale, rounding_mode, sum(elements)) = sum(elements_rounded)
+  # where rounding_mode_set is
+  # HAARE_NIEMEYER, ....
+  def LongMath.round_sum_hm(new_scale, rounding_mode_sum, *elements)
+    if (elements.empty?)
+      return elements
+    end
+    raw_sum = elements.inject(0) do |psum,x| 
+      psum + x
+    end
+    sum = raw_sum.to_ld(new_scale, rounding_mode_sum)
+    raw_elements = elements.map do |element|
+      RawElement.new(element, new_scale)
+    end
+    raw_elements_sum = raw_elements.inject(0) do |psum, element|
+      psum + element.rounded
+    end
+    delta = sum - raw_elements_sum
+    epsilon = LongDecimal(1, new_scale)
+    raw_elements_sorted = raw_elements.sort.reverse
+    n = (delta / epsilon).to_ld(0, ROUND_HALF_EVEN).to_i
+    puts "delta=#{delta} epsilon=#{epsilon} n=#{n} sum=#{sum} raw_sum=#{raw_sum}"
+    n.times do |i|
+      raw_elements_sorted[i].add(epsilon)
+    end
+    result = raw_elements.map do |x|
+      x.rounded
+    end
+  end
+
+  # round elements in such a way that round(new_scale, rounding_mode, sum(elements)) = sum(elements_rounded)
+  # where rounding_mode_set is
+  def LongMath.round_sum_divisor(new_scale, rounding_mode_sum, rounding_mode_set, *elements)
+    if (elements.empty?)
+      return elements
+    end
+    delta = -1
+    raw_sum = elements.inject(0) do |psum,x| 
+      psum + x
+    end
+    sum = raw_sum.to_ld(new_scale, rounding_mode_sum)
+    raw_elements = elements.map do |element|
+      RawElement.new(element, new_scale, rounding_mode_set)
+    end
+    while (true)
+      raw_elements_sum = raw_elements.inject(0) do |psum, element|
+        psum + element.rounded
+      end
+      delta = sum - raw_elements_sum
+      if (delta == 0)
+        break
+      end
+      factor = (1 + delta/raw_elements_sum)
+      puts("delta=#{delta} raw_elements_sum=#{raw_elements_sum} factor=#{factor}")
+      raw_elements = raw_elements.map do |element|
+        RawElement.new(element.element * factor, new_scale, rounding_mode_set)
+      end
+    end
+    result = raw_elements.map do |x|
+      x.rounded
+    end
+  end
+
   @@standard_mode = ROUND_HALF_UP
 
   # default to be used as rounding mode when no explicit mode is provided
