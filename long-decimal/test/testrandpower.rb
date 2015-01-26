@@ -9,10 +9,16 @@
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
-require "runit/testcase"
-require "runit/cui/testrunner"
-require "runit/testsuite"
-require "crypt/ISAAC"
+$test_type = nil
+if ((RUBY_VERSION.match /^1\./) || (RUBY_VERSION.match /^2\.0/)) then
+  require 'test/unit'
+  $test_type = :v20
+else
+  require 'minitest/autorun'
+  require 'test/unit/assertions'
+  include Test::Unit::Assertions
+  $test_type = :v21
+end
 
 load "lib/long-decimal.rb"
 load "lib/long-decimal-extra.rb"
@@ -22,12 +28,21 @@ load "test/testrandlib.rb"
 
 LongMath.prec_overflow_handling = :warn_use_max
 
+if ($test_type == :v20)
+  class UnitTest < Test::Unit::TestCase
+  end
+else
+  class UnitTest < MiniTest::Test
+  end
+end
+
 #
 # test class for LongDecimal and LongDecimalQuot
 #
-class TestRandomPower_class < RUNIT::TestCase
+class TestRandomPower_class < UnitTest
   include TestLongDecHelper
   include TestRandomHelper
+  include LongDecimalRoundingMode
 
   @RCS_ID='-$Id: testrandpower.rb,v 1.14 2009/05/09 15:37:00 bk1 Exp $-'
 
@@ -72,6 +87,6 @@ class TestRandomPower_class < RUNIT::TestCase
 
 end
 
-RUNIT::CUI::TestRunner.run(TestRandomPower_class.suite)
+# RUNIT::CUI::TestRunner.run(TestRandomPower_class.suite)
 
 # end of file testrandpower.rb

@@ -9,13 +9,18 @@
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
-# require "runit/testcase"
-# require "runit/cui/testrunner"
-# require "runit/testsuite"
-require "test/unit"
+$test_type = nil
+if ((RUBY_VERSION.match /^1\./) || (RUBY_VERSION.match /^2\.0/)) then
+  require 'test/unit'
+  $test_type = :v20
+else
+  require 'minitest/autorun'
+  require 'test/unit/assertions'
+  include Test::Unit::Assertions
+  $test_type = :v21
+end
 
 require "rubygems"
-# require "crypt/ISAAC"
 require "crypt-isaac"
 
 load "lib/long-decimal.rb"
@@ -24,12 +29,21 @@ load "test/testrandlib.rb"
 
 LongMath.prec_overflow_handling = :warn_use_max
 
+if ($test_type == :v20)
+  class UnitTest < Test::Unit::TestCase
+  end
+else
+  class UnitTest < MiniTest::Test
+  end
+end
+
 #
 # test class for LongDecimal and LongDecimalQuot
 #
-class TestRandom_class < RUNIT::TestCase
+class TestRandom_class < UnitTest
   include TestLongDecHelper
   include TestRandomHelper
+  include LongDecimalRoundingMode
 
   @RCS_ID='-$Id: testrandom.rb,v 1.18 2011/02/03 00:22:39 bk1 Exp $-'
 
@@ -42,14 +56,14 @@ class TestRandom_class < RUNIT::TestCase
       @scnt += 1
       puts("\ncnt=#{cnt} scnt=#{@scnt} x=#{x} ep=#{eprec} lp=#{lprec} sp=#{sprec} pp=#{pprec}\n")
       if (x <= LongMath::MAX_EXP_ABLE) then
-	check_exp_floated(x, eprec)
+        check_exp_floated(x, eprec)
       end
       if (x > 0)
-	check_log_floated(x, lprec)
+        check_log_floated(x, lprec)
       end
       if (x > 0)
-	xr = x.round_to_scale(sc, LongMath::ROUND_HALF_UP)
-	check_sqrt_with_remainder(xr, sprec, "x=#{x} p=#{sprec}")
+        xr = x.round_to_scale(sc, LongMath::ROUND_HALF_UP)
+        check_sqrt_with_remainder(xr, sprec, "x=#{x} p=#{sprec}")
       end
     end
   end
@@ -73,6 +87,6 @@ class TestRandom_class < RUNIT::TestCase
 
 end
 
-RUNIT::CUI::TestRunner.run(TestRandom_class.suite)
+# RUNIT::CUI::TestRunner.run(TestRandom_class.suite)
 
 # end of file testrandom.rb
