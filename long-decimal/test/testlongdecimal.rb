@@ -5908,6 +5908,11 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
 
   # TODO: do tests with rational numbers that approach square and cube roots with continuos fractions
   # TODO: do tests for harmonic that are exact matches
+  # def test_ldq_round_to_scale_geometric_common
+  # def test_ldq_round_to_scale_harmonic_common
+  # def test_ldq_round_to_scale_harmonic_*
+  # def test_ldq_round_to_scale_quadratic_common
+  # def test_ldq_round_to_scale_cubic_common
 
   #
   # test rounding of LongDecimalQuot with ROUND_UNNECESSARY
