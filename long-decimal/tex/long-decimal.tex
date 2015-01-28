@@ -8,6 +8,7 @@
 \usepackage[latin1]{inputenc}
 \usepackage{graphics}
 \usepackage{amsmath,amssymb}
+\usepackage[a4paper,margin=3cm,footskip=.5cm]{geometry}
 
 \title{The Ruby library {\slshape long-decimal}}
 \author{Karl Brodowsky\\
@@ -37,7 +38,7 @@ Switzerland}
 \begin{abstract}
 
 The goal of the Ruby-library {\slshape long-decimal}\/ is to provide a new
-numerical type {\slshape LongDecimal}\/ and arithmetic operations to deal
+numerical type {\slshape LongDecimal\/}\/ and arithmetic operations to deal
 with this type.
 
 \end{abstract}
@@ -48,7 +49,7 @@ Ruby supports non-integral numbers with the built-in types {\slshape
   Float\/} and {\slshape Rational\/} and {\slshape BigDecimal\/}.
 While these are very useful for many purposes, the development of
 finance application requires the availability of a type like
-LongDecimal, that allows explicit control of the rounding and uses a
+{\slshape LongDecimal\/}, that allows explicit control of the rounding and uses a
 decimal representation for the fractional part.  An instance of
 {\slshape LongDecimal\/} can be represented as a pair of integral
 numbers $(n, d)$, where the value of the number is $\frac{n}{10^d}$.
@@ -71,7 +72,7 @@ the decimal point and the rounding rules for achieving the result.
 In the remainder of this document we will write $\ld(n, d)$ for the
 {\slshape LongDecimal\/}-number represented by the pair $(n, d)$ in
 the manner described above and $\ldq(r, d)$ for the {\slshape
-  LongDecimalQuot\/}-number represented by teh pair $(r, n)$.  It
+  LongDecimalQuot\/}-number represented by the pair $(r, n)$.  It
 needs to be observed that the part $d$ in both cases carries
 information about the precision of the number in terms of significant
 digits after the decimal point.
@@ -83,11 +84,11 @@ digits after the decimal point.
 The ring operations $+$, $-$ and $*$ and obvious derived operations
 like negation are defined like this:
 
-$$\bigwedge_{m,n \in \mathbb{N}_0} \bigwedge_{d, e \in \mathbb{Z}}
-\ld(m,d) + \ld(n,e) = \ld(m \frac{\max(d, e)}{d} + n \frac{\max(d, e)}{e}, \max(d, e))$$
-$$\bigwedge_{m,n \in \mathbb{N}_0} \bigwedge_{d, e \in \mathbb{Z}}
-\ld(m,d) - \ld(n,e) = \ld(m \frac{\max(d, e)}{d} - n \frac{\max(d, e)}{e}, \max(d, e))$$
-$$\bigwedge_{m,n \in \mathbb{N}_0} \bigwedge_{d, e \in \mathbb{Z}}
+$$\bigwedge_{e,d \in \mathbb{N}_0} \bigwedge_{m, n \in \mathbb{Z}}
+\ld(m,d) + \ld(n,e) = \ld(m \cdot 10^{\max(d, e)-d} + n \cdot 10^{\max(d, e)-e}, \max(d, e))$$
+$$\bigwedge_{e,d \in \mathbb{N}_0} \bigwedge_{m, n \in \mathbb{Z}}
+\ld(m,d) - \ld(n,e) = \ld(m \cdot 10^{\max(d, e)-d} - n \cdot 10^{\max(d, e)-e}, \max(d, e))$$
+$$\bigwedge_{e,d \in \mathbb{N}_0} \bigwedge_{m, n \in \mathbb{Z}}
 \ld(m,d) \cdot \ld(n,e) = \ld(m n, d+e)$$
 
 \pagebreak
@@ -106,7 +107,81 @@ process looses information.  It defaults to {\slshape
 ROUND\_UNNECESSARY\/}, in which case an exception is raised whenever
 a value changing rounding process would be required.
 
-\begin{tabular}{|l|l|}
+The other rounding operations can be grouped into two groups:
+ROUND\_UP, ROUND\_DOWN, ROUND\_CEILING and ROUND\_FLOOR already answer
+the question of how to round completely because they use the values
+that result from rounding as boundaries and obviously round these to
+themselves.
+
+The other rounding operations put a boundary somewhere in the middle
+between allowed rounded values, but they leave the question of how to
+round the boundary itself to be answered as well.  This is expressed
+by having a major rounding mode that defines where the boundaries lie
+and a minor rounding mode that is applicable for values that lie
+exactly on the boundary. In some cases this cannot happen, because
+boundaries are irrational and {\slshape LongDecimal\/} (and {\slshape LongDecimalQuot\/}) can
+only express (some) rational numbers, but for the sake of completeness
+and applicability to other representations, that might allow some
+irrational values, this is done in a uniform way.  Since rounding
+operations can also apply to internal intermediate results, it is a
+good idea not to constrain their definition to rational numbers.
+
+Major rounding modes are 
+
+\begin{tabular}{|l|p{100mm}|}
+\hline
+  MAJOR\_UP           & always round in such a way that the absolute value does not decrease.No minor rounding mode needed.\\
+\hline
+  MAJOR\_DOWN         & always round in such a way that the absolute value does not increase. No minor rounding mode needed.\\
+\hline
+  MAJOR\_CEILING      & always round in such a way that the rational value does not decrease. No minor rounding mode needed.\\
+\hline
+  MAJOR\_FLOOR        & always round in such a way that the rational value does not increase. No minor rounding mode needed.\\
+\hline
+  MAJOR\_HALF         & round to the nearest available value.  The boundary is the arithmetic mean of the two adjacent available values.\\
+\hline
+  MAJOR\_GEOMETRIC    & round to one of the two adjacent available values $x,y$ and use their geometric mean $\sqrt{xy}$ as boundary.  For negative $x,y$ use the negated square root instead.\\
+\hline
+  MAJOR\_HARMONIC     & round to one of the two adjacent available values $x,y$ and use their harmonic mean $\frac{2xy}{x+y}$ as boundary.\\
+\hline
+  MAJOR\_QUADRATIC    & round to one of the two adjacent available values $x,y$ and use their quadratic mean $\sqrt{\frac{x^2+y^2}{2}}$ as boundary.  If $x,y\le 0$ use the negated square root instead.\\
+\hline
+  MAJOR\_CUBIC        & round to one of the two adjacent available values $x,y$ and use their cubic mean $\sqrt[3]{\frac{x^3+y^3}{2}}$ as boundary.\\
+\hline
+  MAJOR\_UNNECESSARY  & raise an exception if value changing rounding would be needed\\
+\hline
+\end{tabular}
+
+\pagebreak
+
+Minor rounding modes are
+
+
+\begin{tabular}{|l|p{100mm}|}
+\hline
+{\bfseries rounding mode}&{\bfseries description}\\
+\hline
+  MINOR\_UNUSED  & no minor rounding mode applies, can only be combined with ROUND\_UP, ROUND\_DOWN, ROUND\_CEILING and ROUND\_FLOOR.\\
+\hline
+  MINOR\_UP      & round values exactly on the boundary by increasing the absolute value (away from zero).\\
+\hline
+  MINOR\_DOWN    & round values exactly on the boundary by decreasing the absolute value (towards zero).\\
+\hline
+  MINOR\_CEILING & round values exactly on the boundary by increasing the rational value (towards $\infty$).\\
+\hline
+  MINOR\_FLOOR   & round values exactly on the boundary by decreasing the rational value (towards $-\infty$).\\
+\hline
+  MINOR\_EVEN    & round values exactly on the boundary by using the choice resulting in the rounded last digit to be even.\\
+\hline
+  MINOR\_ODD     & round values exactly on the boundary by using the choice resulting in the rounded last digit to be odd.\\
+\hline
+\end{tabular}
+
+\pagebreak
+
+These combine to rounding modes:
+
+\begin{tabular}{|l|p{100mm}|}
 \hline
 {\bfseries rounding mode}&{\bfseries description}\\
 \hline
@@ -128,25 +203,65 @@ a value changing rounding process would be required.
 \hline
   ROUND\_HALF\_EVEN    & round to the nearest available value, prefer the resulting last digit to be even if the last digit prior to rounding is 5\\
 \hline
+  ROUND\_HALF\_ODD    & round to the nearest available value, prefer the resulting last digit to be odd if the last digit prior to rounding is 5\\
+\hline
+  ROUND\_GEOMETRIC\_UP      & round to the available value using the geometric mean as boundary, prefer increasing the absolute value if the unrounded value is exactly on the boundary\\
+\hline
+  ROUND\_GEOMETRIC\_DOWN    & round to the available value, using the geometric mean as boundary, prefer decreasing the absolute value if the unrounded value is exactly on the boundary\\
+\hline
+  \dots & \ldots\\
+\hline
+  ROUND\_HARMONIC\_UP      & round to the available value using the harmonic mean as boundary, prefer increasing the absolute value if the unrounded value is exactly on the boundary\\
+\hline
+  ROUND\_HARMONIC\_DOWN    & round to the available value, using the harmonic mean as boundary, prefer decreasing the absolute value if the unrounded value is exactly on the boundary\\
+\hline
+  \dots & \ldots\\
+\hline
+  ROUND\_QUADRATIC\_UP      & round to the available value using the quadratic mean as boundary, prefer increasing the absolute value if the unrounded value is exactly on the boundary\\
+\hline
+  ROUND\_QUADRATIC\_DOWN    & round to the available value, using the quadratic mean as boundary, prefer decreasing the absolute value if the unrounded value is exactly on the boundary\\
+\hline
+  \dots & \ldots\\
+\hline
+  ROUND\_CUBIC\_UP      & round to the available value using the cubic mean as boundary, prefer increasing the absolute value if the unrounded value is exactly on the boundary\\
+\hline
+  ROUND\_CUBIC\_DOWN    & round to the available value, using the cubic mean as boundary, prefer decreasing the absolute value if the unrounded value is exactly on the boundary\\
+\hline
+  \dots & \ldots\\
+\hline
+  ROUND\_CUBIC\_ODD    & round to the available value using the cubic mean as boundary, prefer the resulting last digit to be odd if the unrounded value is exactly on the boundary\\
+\hline
   ROUND\_UNNECESSARY  & raise an exception if value changing rounding would be needed\\
 \hline
 \end{tabular}
+
 
 In addition to these commonly available rounding operations {\slshape long-decimal\/} provides rounding to remainder sets.  This is motivated by the practice in some
 currencies to prefer using certain multiples of the smallest unit.  For example in CHF you commonly use two digits after the decimal point, but the last digit is
 required to be 0 or 5.  This is achieved as a special case of a more general concept {\slshape round\_to\_allowed\_remainders\/}.  A modulus $M \ge 2$ and a set
 $R\subset\mathbb{N}_0$ are given and a number $x$ is rounded to $\ld(n, d)$ such that
 
-$$\bigvee_{r\in R} n \equiv r (\mod M)$$
+$$\bigvee_{r\in R} n \equiv r \mod M$$
 
 Typically $M$ is ten or a power of ten, but this is not required.  Neither is it required that zero is a member of $R$.  In that case an additional parameter is needed
 in order to define to which direction a potential last digit of zero would be rounded.  In the CHF case we would have $M=10$ and $R=\{0, 5\}$.
+
+This kind of rounding can be applied to integers as well as to
+{\slshape LongDecimal\/} and {\slshape LongDecimalQuot\/}, in which case the integral numerator
+$n$ of $\ld(n, d)=\frac{n}{10^d}$ must fullfill the additional
+constraint.  In order to avoid complications, this is not supported in
+conjunction with minor rounding modes MINOR\_EVEN and MINOR\_ODD,
+because all matching rounded values might be even or odd and we cannot
+rely on the alternation of even and odd values.
+It is possible to exclude $0$ from the set $R$. In this case a
+ZERO-rounding-mode needs to be provided that tells in which way a
+zero, should it occur, shoud be rounded.
 
 \pagebreak
 
 \section{Division}
 
-Regular division using $/$ yield an instance of {\slshape LongDecimalQuot\/}.  The approximate number of significant digits is estimated by using the partial derivatives of $f(x, y) = \frac{x}{y}$.
+Regular division using $/$ yields an instance of {\slshape LongDecimalQuot\/}.  The approximate number of significant digits is estimated by using the partial derivatives of $f(x, y) = \frac{x}{y}$.
 Assume $x=\ld(m, s)$ and $y=\ld(n, t)$.  So we get for $\ld(m, s) / \ld(n, t)$ an result 
 
 $$\frac{x}{y} = \ldq(10^{t-s}\frac{m}{n}, r)$$
@@ -175,12 +290,18 @@ calculations.
 
 \section{Roots}
 
-Square root and cube root of LongDecimal can be calculated quite
+Square root and cube root of {\slshape LongDecimal\/} can be calculated quite
 efficiently using an algorithm that is somewhat similar to the
 algorithm for long integer division.  This has been preferred over the
 more commonly known Newton algorithm.  Since square and cube roots are
 usually irrational, it is mandatory to provide rounding information
 concerning the number of desired digits and the rounding mode.
+
+Square roots and cube roots can also calculated of integers, in which
+case a variant is available that also calculates a remainder $r$ in
+addition to the approximated square root $s$, such
+that
+$a = s^2+r$.
 
 \section{$\pi$}
 
@@ -238,16 +359,62 @@ Similar patterns will be applied to the calculation of other transcendental func
 
 \section{Powers}
 
-Calculation of powers with any positive {\slshape LongDecimal} as base and any {\slshape LongDecimal} as exponent is quite challenging to do.
+Calculation of powers with any positive {\slshape LongDecimal\/} as base and any {\slshape LongDecimal\/} as exponent is quite challenging to do.
 
 It is quite trivial that $x^y = \exp(y \log x)$, but the challenges
 are to achieve the result in acceptable time and with the required
 precision.  The builtin class {\slshape BigDecimal} does not meet
 these goals, because it becomes incredibly slow for certain
-combinations of $x$ and $y$.  
+combinations of $x$ and $y$.  The power function of {\slshape LongDecimal\/} has
+been optimized to handle a broad range of cases with different
+approaches to provide precision and speed. This should work fine for
+reasonable practical use, but it will still be possible to construct
+corner cases with bases very close to 1 and large exponents which fail
+in an attempt to do an accurate calculation in their last digits.
+
+\section{Means}
+
+In the class {\slshape LongMath} there are methods for calculating the
+following means: arithmetic\_mean, geometric\_mean, harmonic\_mean,
+quadratic\_mean, cubic\_mean, arithmetic\_geometric\_mean,
+harmonic\_geometric\_mean.  See Wikipedia for their definitions.
+
+\section{Rounding with sum constraint}
+
+Experimental support for rounding of several number simultanously in
+such a way that their rounded sum is the sum of the rounded numbers is
+included with the methods {\slshape LongMath.round\_sum\_hm} which uses
+the Haare-Niemeyer-approach and {\slshape LongMath.round\_sum\_divisor}
+which uses one of several divisor based approaches, like D'Hondt. The
+approach is chosen by the rounding mode. These are not yet implemented
+efficiently nor are they tested well, so use at your own risk (like
+the whole library).
 
 \section{Limitations}
 
+Rounding with sum constraint is not yet production stable.
+
+Powers with bases that are off 1 by $10^{-20}$ or less and exponents
+in the order of magnitude of $10^20$ or more are not always calculated
+precisely.
+
+Some interesting transcendental functions are missing.
+
+Many operations (like power, exp, log and other transcendental functions) fail to work with numbers whose magnitude cannot be
+expressed as double.
+
+Using transcendental functions that have a rounding mode and precision
+as part of their parameter set has not been tested with the newer
+rounding modes, \dots\_ODD, ROUND\_GEOMETRIC\_\dots,
+ROUND\_HARMONIC\_\dots, ROUND\_QUADRATIC\_\dots and
+ROUND\_CUBIC\_\dots.
+These combinations will be tested and improved in future versions.
+
 \section{Tests}
+
+Unit tests have been added to test much of the implemented
+functionality.
+
+More unit tests are desirable.
 
 \end{document}
