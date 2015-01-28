@@ -2,6 +2,7 @@ Gemfile.lock
 README2
 doc
 *.log
+*.aux
 pkg
 tmp.rb
 todo

@@ -42,6 +42,8 @@ module LongDecimalRoundingMode
   MINOR_EVEN = RoundingMinorMode.new(:MINOR_EVEN, :_EVEN)
   # exactly on the boundary pick the one with even end digit
   MINOR_ODD = RoundingMinorMode.new(:MINOR_ODD, :_ODD)
+  # (away from zero if last digit after rounding towards zero would have been 0 or 5; otherwise towards zero)
+  # MINOR_05UP = RoundingMinorMode.new(:MINOR_05UP, :_05UP)
   # for major modes that are completely defined by themselves and do not need to rely on minor modes for the boundary stuff
   MINOR_UNUSED = RoundingMinorMode.new(:MINOR_UNUSED, "")
 
@@ -87,6 +89,8 @@ module LongDecimalRoundingMode
   MAJOR_FLOOR = RoundingMajorMode.new(:MAJOR_FLOOR, :FLOOR, NO_MINOR)
   # use the original value, if it is not already rounded, raise an error
   MAJOR_UNNECESSARY = RoundingMajorMode.new(:MAJOR_UNNECESSARY, :UNNECESSARY, NO_MINOR)
+  # (away from zero if last digit after rounding towards zero would have been 0 or 5; otherwise towards zero)
+  # MAJOR_05UP = RoundingMinorMode.new(:MAJOR_05UP, :_05UP, NO_MINOR)
 
   # the arithmetic mean of two adjacent rounded values is the boundary
   MAJOR_HALF = RoundingMajorMode.new(:MAJOR_HALF, :HALF, ALL_MINOR)
