@@ -1,25 +1,49 @@
 Version
 -------
 
-This version ($Name:  $) is similar to the previous beta-0.02.01
+This version (1.00.02) is fixing bugs from version 1.00.01.
+It also can be considered as a release candidate from the upcoming
+version 1.01.00, adding new features.
 
 Improvements over the previous version:
 
-- better rubydoc
+- migration from CVS (rubyforge) to GIT (github)
+- bug fixed with frozen string attempted to be changed when parsing a string for a long-decimal number.
+- removed some code duplication between rounding of LongDecimal, LongDecimalQuot and rounding of Integers to remainder set.
+- added more rounding modes based on geometric, harmonic, quadratic and cubic mean
+- fixed calculation of powers in such a way that it fails yielding a reasonably accurate result less often.  Cases that are sensitive are powers with a base that is close to 1 (for example off by 1e-35) with an exponent that is huge (for example like 1e20).  With "reasonable" values power of a LongDecimal by a LongDecimal works quite well.
+- added functions to calculate arithmetic, harmonic, quadratic, cubic, geometric, arithmetic-geometric and harmonic-geometric means.
+- added functions to round summand in such a way that their sum is the rounded value of the sum of the unrounded values (experimental)
+- moved power, log10, log2 etc. from long-decimal-extra.rb to long-decimal.rb
+- added more unit tests
 
-All this functionality did not show any bugs during intensive
+Work to do for 1.01.00:
+- go through functions that are working with rounding modes as parameter (like transcendental functions, sqrt, cbrt etc.) to ensure that they work properly with all new rounding modes
+- improve algorithm for rounding with sum constraint
+- go through unit tests to see they are covering all rounding modes
+- add unit tests for rounding with sum constraint
+- rubydoc-documentation
+- external documentation
+
+Work to do for 1.02.00 (or 2.00.00):
+- add the following transcendental functions: sin, cos, tan, cot, sec, csc, sinh, cosh, tanh, coth, sech, csch, asin, acos, atan, atan2, acot, asec, acsc, asinh, acosh, atanh, acoth, asech, acsch
+- documentation
+- external documentation
+- interoperability with flt
+
+The existing functionality did not show any bugs during intensive
 testing, so it could be assumed that the whole library is good for
-for production/stable.
+for production/stable.  The library is used for productive software by the author.
 
-This software development effort is hosted on RubyForge (
-http://rubyforge.org/ ) under the project name "long-decimal", to be
-found directly with http://rubyforge.org/projects/long-decimal/ .  So
-you should feel encouraged to look if there is a newer version, when
+This software development effort is hosted on GitHub ( https://github.com/ )
+under the project name "long-decimal", to be
+found directly with http://rubyforge.org/projects/long-decimal/
+So you should feel encouraged to look if there is a newer version, when
 you install long-decimal.
 
-This version is an beta-version.
+This version is an production stable version.
 Operations +, -, *, / and sqrt should be working properly
-and could probably justify calling this release production/stable.
+and justify calling this release production/stable.
 Even log and exp should be fine.  log, log2, log10 and exp have been
 tested for several million random values and the current version
 should cover all of these correctly.  But it is still possible, that
@@ -53,7 +77,6 @@ after which the decimal point is inserted again.
 Usage
 -----
 
-require 'rubygems'
 require 'long-decimal'
 
 (then use it.)
@@ -106,36 +129,14 @@ ruby test/testrandpower.rb
 These random tests require installation of the ruby-library
 crypt-isaac for its random numbers, which works well with Linux or
 Windows in combination with Cygwin.  Installation of crypt-isaac is
-slightly special.  You have to download the gem, then install it using
-gem install:
-
-$ cd /tmp
-$ wget http://rubyforge.org/frs/download.php/6461/crypt-isaac_0.9.1.gem
-$ su -l
-# cd /tmp
-# gem install crypt-isaac
-(you may need to adjust the URL for downloading the gem)
-
- .... and then go into the directory, where the gem is
- (/usr/local/lib/ruby/gems/1.8/gems/Crypt::ISAAC-0.9.1/ or
- /usr/lib/ruby/gems/1.8/gems/Crypt::ISAAC-0.9.1/ or ...)
-
-# cd /usr/local/lib/ruby/gems/1.8/gems/Crypt::ISAAC-0.9.1/
-# ruby setup.rb install
-# exit
-$
+required for the random tests.
 
 If you actually want to run tests for long-decimal or
-long-decimal-extra and find an error with it, please report it with
-the lines of output revealing the bug on
-http://rubyforge.org/projects/long-decimal/ -> tracker
+long-decimal-extra and find an error with it, please report it.
 
 Install
 -------
 
-(REMARK: installation has only been successfully tested on Linux with
-ruby 1.8.7 and on Windows 2000 with Cygwin and on Windows 2000 with
-native ruby)
 
 1. Using ruby-gems (preferred)
 - open a shell window
@@ -154,7 +155,6 @@ native ruby)
 
 - Usage from your ruby-programs:
 
-  require "rubygems"
   require "long-decimal"
 
 - documentation will be found in HTML-format in the directory
@@ -229,17 +229,16 @@ a sophisticated library like this additional external documentation
 should be provided in the long term.  Currently this does not exist at
 all.
 
-Please report any bugs you come across on
-http://rubyforge.org/projects/long-decimal -> Tracker.
+Please report any bugs you come across.
 
-The status of long-decimal is considered to be beta.
+The status of long-decimal is considered to be production stable.
 
 License
 -------
 
 Ruby's license or LGPL
 Find copies of these licenses on http://www.gnu.org/ or http://www.ruby-lang.org/
-© Karl Brodowsky (IT Sky Consulting GmbH) 2006-2012
+© Karl Brodowsky (IT Sky Consulting GmbH) 2006-2014
 http://www.it-sky-consulting.com/
 
 Warranty

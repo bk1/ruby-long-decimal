@@ -5044,6 +5044,36 @@ module LongMath
     return result
   end
 
+  # arithmetic-geometric mean (AGM)
+  def LongMath.arithmetic_geometric_mean(new_scale, rounding_mode, *args)
+    prec = (new_scale * 1.1 + 10).to_i
+    x = arithmetic_mean(prec, rounding_mode, *args)
+    y = geometric_mean(prec, rounding_mode, *args)
+    delta = 3*x.unit
+    while ((x-y).abs >= delta)
+      xn = arithmetic_mean(prec, rounding_mode, x, y)
+      yn = geometric_mean(prec, rounding_mode, x, y)
+      x = xn
+      y = yn
+    end
+    return x.round_to_scale(new_scale, rounding_mode)
+  end
+
+  # harmonic-geometric mean (HGM)
+  def LongMath.harmonic_geometric_mean(new_scale, rounding_mode, *args)
+    prec = (new_scale * 1.1 + 10).to_i
+    x = harmonic_mean(prec, rounding_mode, *args)
+    y = geometric_mean(prec, rounding_mode, *args)
+    delta = 3*x.unit
+    while ((x-y).abs >= delta)
+      xn = harmonic_mean(prec, rounding_mode, x, y)
+      yn = geometric_mean(prec, rounding_mode, x, y)
+      x = xn
+      y = yn
+    end
+    return x.round_to_scale(new_scale, rounding_mode)
+  end
+
   # quadratic mean
   def LongMath.quadratic_mean(new_scale, rounding_mode, *args)
     result_sign, all_same, has_neg, has_zero, has_pos = sign_check_for_mean(true, *args)
