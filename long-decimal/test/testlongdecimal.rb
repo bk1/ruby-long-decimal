@@ -205,6 +205,82 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   end
 
   #
+  # test exp2 of LongMath
+  #
+  def test_exp2
+    print "\ntest_exp2 [#{Time.now}]: "
+    10.times do |i|
+      n = (i*i+i)/2
+      x = LongDecimal(n, 3*i)+LongMath.pi(20)
+      check_exp2_floated(x, n)
+
+      y  = LongMath.exp2(x, n)
+      yy = LongMath.exp2(x, n + 5)
+      assert_equal(yy.round_to_scale(y.scale, LongDecimal::ROUND_HALF_DOWN), y, "x=#{x} y=#{y} yy=#{yy}")
+      z  = LongMath.power(2, x, n)
+      assert_equal(z, y, "exp2 x=#{x} y=#{y} z=#{z} i=#{i} n=#{n}")
+    end
+
+    # random tests that have failed previously
+    check_exp2_floated(LongDecimal("-0.00147492625237084606064197462823289474038138852346725504592707365251736299180323394082648207114993022483949313246714392730651107673327728615912046468517225938833913598854936005"), 20)
+
+  end
+
+  #
+  # test the calculation of the exponential function where result is
+  # near zero
+  #
+  def test_exp2_near_zero
+    print "\ntest_exp2_near_zero [#{Time.now}]: "
+
+    x = LongDecimal(1, 100)
+    y = LongMath.log2(x, 100)
+    z = check_exp2_floated(y, 100)
+    assert_equal(x, z, "must be equal")
+    z = check_exp2_floated(y, 99)
+    assert(z.zero?, "must be zero")
+    z = check_exp2_floated(y * 100, 99)
+    assert(z.zero?, "must be zero")
+
+  end
+
+  #
+  # test exp10 of LongMath
+  #
+  def test_exp10
+    print "\ntest_exp10 [#{Time.now}]: "
+    10.times do |i|
+      n  = (i*i+i)/2
+      x  = LongDecimal(n, 3*i)+LongMath.pi(20)
+      check_exp10_floated(x, n)
+
+      y  = LongMath.exp10(x, n)
+      yy = LongMath.exp10(x, n + 5)
+      assert_equal(yy.round_to_scale(y.scale, LongDecimal::ROUND_HALF_DOWN), y, "x=#{x} y=#{y} yy=#{yy}")
+      z  = LongMath.power(10, x, n)
+      assert_equal(z, y, "exp10 x=#{x} y=#{y} z=#{z} i=#{i} n=#{n}")
+    end
+  end
+
+  #
+  # test the calculation of the exponential function where result is
+  # near zero
+  #
+  def test_exp10_near_zero
+    print "\ntest_exp10_near_zero [#{Time.now}]: "
+
+    x = LongDecimal(1, 100)
+    y = LongMath.log10(x, 100)
+    z = check_exp10_floated(y, 100)
+    assert_equal(x, z, "must be equal")
+    z = check_exp10_floated(y, 99)
+    assert(z.zero?, "must be zero")
+    z = check_exp10_floated(y * 100, 99)
+    assert(z.zero?, "must be zero")
+
+  end
+
+  #
   # test LongMath.log with non-LongDecimal arguments
   #
   def test_non_ld_log
@@ -299,6 +375,410 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
 
   end
 
+
+  #
+  # test LongMath.power for bases that can be expressed as integer
+  #
+  def test_lm_power_xint
+    print "\ntest_lm_power_xint [#{Time.now}]: "
+
+    xx = LongMath.log(3, 40)
+    pi = LongMath.pi(40)
+    sq = LongMath.sqrt(5, 40)
+
+    check_power_xint(2, 700.01, 10)
+    check_power_xint(2, 100.001, 10)
+    check_power_xint(2, 1.000000001, 10)
+    check_power_xint(2, 0.01, 10)
+    check_power_xint(2, 1e-10, 10)
+    check_power_xint(2, 1e-90, 10)
+    check_power_xint(2, 0, 10)
+    check_power_xint(2, -1.000000001, 10)
+    check_power_xint(2, -100.001, 10)
+    check_power_xint(2, -700.01, 10)
+    check_power_xint(2, xx, 10)
+    check_power_xint(2, pi, 10)
+    check_power_xint(2, sq, 10)
+
+    check_power_xint(10, 308.01, 10)
+    check_power_xint(10, 100.001, 10)
+    check_power_xint(10, 1.000000001, 10)
+    check_power_xint(10, 0.01, 10)
+    check_power_xint(10, 1e-10, 10)
+    check_power_xint(10, 1e-90, 10)
+    check_power_xint(10, 0, 10)
+    check_power_xint(10, -1.000000001, 10)
+    check_power_xint(10, -100.001, 10)
+    check_power_xint(10, -308.01, 10)
+    check_power_xint(10, xx, 10)
+    check_power_xint(10, pi, 10)
+    check_power_xint(10, sq, 10)
+
+    check_power_xint(2, 700.01, 100)
+    check_power_xint(2, 100.001, 100)
+    check_power_xint(2, 1.000000001, 100)
+    check_power_xint(2, 0.01, 100)
+    check_power_xint(2, 1e-10, 100)
+    check_power_xint(2, 1e-90, 100)
+    check_power_xint(2, 0, 100)
+    check_power_xint(2, -1.000000001, 100)
+    check_power_xint(2, -100.001, 100)
+    check_power_xint(2, -700.01, 100)
+    check_power_xint(2, xx, 100)
+    check_power_xint(2, pi, 100)
+    check_power_xint(2, sq, 100)
+
+    check_power_xint(10, 308.01, 100)
+    check_power_xint(10, 100.001, 100)
+    check_power_xint(10, 1.000000001, 100)
+    check_power_xint(10, 0.01, 100)
+    check_power_xint(10, 1e-10, 100)
+    check_power_xint(10, 1e-90, 100)
+    check_power_xint(10, 0, 100)
+    check_power_xint(10, -1.000000001, 100)
+    check_power_xint(10, -100.001, 100)
+    check_power_xint(10, -308.01, 100)
+    check_power_xint(10, xx, 100)
+    check_power_xint(10, pi, 100)
+    check_power_xint(10, sq, 100)
+
+    check_power_xint(2, 700.01, 40)
+    check_power_xint(2, 100.001, 40)
+    check_power_xint(2, 1.000000001, 40)
+    check_power_xint(2, 0.01, 40)
+    check_power_xint(2, 1e-10, 40)
+    check_power_xint(2, 1e-90, 40)
+    check_power_xint(2, 0, 40)
+    check_power_xint(2, -1.000000001, 40)
+    check_power_xint(2, -100.001, 40)
+    check_power_xint(2, -700.01, 40)
+    check_power_xint(2, xx, 40)
+    check_power_xint(2, pi, 40)
+    check_power_xint(2, sq, 40)
+
+    check_power_xint(10, 308.01, 40)
+    check_power_xint(10, 100.001, 40)
+    check_power_xint(10, 1.000000001, 40)
+    check_power_xint(10, 0.01, 40)
+    check_power_xint(10, 1e-10, 40)
+    check_power_xint(10, 1e-90, 40)
+    check_power_xint(10, 0, 40)
+    check_power_xint(10, -1.000000001, 40)
+    check_power_xint(10, -100.001, 40)
+    check_power_xint(10, -308.01, 40)
+    check_power_xint(10, xx, 40)
+    check_power_xint(10, pi, 40)
+    check_power_xint(10, sq, 40)
+
+  end
+
+  #
+  # test LongMath.power for bases that can be expressed as integer
+  #
+  def test_lm_power_yint
+    print "\ntest_lm_power_yint [#{Time.now}] (2 min): "
+
+    xx = LongMath.log(3, 40)
+    pi = LongMath.pi(40)
+    sq = LongMath.sqrt(5, 40)
+
+    check_power_yint(xx, 400, 10)
+    check_power_yint(xx, 100, 10)
+    check_power_yint(xx, 1, 10)
+    check_power_yint(xx, 0, 10)
+    check_power_yint(xx, -1, 10)
+    check_power_yint(xx, -100, 10)
+    check_power_yint(xx, -400, 10)
+
+    check_power_yint(pi, 400, 10)
+    check_power_yint(pi, 100, 10)
+    check_power_yint(pi, 1, 10)
+    check_power_yint(pi, 0, 10)
+    check_power_yint(pi, -1, 10)
+    check_power_yint(pi, -100, 10)
+    check_power_yint(pi, -400, 10)
+
+    check_power_yint(sq, 400, 10)
+    check_power_yint(sq, 100, 10)
+    check_power_yint(sq, 1, 10)
+    check_power_yint(sq, 0, 10)
+    check_power_yint(sq, -1, 10)
+    check_power_yint(sq, -100, 10)
+    check_power_yint(sq, -400, 10)
+
+    check_power_yint(xx, 400, 100)
+    check_power_yint(xx, 100, 100)
+    check_power_yint(xx, 1, 100)
+    check_power_yint(xx, 0, 100)
+    check_power_yint(xx, -1, 100)
+    check_power_yint(xx, -100, 100)
+    check_power_yint(xx, -400, 100)
+
+    check_power_yint(pi, 400, 100)
+    check_power_yint(pi, 100, 100)
+    check_power_yint(pi, 1, 100)
+    check_power_yint(pi, 0, 100)
+    check_power_yint(pi, -1, 100)
+    check_power_yint(pi, -100, 100)
+    check_power_yint(pi, -400, 100)
+
+    check_power_yint(sq, 400, 100)
+    check_power_yint(sq, 100, 100)
+    check_power_yint(sq, 1, 100)
+    check_power_yint(sq, 0, 100)
+    check_power_yint(sq, -1, 100)
+    check_power_yint(sq, -100, 100)
+    check_power_yint(sq, -400, 100)
+
+    check_power_yint(xx, 400, 40)
+    check_power_yint(xx, 100, 40)
+    check_power_yint(xx, 1, 40)
+    check_power_yint(xx, 0, 40)
+    check_power_yint(xx, -1, 40)
+    check_power_yint(xx, -100, 40)
+    check_power_yint(xx, -400, 40)
+
+    check_power_yint(pi, 400, 40)
+    check_power_yint(pi, 100, 40)
+    check_power_yint(pi, 1, 40)
+    check_power_yint(pi, 0, 40)
+    check_power_yint(pi, -1, 40)
+    check_power_yint(pi, -100, 40)
+    check_power_yint(pi, -400, 40)
+
+    check_power_yint(sq, 400, 40)
+    check_power_yint(sq, 100, 40)
+    check_power_yint(sq, 1, 40)
+    check_power_yint(sq, 0, 40)
+    check_power_yint(sq, -1, 40)
+    check_power_yint(sq, -100, 40)
+    check_power_yint(sq, -400, 40)
+
+  end
+
+  #
+  # test LongMath.power for bases that can be expressed as integer
+  #
+  def test_lm_power_yhalfint
+    print "\ntest_lm_power_yhalfint [#{Time.now}] (10 min): "
+
+    xx = LongMath.log(3, 40)
+    pi = LongMath.pi(40)
+    sq = LongMath.sqrt(5, 40)
+
+    check_power_yhalfint(xx, 801, 10)
+    check_power_yhalfint(xx, 799, 10)
+    check_power_yhalfint(xx, 201, 10)
+    check_power_yhalfint(xx, 3, 10)
+    check_power_yhalfint(xx, 1, 10)
+    check_power_yhalfint(xx, -1, 10)
+    check_power_yhalfint(xx, -201, 10)
+    check_power_yhalfint(xx, -799, 10)
+    check_power_yhalfint(xx, -801, 10)
+
+    check_power_yhalfint(pi, 801, 10)
+    check_power_yhalfint(pi, 799, 10)
+    check_power_yhalfint(pi, 201, 10)
+    check_power_yhalfint(pi, 3, 10)
+    check_power_yhalfint(pi, 1, 10)
+    check_power_yhalfint(pi, -1, 10)
+    check_power_yhalfint(pi, -201, 10)
+    check_power_yhalfint(pi, -799, 10)
+    check_power_yhalfint(pi, -801, 10)
+
+    check_power_yhalfint(sq, 801, 10)
+    check_power_yhalfint(sq, 799, 10)
+    check_power_yhalfint(sq, 201, 10)
+    check_power_yhalfint(sq, 3, 10)
+    check_power_yhalfint(sq, 1, 10)
+    check_power_yhalfint(sq, -1, 10)
+    check_power_yhalfint(sq, -201, 10)
+    check_power_yhalfint(sq, -799, 10)
+    check_power_yhalfint(sq, -801, 10)
+
+    check_power_yhalfint(xx, 801, 40)
+    check_power_yhalfint(xx, 799, 40)
+    check_power_yhalfint(xx, 201, 40)
+    check_power_yhalfint(xx, 3, 40)
+    check_power_yhalfint(xx, 1, 40)
+    check_power_yhalfint(xx, -1, 40)
+    check_power_yhalfint(xx, -201, 40)
+    check_power_yhalfint(xx, -799, 40)
+    check_power_yhalfint(xx, -801, 40)
+
+    check_power_yhalfint(pi, 801, 40)
+    check_power_yhalfint(pi, 799, 40)
+    check_power_yhalfint(pi, 201, 40)
+    check_power_yhalfint(pi, 3, 40)
+    check_power_yhalfint(pi, 1, 40)
+    check_power_yhalfint(pi, -1, 40)
+    check_power_yhalfint(pi, -201, 40)
+    check_power_yhalfint(pi, -799, 40)
+    check_power_yhalfint(pi, -801, 40)
+
+    check_power_yhalfint(sq, 801, 40)
+    check_power_yhalfint(sq, 799, 40)
+    check_power_yhalfint(sq, 201, 40)
+    check_power_yhalfint(sq, 3, 40)
+    check_power_yhalfint(sq, 1, 40)
+    check_power_yhalfint(sq, -1, 40)
+    check_power_yhalfint(sq, -201, 40)
+    check_power_yhalfint(sq, -799, 40)
+    check_power_yhalfint(sq, -801, 40)
+
+  end
+
+  #
+  # test the calculation of the base-10-logarithm function
+  #
+  def test_log10
+    print "\ntest_log10 [#{Time.now}]: "
+    check_log10_floated(10**2000, 30)
+    check_log10_floated(100, 30)
+    check_log10_floated(1, 30)
+    check_log10_floated(0.01, 30)
+    check_log10_floated(1e-10, 30)
+    check_log10_floated(1e-90, 30)
+    check_log10_floated(1e-300, 30)
+    check_log10_floated(LongDecimal(1, 2000), 30)
+
+    check_log10_exact(10**2000, 2000, 30)
+    check_log10_exact(10**0, 0, 30)
+    check_log10_exact(10**1, 1, 30)
+    check_log10_exact(10**10, 10, 30)
+
+    # random tests that have failed
+    check_log10_floated(LongDecimal("587.00000000000000000095700000000000000000000000000000000000000000000000000000000000000000000001206"), 21)
+    check_log10_floated(LongDecimal("543.0000002480000900000000000000000000000000000000000000000000000000000000000000000000847"), 2)
+    check_log10_floated(LongDecimal("180.0000000000000000003570000000000000000000000000000000000000000000000577000000000000000000000000000637"), 2)
+    check_log10_floated(LongDecimal("0.0000000000000000000000000000000000000000180000000063000000000000000000000000000000000025"), 74)
+    check_log10_floated(LongDecimal("0.0000000000000000000000000006200000000000000000000000000000000000000000000000007940000015"), 74)
+    check_log10_floated(LongDecimal("0.00000000000000000000000000000000000000000032900000000000000000000233000000000000000000000000000000254"), 10)
+    check_log10_floated(LongDecimal("0.00000000000000000000000233000000094800000000000000000000000000000000000000000000000000000000000000682"), 100)
+    check_log10_floated(LongDecimal("0.000000000000000000000000000000000000097000000041500000000000000000784"), 97)
+    check_log10_floated(LongDecimal("185.000025300000000000000006320000000000000000000000000000737"), 27)
+    check_log10_floated(LongDecimal("0.00000000000000000000000000000302000000000000000000000000000000000000000000000000000000060673"), 100)
+    check_log10_floated(LongDecimal("442.000000000000045300000000000000000000000000000000000000000000000000000000000000000000000721000000000752"), 97)
+    check_log10_floated(LongDecimal("0.001030927835051546391752577284408545010096715910298651428936221023301883588097777204212461151695109779555577162172"), 62)
+
+  end
+
+  #
+  # test the calculation of the base-10-logarithm function
+  #
+  def test_log2
+    print "\ntest_log2 [#{Time.now}]: "
+    check_log2_floated(10**2000, 30)
+    check_log2_floated(2**2000, 30)
+    check_log2_floated(100, 30)
+    check_log2_floated(1, 30)
+    check_log2_floated(0.01, 30)
+    check_log2_floated(1e-10, 30)
+    check_log2_floated(1e-90, 30)
+    check_log2_floated(1e-300, 30)
+    check_log2_floated(LongDecimal(1, 2000), 30)
+
+    check_log2_exact(2**2000, 2000, 30)
+    check_log2_exact(2**0, 0, 30)
+    check_log2_exact(2**1, 1, 30)
+    check_log2_exact(2**10, 10, 30)
+
+    # random tests that have failed
+    check_log2_floated(LongDecimal("341.00000739000000000000000000000000000000000000000000000000000000000000171"), 3)
+    check_log2_floated(LongDecimal("504.00000000000000000000000000000000000000000000000000000000000000000000000000000000000327400000000000828"), 1)
+    check_log2_floated(LongDecimal("0.0033222591362126245847176079734219269102990032888157967351353737817463383406363175903135730345286354858609181999523961456225622835123748782987926188031081"), 48)
+    check_log2_floated(LongDecimal("0.000802000000000000000000197000000000000000000000302"), 84)
+    check_log2_floated(LongDecimal("0.00000000000000000000000000000000000000000000000000000000000000000000000452000000000069480"), 3)
+    check_log2_floated(LongDecimal("0.0000000000000000000000000000000000000000000000000000930000000000000000000000000983000000000000300"), 61)
+    check_log2_floated(LongDecimal("0.000000000000000000000000000000000000000000000000000000000086000133000000000000000000000000947"), 106)
+    check_log2_floated(LongDecimal("0.00000000000000000000000000000276000000000000000000000000000000000008560000000000000000000000000000161"), 81)
+
+  end
+
+  #
+  # test the calculation of the base-x-logarithm of sqrt(x)
+  #
+  def test_log_2_10_of_sqrt
+    print "\ntest_log_2_10_of_sqrt [#{Time.now}]: "
+    # n = 125
+    n = 30
+    m = 5
+    x2  = LongMath.sqrt(2, n)
+    x10 = LongMath.sqrt(10, n)
+
+    (2*m).times do |i|
+      check_log2_floated(x2, n+m-i)
+      check_log10_floated(x10, n+m-i)
+    end
+
+    y2  = check_log2_floated(x2, n)
+    assert((y2*2).one?, "xe=#{x2} ye=#{y2}")
+    y10 = check_log10_floated(x10, n)
+    assert((y10*2).one?, "xe=#{x10} ye=#{y10}")
+
+  end
+
+  #
+  # test LongMath.power with non-LongDecimal arguments
+  #
+  def test_non_ld_power
+    print "\ntest_non_ld_power [#{Time.now}]: "
+    xi = 77
+    yi = 88
+    zi = LongMath.power(xi, yi, 35)
+    wi = (LongMath.log(zi, 40) / LongMath.log(xi, 40)).round_to_scale(30, LongMath::ROUND_HALF_EVEN)
+    assert(wi.is_int?, "wi=#{wi} not int (zi=#{zi})")
+    assert_equal(yi, wi.to_i, "zi=#{zi} wi=#{wi}")
+    zj = LongMath.power_internal(xi, yi, 35)
+    assert_equal(zi, zj, "internal power should yield the same result zi=#{zi} zj=#{zj}")
+
+    xf = 77.0
+    yf = 88.0
+    zf = LongMath.power(xf, yf, 35)
+    wf = (LongMath.log(zf, 40) / LongMath.log(xf, 40)).round_to_scale(30, LongMath::ROUND_HALF_EVEN)
+    assert(wf.is_int?, "wf=#{wf} not int (zf=#{zf} wi=#{wi} zi=#{zi}")
+    assert_equal(yf, wf.to_i, "yf=#{yf} wf=#{yf}")
+
+    xr = Rational(224, 225)
+    yr = Rational(168, 169)
+    zr = LongMath.power(xr, yr, 35)
+    wr = (LongMath.log(zr, 40) / LongMath.log(xr, 40)).round_to_scale(30, LongMath::ROUND_HALF_EVEN)
+    assert((yr-wr).abs <= wr.unit, "wr-yr")
+  end
+
+  #
+  # test the calculation of the power-function of LongMath
+  #
+  def test_lm_power
+    print "\ntest_lm_power [#{Time.now}]: "
+    check_power_floated(1.001, 1.001, 10)
+    check_power_floated(1.001, 2.001, 10)
+    check_power_floated(2.001, 1.001, 10)
+    check_power_floated(2.001, 2.001, 10)
+    check_power_floated(100.001, 10.001, 10)
+    check_power_floated(10.001, 100.001, 10)
+    check_power_floated(10.001, 100.001, 100)
+    check_power_floated(1e-20, 1.01, 19)
+    check_power_floated(1.01, 1e-20, 19)
+    check_power_floated(1e-20, 1.01, 20)
+    check_power_floated(1.01, 1e-20, 20)
+    check_power_floated(1e-20, 1.01, 21)
+    check_power_floated(1.01, 1e-20, 21)
+
+    check_power_floated(1.001, -1.001, 10)
+    check_power_floated(1.001, -2.001, 10)
+    check_power_floated(2.001, -1.001, 10)
+    check_power_floated(2.001, -2.001, 10)
+    check_power_floated(100.001, -10.001, 10)
+    check_power_floated(10.001, -100.001, 10)
+    check_power_floated(1e-20, -1.01, 19)
+    check_power_floated(1.01, -1e-20, 19)
+    check_power_floated(1e-20, -1.01, 20)
+    check_power_floated(1.01, -1e-20, 20)
+    check_power_floated(1e-20, -1.01, 21)
+    check_power_floated(1.01, -1e-20, 21)
+
+  end
 
 
   #
@@ -6834,7 +7314,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     end
   end
 
-  def _test_means_two_param
+  def test_means_two_param
     print "\ntest_means_two_param [#{Time.now}] (20 sec): "
     arr = [ 0, 1, 2, 7, 0.0, 1.0, 2.0, Math::PI, Rational(40, 9), Rational(0, 1), Rational(1,1), Rational(2,3), LongDecimal(3333333333333333, 10), LongDecimal(33, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ]
     arr.each do |x|
@@ -6879,7 +7359,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     end
   end
 
-  def _test_means_three_param
+  def test_means_three_param
     print "\ntest_means_three_param [#{Time.now}] (4 min): "
     arr = [ 0, 1, 2, 0.0, 1.0, Math::PI, Rational(40, 9), Rational(0, 1), Rational(1,1), LongDecimal(3333333333333333, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ]
     arr.each do |x|
