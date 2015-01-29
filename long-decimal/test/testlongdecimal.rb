@@ -7377,7 +7377,9 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
               zz = z.to_ld(prec, rm)
               mi = [xx, yy, zz].min
               am = LongMath.arithmetic_mean(prec, rm, x, y, z)
+              agm = LongMath.arithmetic_geometric_mean(prec, rm, x, y, z)
               gm = LongMath.geometric_mean(prec, rm, x, y, z)
+              hgm = LongMath.hyperbollc_geometric_mean(prec, rm, x, y, z)
               if (x.sgn == 0 || y.sgn == 0 || z.sgn == 0)
                 hm = gm
               else
@@ -7388,15 +7390,19 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
               ma = [xx, yy, zz].max
               text = "mi=#{mi} hm=#{hm} gm=#{gm} am=#{am} qm=#{qm} cm=#{cm} ma=#{ma} prec=#{prec} rm=#{rm} x=#{x} y=#{y} z=#{z}"
               assert(mi <= hm.succ, text)
-              assert(hm <= gm.succ, text)
-              assert(gm <= am.succ, text)
+              assert(hm <= hgm.succ, text)
+              assert(hgm <= gm.succ, text)
+              assert(gm <= agm.succ, text)
+              assert(agm <= am.succ, text)
               assert(am <= qm.succ, text)
               assert(qm <= cm.succ, text)
               assert(cm <= ma.succ, text)
               if (x == y && y == z)
                 assert_equal(mi, hm, text)
-                assert_equal(hm, gm, text)
-                assert_equal(gm, am, text)
+                assert_equal(hm, hgm, text)
+                assert_equal(hgm, gm, text)
+                assert_equal(gm, agm, text)
+                assert_equal(gm, agm, text)
                 assert_equal(am, qm, text)
                 assert_equal(qm, cm, text)
                 assert_equal(cm, ma, text)
