@@ -66,7 +66,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
       assert_equal(y3[i], y1[i], "i=#{i}")
     end
     puts "test_sqrtx done"
-  end  
+  end
 
   def fsqrtx2(i)
     1001+i**3+202*i**2+603*i
@@ -110,7 +110,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
       assert_equal(y3[i], y1[i], "i=#{i}")
     end
     puts "test_sqrtx done"
-  end  
+  end
 
   #
   # test sint_digits10_2 of LongDecimal

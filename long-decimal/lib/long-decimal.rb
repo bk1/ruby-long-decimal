@@ -361,7 +361,7 @@ module LongDecimalRoundingMode
   end
 
   MODE_LOOKUP = {}
-  
+
   rounding_mode_counter = 0
 
   public
@@ -614,10 +614,10 @@ class Integer
         break
       end
     end
-    if (r_lower < 0) 
+    if (r_lower < 0)
       raise ArgumentError, "self=#{self} r_self=#{r_self} r_lower=#{r_lower} r_upper=#{r_upper}"
     end
-    if (r_upper < 0) 
+    if (r_upper < 0)
       raise ArgumentError, "self=#{self} r_self=#{r_self} r_lower=#{r_lower} r_upper=#{r_upper}"
     end
     lower = self - (r_self - r_lower)
@@ -1000,7 +1000,7 @@ class LongDecimalBase < Numeric
       direction_criteria    = nil
       if (mode.major == MAJOR_HALF)
         direction_criteria = (abs_rem << 1) <=> divisor
-        
+
         if (direction_criteria < 0) then
           mode = ROUND_DOWN
         elsif direction_criteria > 0 then
@@ -3805,7 +3805,7 @@ module LongMath
     check_is_mode(mode, "mode")
     exp_internal(x, prec, mode)
   end
-  
+
   #
   # calc the base-2-exponential function of x to the given precision as
   # LongDecimal.  Only supports values of x such that the result still
@@ -4660,7 +4660,7 @@ module LongMath
     if (x <= 0)
       raise ArgumentError, "x=#{x} < 0"
     end
-    
+
     s = x.size
     l = [ 8 * s - 36 , 0 ].max
 
@@ -4982,7 +4982,7 @@ module LongMath
     if (args.empty?)
       raise ArgumentError, "cannot calculate average of empty array"
     end
-    sum = args.inject(0) do |psum,x| 
+    sum = args.inject(0) do |psum,x|
       psum + x
     end
     raw_result = if (sum.kind_of? Integer)
@@ -5007,7 +5007,7 @@ module LongMath
     if (has_zero)
       return LongDecimal.zero!(new_scale)
     end
-    prod = args.inject(1) do |pprod,x| 
+    prod = args.inject(1) do |pprod,x|
       pprod * x.abs
     end
     result = nil
@@ -5016,7 +5016,7 @@ module LongMath
       result = prod.to_ld(new_scale, rounding_mode)
     elsif (n == 2)
       result = LongMath.sqrt(prod, new_scale, rounding_mode)
-    elsif (n == 3) 
+    elsif (n == 3)
       result = LongMath.cbrt(prod, new_scale, rounding_mode)
     else
       result = LongMath.power(prod, Rational(1, args.size), new_scale, rounding_mode)
@@ -5036,7 +5036,7 @@ module LongMath
     if (has_zero)
       raise ArgumentError, "cannot calculate harmonic mean of argument list containing zero #{args.inspect}"
     end
-    sum = args.inject(0) do |psum, x| 
+    sum = args.inject(0) do |psum, x|
       psum + if (x.kind_of? Integer)
                Rational(1, x)
              else
@@ -5092,7 +5092,7 @@ module LongMath
     if (all_same)
       return args[0].to_ld(new_scale, rounding_mode)
     end
-    sum = args.inject(0) do |psum, x| 
+    sum = args.inject(0) do |psum, x|
       psum + x*x
     end
     quot = if (sum.kind_of? Integer)
@@ -5113,7 +5113,7 @@ module LongMath
     if (all_same)
       return args[0].to_ld(new_scale, rounding_mode)
     end
-    sum = args.inject(0) do |psum, x| 
+    sum = args.inject(0) do |psum, x|
       if (x.kind_of? Complex)
         raise ArgumentError, "cubic mean not supported for complex numbers args=#{args.inspect}"
       end
@@ -5159,7 +5159,7 @@ module LongMath
     if (elements.empty?)
       return elements
     end
-    raw_sum = elements.inject(0) do |psum,x| 
+    raw_sum = elements.inject(0) do |psum,x|
       psum + x
     end
     sum = raw_sum.to_ld(new_scale, rounding_mode_sum)
@@ -5189,7 +5189,7 @@ module LongMath
       return elements
     end
     delta = -1
-    raw_sum = elements.inject(0) do |psum,x| 
+    raw_sum = elements.inject(0) do |psum,x|
       psum + x
     end
     sum = raw_sum.to_ld(new_scale, rounding_mode_sum)

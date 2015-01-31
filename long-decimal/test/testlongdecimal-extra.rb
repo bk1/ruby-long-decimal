@@ -1312,7 +1312,7 @@ class TestLongDecimalExtra_class < UnitTest # Test::Unit::TestCase # RUNIT::Test
                         36)
     puts "j"
   end
-     
+
   def test_lm_power1k
     print "\ntest_lm_power1k [#{Time.now}]: "
     #   1) Failure:
@@ -1335,7 +1335,7 @@ class TestLongDecimalExtra_class < UnitTest # Test::Unit::TestCase # RUNIT::Test
     puts "k"
   end
 
-  
+
   def test_lm_power1l
     print "\ntest_lm_power1l [#{Time.now}]: "
     #   1) Failure:

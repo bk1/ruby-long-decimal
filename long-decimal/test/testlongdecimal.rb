@@ -2748,7 +2748,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
         ALL_ZERO_MODES.each do |zero_mode|
           zero_rounded = 0.round_to_allowed_remainders([0], modulus, rounding_mode, zero_mode)
           assert_equal(0, zero_rounded)
-        end       
+        end
       end
     end
   end
@@ -2868,7 +2868,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
         assert_equal(i_rounded, i.round_to_allowed_remainders(remainders, modulus, rounding_mode, zm), "i=#{i} i_r=#{i_rounded} m=#{modulus} zm=#{zm} r=#{r}")
       end
     end
-    
+
     # make sure that the result is congruent r modulo the modulus and within less than modulus away from i:
     assert(! (i_rounded.nil?), text)
     assert_equal(0, (i_rounded - r) % modulus, text)
@@ -2898,7 +2898,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
                           else
                             max_neg_remainder
                           end
-        if (-max_neg_remainder > min_remainder) 
+        if (-max_neg_remainder > min_remainder)
           closest_remainder_prefer_minus = min_remainder
           closest_remainder_prefer_plus = min_remainder
         elsif (-max_neg_remainder < min_remainder)
@@ -3051,7 +3051,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
                           else
                             max_neg_remainder
                           end
-        if (-max_neg_remainder > min_remainder) 
+        if (-max_neg_remainder > min_remainder)
           closest_remainder_prefer_minus = min_remainder
           closest_remainder_prefer_plus = min_remainder
         elsif (-max_neg_remainder < min_remainder)
@@ -3061,7 +3061,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
           closest_remainder_prefer_minus = max_neg_remainder
           closest_remainder_prefer_plus = min_remainder
         end
-          
+
         text = "m=#{modulus} x=#{x} s=#{remainders.inspect}"
         # puts text
         print "."
@@ -3267,7 +3267,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
           if (rounding_mode.minor == MINOR_EVEN || rounding_mode.minor == MINOR_ODD)
             next
           end
-          
+
           if (rounding_mode == ROUND_CUBIC_CEILING)
             i_rounded, set, above, below = check_round_to_remainders(0, remainders, modulus, rounding_mode, ZERO_ROUND_UNNECESSARY)
             if (min_remainder+max_neg_remainder > 0)
@@ -3525,7 +3525,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   end
 
   # TODO: round to zero, away from zero to negative, away from zero to positive, across zero to negative, across zero to positive
-                                                    
+
   # test remainder rounding geometric
   #
   def check_int_round_major_to_two_allowed_remainders(remainder_sets, boundary_exact_integral, major_mode, &block)
@@ -3574,7 +3574,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
           boundary_lower = param
         end
         boundary_upper = param +1
-          
+
         1.upto boundary_lower do |x|
           ALL_ROUNDING_MODES.each do |rm|
             if (rm.major == major_mode && rm.minor != MINOR_EVEN && rm.minor != MINOR_ODD)

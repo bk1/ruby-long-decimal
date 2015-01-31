@@ -43,18 +43,18 @@ class TestRandom_class < RUNIT::TestCase
       @scnt += 1
       puts("\ncnt=#{cnt} scnt=#{@scnt} x=#{x} ep=#{eprec} lp=#{lprec} sp=#{sprec} pp=#{pprec}\n")
       if (x <= LongMath::MAX_EXP_ABLE) then
-	check_exp_floated(x, eprec)
-	check_exp2_floated(x, pprec)
-	check_exp10_floated(x, pprec)
+        check_exp_floated(x, eprec)
+        check_exp2_floated(x, pprec)
+        check_exp10_floated(x, pprec)
       end
       if (x > 0)
-	check_log_floated(x, lprec)
-	check_log2_floated(x, lprec)
-	check_log10_floated(x, lprec)
+        check_log_floated(x, lprec)
+        check_log2_floated(x, lprec)
+        check_log10_floated(x, lprec)
       end
       if (x > 0)
-	xr = x.round_to_scale(sc, LongMath::ROUND_HALF_UP)
-	check_sqrt_with_remainder(xr, sprec, "x=#{x} p=#{sprec}")
+        xr = x.round_to_scale(sc, LongMath::ROUND_HALF_UP)
+        check_sqrt_with_remainder(xr, sprec, "x=#{x} p=#{sprec}")
       end
     end
   end
