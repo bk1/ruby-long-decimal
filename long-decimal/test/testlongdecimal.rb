@@ -7379,11 +7379,12 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
               am = LongMath.arithmetic_mean(prec, rm, x, y, z)
               agm = LongMath.arithmetic_geometric_mean(prec, rm, x, y, z)
               gm = LongMath.geometric_mean(prec, rm, x, y, z)
-              hgm = LongMath.hyperbollc_geometric_mean(prec, rm, x, y, z)
               if (x.sgn == 0 || y.sgn == 0 || z.sgn == 0)
                 hm = gm
+                hgm = gm
               else
                 hm = LongMath.harmonic_mean(prec, rm, x, y, z)
+                hgm = LongMath.harmonic_geometric_mean(prec, rm, x, y, z)
               end
               qm = LongMath.quadratic_mean(prec, rm, x, y, z)
               cm = LongMath.cubic_mean(prec, rm, x, y, z)

@@ -5050,7 +5050,11 @@ module LongMath
 
   # arithmetic-geometric mean (AGM)
   def LongMath.arithmetic_geometric_mean(new_scale, rounding_mode, *args)
-    prec = (new_scale * 1.1 + 10).to_i
+    result_sign, all_same, has_neg, has_zero, has_pos = sign_check_for_mean(true, *args)
+    if (all_same)
+      return args[0].to_ld(new_scale, rounding_mode)
+    end
+    prec = (new_scale * 1.1 + 20).to_i
     x = arithmetic_mean(prec, rounding_mode, *args)
     y = geometric_mean(prec, rounding_mode, *args)
     delta = 3*x.unit
@@ -5065,7 +5069,11 @@ module LongMath
 
   # harmonic-geometric mean (HGM)
   def LongMath.harmonic_geometric_mean(new_scale, rounding_mode, *args)
-    prec = (new_scale * 1.1 + 10).to_i
+    result_sign, all_same, has_neg, has_zero, has_pos = sign_check_for_mean(true, *args)
+    if (all_same)
+      return args[0].to_ld(new_scale, rounding_mode)
+    end
+    prec = (new_scale * 1.1 + 20).to_i
     x = harmonic_mean(prec, rounding_mode, *args)
     y = geometric_mean(prec, rounding_mode, *args)
     delta = 3*x.unit
@@ -5145,9 +5153,8 @@ module LongMath
 
   public
 
-  # round elements in such a way that round(new_scale, rounding_mode, sum(elements)) = sum(elements_rounded)
-  # where rounding_mode_set is
-  # HAARE_NIEMEYER, ....
+  # round elements in such a way that round(new_scale, rounding_mode_sum, sum(elements)) = sum(elements_rounded)
+  # HAARE_NIEMEYER
   def LongMath.round_sum_hm(new_scale, rounding_mode_sum, *elements)
     if (elements.empty?)
       return elements
