@@ -1691,9 +1691,19 @@ class LongDecimal < LongDecimalBase
   #
   def sint_digits10
     if (@digits10.nil?)
-      @digits10 = LongMath.int_digits10(int_val) - scale
+      result = LongMath.int_digits10(int_val) - scale
+      if frozen?
+        return result
+      end
+      @digits10 = result
     end
     @digits10
+  end
+
+  # freeze but calcuate sint_digits10 before
+  def freeze_ld
+    sint_digits10
+    freeze
   end
 
   #
@@ -3203,6 +3213,21 @@ module LongMath
           return
         end
       end
+      key.freeze
+      if (val.kind_of? LongDecimal)
+        val.freeze_ld
+      elsif (val.kind_of? Array)
+        val.each do |entry|
+          if (entry.kind_of? LongDecimal)
+            entry.freeze_ld
+          else
+            entry.freeze
+          end
+        end
+        val.freeze
+      else
+        val.freeze
+      end
       @@cache[key] = val
     end
   end
@@ -4079,8 +4104,43 @@ module LongMath
       return y_arr
     else
       y, r = y_arr
-      if ((mode == ROUND_HALF_EVEN || mode == ROUND_HALF_ODD || mode == ROUND_HALF_DOWN) && r > 0) then
-        mode = ROUND_HALF_UP
+      if (mode.major == MAJOR_GEOMETRIC || mode.major == MAJOR_QUADRATIC)
+        # we need to deal with the case that the square root is on the exact border
+        y_lower = y.round_to_scale(prec, ROUND_DOWN)
+        y_upper = y.round_to_scale(prec, ROUND_UP)
+        # puts "mode=#{mode} x=#{x} y=#{y} r=#{r} y_lower=#{y_lower} y_upper=#{y_upper} prec=#{prec} prec1=#{prec1}"
+        if (r == 0)
+          if (y == y_lower)
+            # puts "r=0 y=y_lower=#{y_lower} (x=#{x} y_upper=#{y_upper} mode=#{mode})"
+            return y_lower
+          elsif (y == y_upper)
+            # puts "r=0 y=y_upper=#{y_upper} (x=#{x} y_lower=#{y_lower} mode=#{mode})"
+            return y_upper
+          end
+        end
+        # puts "mode=#{mode} x=#{x} gm2=#{y_lower * y_upper} qm2=#{arithmetic_mean(prec*2+1, ROUND_HALF_UP, y_lower*y_lower, y_upper*y_upper)}"
+        if (mode.major == MAJOR_GEOMETRIC && x == y_lower * y_upper \
+            || mode.major == MAJOR_QUADRATIC && x == arithmetic_mean(prec*2+1, ROUND_HALF_UP, y_lower*y_lower, y_upper*y_upper))
+          if (mode.minor == MINOR_UP || mode.minor == MINOR_CEILING)
+            # puts "r=0 y=#{y} on boundary: y_upper=#{y_upper} (x=#{x} y_lower=#{y_lower} mode=#{mode})"
+            return y_upper;
+          elsif (mode.minor == MINOR_DOWN || mode.minor == MINOR_FLOOR)
+            # puts "r=0 y=#{y} on boundary: y_lower=#{y_lower} (x=#{x} y_upper=#{y_upper} mode=#{mode})"
+            return y_lower;
+          elsif (mode.minor == MINOR_EVEN && y_upper[0] == 0 || mode.minor == MINOR_ODD && y_upper[0] == 1)
+            # puts "r=0 y=#{y} on boundary odd/even: y_upper=#{y_upper} (x=#{x} y_lower=#{y_lower} y_upper=#{y_upper} mode=#{mode})"
+            return y_upper;
+          elsif (mode.minor == MINOR_EVEN && y_lower[0] == 0 || mode.minor == MINOR_ODD && y_lower[0] == 1)
+            # puts "r=0 y=#{y} on boundary odd/even: y_lower=#{y_lower} (x=#{x} y_lower=#{y_lower} y_upper=#{y_upper} mode=#{mode})"
+            return y_lower;
+          else
+            raise ArgumentError, "unsupported combination: x=#{x} prec=#{prec} prec1=#{prec1} mode=#{mode} y=#{y} r=#{r} y_lower=#{y_lower} y_upper=#{y_upper}"
+          end
+        end
+      end
+            
+      if ((mode.minor == MINOR_EVEN || mode.minor == MINOR_ODD || mode.minor == MINOR_DOWN || mode.minor == MINOR_FLOOR) && r > 0) then
+        mode = MODE_LOOKUP[[mode.major, MINOR_UP]];
       end
       y = y.round_to_scale(prec, mode)
       return y
@@ -4147,8 +4207,8 @@ module LongMath
       return y_arr
     else
       y, r = y_arr
-      if ((mode == ROUND_HALF_EVEN || mode == ROUND_HALF_ODD || mode == ROUND_HALF_DOWN) && r > 0) then
-        mode = ROUND_HALF_UP
+      if ((mode.minor == MINOR_EVEN || mode.minor == MINOR_ODD || mode.minor == MINOR_DOWN || mode.minor == MINOR_FLOOR) && r > 0) then
+        mode = MODE_LOOKUP[[mode.major, MINOR_UP]];
       end
       y = y.round_to_scale(prec, mode)
       return y
@@ -4991,6 +5051,7 @@ module LongMath
         sum / args.size
     end
     result = raw_result.to_ld(new_scale, rounding_mode)
+    # puts "sum=#{sum} args.size=#{args.size} raw_result=#{raw_result} result=#{result} new_scale=#{new_scale} rounding_mode=#{rounding_mode}"
     return result
   end
 

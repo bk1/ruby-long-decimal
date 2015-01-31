@@ -26,8 +26,10 @@ end
 #
 module TestLongDecHelper
 
-  @RCS_ID='-$Id: testlongdeclib.rb,v 1.42 2011/02/03 00:22:39 bk1 Exp $-'
+  include LongDecimalRoundingMode
 
+  @RCS_ID='-$Id: testlongdeclib.rb,v 1.42 2011/02/03 00:22:39 bk1 Exp $-'
+  
   def assert_equal_float(lhs, rhs, delta=0, msg="")
     if ((lhs - rhs).abs >= delta)
       msg2 = "delta=#{delta} #{msg}"
@@ -106,8 +108,8 @@ module TestLongDecHelper
 #       full_message = build_message(message, "Expected <?> to match <?> (lhs=#{lhs} rhs=#{rhs})", actual, expected)
 #       assert_block(full_message) {
 #         #       prec = actual.scale
-#         #       ed   = expected.round_to_scale(prec, LongMath::ROUND_HALF_FLOOR)
-#         #       eu   = expected.round_to_scale(prec, LongMath::ROUND_HALF_CEILING)
+#         #       ed   = expected.round_to_scale(prec, ROUND_HALF_FLOOR)
+#         #       eu   = expected.round_to_scale(prec, ROUND_HALF_CEILING)
 #         #       # puts("ed=#{ed} eu=#{eu} e=#{expected} a=#{actual}")
 #         #       ed <= actual && actual <= eu
 
@@ -178,7 +180,7 @@ module TestLongDecHelper
     # eprec = prec+1
     y  = LongMath.exp(x, prec)
     yy = LongMath.exp(x, prec+10)
-    #  assert_equal(yy.round_to_scale(y.scale, LongDecimal::ROUND_HALF_DOWN), y, "x=#{x} y=#{y} yy=#{yy}")
+    #  assert_equal(yy.round_to_scale(y.scale, ROUND_HALF_DOWN), y, "x=#{x} y=#{y} yy=#{yy}")
     assert_equal_rounded(yy, y, "x=#{x} y=#{y} yy=#{yy}")
 
     # compare y against z = exp(x) calculated using regular floating point arithmetic
@@ -206,8 +208,8 @@ module TestLongDecHelper
     end
 
     # check by doing calculation with different internal rounding modes.  They should not differ.
-    yd = LongMath.exp_internal(x, prec, nil, nil, nil, nil, LongDecimal::ROUND_DOWN)
-    yu = LongMath.exp_internal(x, prec, nil, nil, nil, nil, LongDecimal::ROUND_UP)
+    yd = LongMath.exp_internal(x, prec, nil, nil, nil, nil, ROUND_DOWN)
+    yu = LongMath.exp_internal(x, prec, nil, nil, nil, nil, ROUND_UP)
     # assert_equal(yd, yu, "the result yd/yu should not depend on the internal rounding mode x0=#{x0} x=#{x} p=#{prec} d=#{(yd-yu).to_f.to_s}")
     # assert_equal(y,  yu, "the result y/yu  should not depend on the internal rounding mode x0=#{x0} x=#{x} p=#{prec} d=#{(y -yu).to_f.to_s}")
     assert_small_interval(yd, yu, y, "the result y/yu  should not depend on the internal rounding mode x0=#{x0} x=#{x} p=#{prec} d=#{(yd-yu).to_f.to_s}")
@@ -256,7 +258,7 @@ module TestLongDecHelper
     # eprec = prec+1
     y  = LongMath.exp2(x, prec)
     yy = LongMath.exp2(x, prec+10)
-    #  assert_equal(yy.round_to_scale(y.scale, LongDecimal::ROUND_HALF_DOWN), y, "x=#{x} y=#{y} yy=#{yy}")
+    #  assert_equal(yy.round_to_scale(y.scale, ROUND_HALF_DOWN), y, "x=#{x} y=#{y} yy=#{yy}")
     assert_equal_rounded(yy, y, "x=#{x} y=#{y} yy=#{yy}")
 
     # compare y against z = exp(x) calculated using regular floating point arithmetic
@@ -303,7 +305,7 @@ module TestLongDecHelper
     # eprec = prec+1
     y  = LongMath.exp10(x, prec)
     yy = LongMath.exp10(x, prec+10)
-    #  assert_equal(yy.round_to_scale(y.scale, LongDecimal::ROUND_HALF_DOWN), y, "x=#{x} y=#{y} yy=#{yy}")
+    #  assert_equal(yy.round_to_scale(y.scale, ROUND_HALF_DOWN), y, "x=#{x} y=#{y} yy=#{yy}")
     assert_equal_rounded(yy, y, "x=#{x} y=#{y} yy=#{yy}")
 
     if (y.abs < LongMath::MAX_FLOATABLE) then
@@ -369,8 +371,8 @@ module TestLongDecHelper
     x  = x.to_ld
     y  = y.to_ld
 
-    z  = LongMath.power(x, y, prec, LongMath::ROUND_HALF_UP)
-    zz = (x ** yi).round_to_scale(prec, LongMath::ROUND_HALF_UP)
+    z  = LongMath.power(x, y, prec, ROUND_HALF_UP)
+    zz = (x ** yi).round_to_scale(prec, ROUND_HALF_UP)
     assert_equal(z, zz, "power with ** or power-method x=#{x} y=#{y} z=#{z} zz=#{zz}")
     zz = LongMath.power_internal(x, y, prec)
     assert((zz - z).abs <= z.unit, "power with and without optimizations x=#{x} y=#{y} z=#{z} zz=#{zz}")
@@ -394,8 +396,8 @@ module TestLongDecHelper
     x = x.to_ld
     y = LongDecimal("0.5") * y2i
 
-    z  = LongMath.power(x, y, prec, LongMath::ROUND_HALF_UP)
-    zz = LongMath.sqrt(x ** y2i, prec, LongMath::ROUND_HALF_UP)
+    z  = LongMath.power(x, y, prec, ROUND_HALF_UP)
+    zz = LongMath.sqrt(x ** y2i, prec, ROUND_HALF_UP)
     assert_equal(z, zz, "power with ** or power-method x=#{x} y=#{y} z=#{z} zz=#{zz}")
     zz = LongMath.power_internal(x, y, prec)
     assert((zz - z).abs <= z.unit, "power with and without optimizations x=#{x} y=#{y} z=#{z} zz=#{zz}")
@@ -423,7 +425,7 @@ module TestLongDecHelper
     # calculate y = log(x)
     y  = LongMath.log(x, prec)
     yy = LongMath.log(x, prec+10)
-    # assert_equal(yy.round_to_scale(y.scale, LongDecimal::ROUND_HALF_DOWN), y, "x=#{x} y=#{y} yy=#{yy}")
+    # assert_equal(yy.round_to_scale(y.scale, ROUND_HALF_DOWN), y, "x=#{x} y=#{y} yy=#{yy}")
     assert_equal_rounded(yy, y, "x=#{x} y=#{y} yy=#{yy}")
 
     # compare y against z = log(x) calculated using regular floating
@@ -474,10 +476,10 @@ module TestLongDecHelper
     end
 
     # check by doing calculation with different internal rounding modes.  They should not differ.
-    # yd = LongMath.log_internal(x, prec, nil, nil, LongDecimal::ROUND_DOWN)
-    # yu = LongMath.log_internal(x, prec, nil, nil, LongDecimal::ROUND_UP)
-    yd = LongMath.log_internal(x, prec, nil, nil, LongDecimal::ROUND_FLOOR)
-    yu = LongMath.log_internal(x, prec, nil, nil, LongDecimal::ROUND_CEILING)
+    # yd = LongMath.log_internal(x, prec, nil, nil, ROUND_DOWN)
+    # yu = LongMath.log_internal(x, prec, nil, nil, ROUND_UP)
+    yd = LongMath.log_internal(x, prec, nil, nil, ROUND_FLOOR)
+    yu = LongMath.log_internal(x, prec, nil, nil, ROUND_CEILING)
     # assert_equal(yd, yu, "the result yd/yu should not depend on the internal rounding mode yd=#{yd} yu=#{yu} y=#{y} p=#{prec} d=#{(yd-yu).to_f.to_s}")
     # assert_equal(y,  yu, "the result y/yu  should not depend on the internal rounding mode yd=#{yd} yu=#{yu} y=#{y} p=#{prec} d=#{(y -yu).to_f.to_s}")
     assert_small_interval(yd, yu, y, "the result y/yu  should not depend on the internal rounding mode x0=#{x0} x=#{x} p=#{prec} d=#{(yd-yu).to_f.to_s}")
@@ -503,7 +505,7 @@ module TestLongDecHelper
     prec_dp = 2*prec+1
     z_dp = LongMath.power(x, y, prec_dp)
     msg = "x=#{x}\ny=#{y}\nz=#{z}\nz_dp=#{z_dp}\nprec=#{prec}"
-    puts msg
+    # puts msg
     assert((z - z_dp).abs <= 2*z.unit, msg)
 
     corr2 = (x - 1).abs*1000000000 # 10**9
@@ -532,7 +534,7 @@ module TestLongDecHelper
 
       diff  = (zf - wf).abs
       msg = "z=#{z}=#{zf} and wf=#{wf.to_s} should be almost equal\nx=#{x}=#{xf}\ny=#{y}=#{yf}\ndelta=#{delta}\nl=#{l}\ndiff=#{diff}\nprec=#{prec}\ncorr=#{corr}=#{corr.to_f}\ncorr2=#{corr2}=#{corr2.to_f}\ncorr_f=#{corr_f}"
-      puts msg
+      # puts msg
       assert_equal_float(zf, wf, delta, msg)
       puts "OK"
     end
@@ -563,8 +565,8 @@ module TestLongDecHelper
       u_dp = LongMath.log(z_dp, lprec_dp)
       v = LongMath.log(x, lprec+l10y)
       v_dp = LongMath.log(x, lprec_dp + l10y)
-      yv = (y*v).round_to_scale(lprec, LongDecimal::ROUND_HALF_DOWN)
-      yv_dp = (y * v_dp).round_to_scale(lprec_dp, LongDecimal::ROUND_HALF_DOWN)
+      yv = (y*v).round_to_scale(lprec, ROUND_HALF_DOWN)
+      yv_dp = (y * v_dp).round_to_scale(lprec_dp, ROUND_HALF_DOWN)
       assert((u_dp - yv_dp).abs <= unit, "u=log(z,#{lprec})=#{u_dp}=#{u} and yv=y*v=y*log(x,#{lprec+l10y})=#{yv_dp}=#{yv} should be almost equal (unit=#{unit} x=#{x.to_s} y=#{y.to_s} z=#{z_dp}=#{z.to_s} u=#{u_dp}=#{u.to_s} v=#{v_dp}=#{v.to_s} lprec=#{lprec} prec=#{prec} lprec_dp=#{lprec_dp} prec_dp=#{prec_dp})")
       assert((u - yv).abs <= unit, "u=log(z,#{lprec})=#{u} and yv=y*v=y*log(x,#{lprec+l10y})=#{yv} should be almost equal (unit=#{unit} x=#{x.to_s} y=#{y.to_s} z=#{z.to_s} u=#{u.to_s} v=#{v.to_s} lprec=#{lprec} prec=#{prec})")
     end
@@ -664,7 +666,7 @@ module TestLongDecHelper
     # calculate y = log2(x)
     y  = LongMath.log2(x, prec)
     yy = LongMath.log2(x, prec+10)
-    # assert_equal(yy.round_to_scale(y.scale, LongDecimal::ROUND_HALF_DOWN), y, "x=#{x} y=#{y} yy=#{yy}")
+    # assert_equal(yy.round_to_scale(y.scale, ROUND_HALF_DOWN), y, "x=#{x} y=#{y} yy=#{yy}")
     assert_equal_rounded(yy, y, "x=#{x} y=#{y} yy=#{yy}")
 
     # compare y against z = log2(x) calculated using regular floating
@@ -781,13 +783,26 @@ module TestLongDecHelper
 
   #
   # helper method of test_sqrt
+  # su0 and su1 describe how close the sqrt should be to the ideal result in units of the result
+  # usually su0=0 or -1 and su1=0 or 1
   #
   def check_sqrt(x, scale, mode, su0, su1, str)
     y  = x.sqrt(scale, mode)
-    if (mode == LongMath::ROUND_HALF_UP || mode == LongMath::ROUND_HALF_DOWN || mode == LongMath::ROUND_HALF_EVEN)
+    if (mode == ROUND_UNNECESSARY)
+      ALL_ROUNDING_MODES.each do |any_mode|
+        if (any_mode == ROUND_UNNECESSARY)
+          next
+        end
+        yy = x.sqrt(scale, any_mode)
+        assert_equal(y, yy, "any_mode=#{any_mode}")
+      end
+    end
+
+    if (mode == ROUND_HALF_UP || mode == ROUND_HALF_DOWN || mode == ROUND_HALF_EVEN)
       yy = x.sqrt(scale+10, mode)
       assert_equal(yy.round_to_scale(y.scale, mode), y, "x=#{x} y=#{y} yy=#{yy}")
     end
+
     z0 = (y+su0*y.unit).square
     z1 = (y+su1*y.unit).square
     assert(0 <= y.sign, "sqrt must be >= 0" + str)
@@ -840,7 +855,7 @@ module TestLongDecHelper
   #
   def check_cbrt(x, scale, mode, su0, su1, str)
     y  = x.cbrt(scale, mode)
-    if (mode == LongMath::ROUND_HALF_UP || mode == LongMath::ROUND_HALF_DOWN || mode == LongMath::ROUND_HALF_EVEN)
+    if (mode == ROUND_HALF_UP || mode == ROUND_HALF_DOWN || mode == ROUND_HALF_EVEN)
       yy = x.cbrt(scale+10, mode)
       assert_equal(yy.round_to_scale(y.scale, mode), y, "x=#{x} y=#{y} yy=#{yy}")
     end
