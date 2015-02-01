@@ -5,6 +5,9 @@ This version (1.00.03) is fixing bugs from version 1.00.02.
 It can be considered as a release candidate from the upcoming
 version 1.01.00.
 
+Change Log
+----------
+
 Improvements in 1.00.03
 - tests improved
 - bug fixes in mean calculation functionality for non-LongDecimal paramters
@@ -23,19 +26,29 @@ Improvements over the previous version in 1.00.02
 - moved power, log10, log2 etc. from long-decimal-extra.rb to long-decimal.rb
 - added more unit tests
 
+Road Map
+--------
+
 Work to do for 1.01.00:
 - go through functions that are working with rounding modes as parameter (like transcendental functions, sqrt, cbrt etc.) to ensure that they work properly with all new rounding modes
 - improve algorithm for rounding with sum constraint
 - go through unit tests to see they are covering all rounding modes
 - add unit tests for rounding with sum constraint
+- caching of frequently used calculation results needs to be done independent of rounding mode
+- add tests comparing results of transcendental functions for different rounding modes
 - rubydoc-documentation
 - external documentation
 
 Work to do for 1.02.00 (or 2.00.00):
 - add the following transcendental functions: sin, cos, tan, cot, sec, csc, sinh, cosh, tanh, coth, sech, csch, asin, acos, atan, atan2, acot, asec, acsc, asinh, acosh, atanh, acoth, asech, acsch
+- support Complex of LongDecimal wherever it makes sense
 - documentation
 - external documentation
-- interoperability with flt
+- interoperability with gmp, mpfr, mpfi, flt and other libraries
+- interoparability with rails
+
+Status
+------
 
 The existing functionality did not show any bugs during intensive
 testing, so it could be assumed that the whole library is good for
@@ -105,27 +118,24 @@ ruby test/testlongdecimal.rb
 
 This is the result of the test:
 
-Finished in 5174.187655 seconds.
-134 tests, 9461909 assertions, 0 failures, 0 errors
+Finished in 2952.440454s, 0.0660 runs/s, 7759.3877 assertions/s.
+
+195 runs, 22909130 assertions, 0 failures, 0 errors, 0 skips
 
 In addition random tests for exp, exp2, exp10, sqrt, log, log2 and
 log10 can be run for a long time, using
 
 ruby test/testrandom.rb.
 
-The functionality in lib/long-decimal-extra.rb, which contains some
-more advanced and less tested methods, has its tests in
+The power function did fail in some tests, which have been collected in
 
 ruby test/testlongdecimal-extra.rb
 
-and its random tests in
+some additional tests are in
 
 ruby test/testrandom-extra.rb
 
-This is the result of the test:
-
-Finished in 4115.851979 seconds.
-12 tests, 976 assertions, 0 failures, 0 errors
+They should be integrated into testrandom.rb
 
 Likewise tests for powers x to the yth with random x and y (which also
 resided in long-decimal-extra.rb) can be tested for a long time using
@@ -143,11 +153,10 @@ long-decimal-extra and find an error with it, please report it.
 Install
 -------
 
-
 1. Using ruby-gems (preferred)
 - open a shell window
 - become root, unless the current user has the right to install gems
-  (which is usually the case on windows)
+  (which is usually the case on windows or when using rvm)
 
   su
 
@@ -168,25 +177,21 @@ Install
   where $RUBY_DIR is the directory containing your ruby-installation,
                   usually /usr/lib/ruby or /usr/local/lib/ruby on
                   Linux/Unix-systems.
-        $RUBY_VERSION is the major version of your Ruby, like 1.8
+        $RUBY_VERSION is the major version of your Ruby, like 2.1
         $LONG_DECIMAL_VERSION is the version of long-decimal that you
-                              have installed, like 0.00.20
-  on my machine that would be
-  /usr/local/lib/ruby/gems/1.8/doc/long-decimal-0.02.01/rdoc/index.html
+                              have installed, like 1.00.03
 
 2. Installing from the sources (it is preferred to use the
    gem-installation, but since long-decimal is open-source-software you
    are off course granted the right to download the source and change
    it and install your own version.)
 
-- download the newest source-tar.gz-file from long-decimal project at rubyforge
+- download the newest source-tar.gz-file from long-decimal project at github
   which can be found by
-  http://rubyforge.org/projects/long-decimal/ -> Files
-  ( http://rubyforge.org/frs/?group_id=1334 )
 - open a shell window
   cd to the directory where you have downloaded the .tar.gz-file
   unpack the file using tar
-  tar xfzvv long-decimal-beta-1_00.tar.gz
+  tar xfzvv long-decimal-*.tar.gz
   cd long-decimal
 - now you can use rake for several operations
   - rake test
