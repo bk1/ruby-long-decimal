@@ -536,7 +536,8 @@ module TestLongDecHelper
       msg = "z=#{z}=#{zf} and wf=#{wf.to_s} should be almost equal\nx=#{x}=#{xf}\ny=#{y}=#{yf}\ndelta=#{delta}\nl=#{l}\ndiff=#{diff}\nprec=#{prec}\ncorr=#{corr}=#{corr.to_f}\ncorr2=#{corr2}=#{corr2.to_f}\ncorr_f=#{corr_f}"
       # puts msg
       assert_equal_float(zf, wf, delta, msg)
-      puts "OK"
+      # puts "OK"
+      print "."
     end
 
     # check by taking log(z) = y * log(x)
