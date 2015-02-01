@@ -1,12 +1,13 @@
 #
 # long-decimal.rb -- Arbitrary precision decimals with fixed decimal point
 #
-# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
+# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2015
 #
 # This class contains the basic functionality for working with LongDecimal
 # additional functionality, mostly transcendental functions,
 # may be found in long-decimal-extra.rb
 #
+# TAG:       $TAG$
 # CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal.rb,v 1.87 2011/01/30 20:01:40 bk1 Exp $
 # CVS-Label: $Name:  $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
@@ -5092,6 +5093,20 @@ module LongMath
     return result
   end
 
+  # arithmetic mean with LongDecimalQuot as result (experimental)
+  # parameters arguments for which arithmetic mean is calculated
+  # result is exact if parameters are Integer, LongDecimal, LongDecimalQuot or Rational
+  def LongMath.arithmetic_mean_ldq(*args)
+    if (args.empty?)
+      raise ArgumentError, "cannot calculate average of empty array"
+    end
+    sum = args.inject(LongDecimalQuot(0, 0)) do |psum,x|
+      psum + x
+    end
+    result = sum / args.size
+    return result
+  end
+
   class << LongMath
     alias_method :average, :arithmetic_mean
   end
@@ -5143,6 +5158,28 @@ module LongMath
     end
     raw_result = args.size / sum
     result = raw_result.to_ld(new_scale, rounding_mode)
+    return result
+  end
+
+  # harmonic mean with LongDecimalQuot as result (experimental)
+  # parameters arguments for which arithmetic mean is calculated
+  # result is exact if parameters are Integer, LongDecimal, LongDecimalQuot or Rational
+  def LongMath.harmonic_mean_ldq(*args)
+    result_sign, all_same, has_neg, has_zero, has_pos = sign_check_for_mean(true, *args)
+    if (all_same)
+      return LongDecimalQuot(args)
+    end
+    if (has_zero)
+      raise ArgumentError, "cannot calculate harmonic mean of argument list containing zero #{args.inspect}"
+    end
+    sum = args.inject(LongDecimalQuot(0, 0)) do |psum, x|
+      psum + if (x.kind_of? Integer)
+               Rational(1, x)
+             else
+               1 / x
+             end
+    end
+    result = args.size / sum
     return result
   end
 
@@ -5259,6 +5296,7 @@ module LongMath
 
   # round elements in such a way that round(new_scale, rounding_mode_sum, sum(elements)) = sum(elements_rounded)
   # HAARE_NIEMEYER
+  #  (experimental)
   def LongMath.round_sum_hm(new_scale, rounding_mode_sum, *elements)
     if (elements.empty?)
       return elements
@@ -5288,6 +5326,7 @@ module LongMath
 
   # round elements in such a way that round(new_scale, rounding_mode, sum(elements)) = sum(elements_rounded)
   # where rounding_mode_set is
+  #  (experimental)
   def LongMath.round_sum_divisor(new_scale, rounding_mode_sum, rounding_mode_set, *elements)
     if (elements.empty?)
       return elements

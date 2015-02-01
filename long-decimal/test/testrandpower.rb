@@ -2,8 +2,9 @@
 #
 # testrandpower.rb -- random tests for power-method from long-decimal-extra.rb
 #
-# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
+# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2015
 #
+# TAG:       $TAG$
 # CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testrandpower.rb,v 1.14 2009/05/09 15:37:00 bk1 Exp $
 # CVS-Label: $Name:  $
 # Author:    $Author: bk1 $ (Karl Brodowsky)

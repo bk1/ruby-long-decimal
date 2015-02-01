@@ -3,7 +3,7 @@
 #
 # version.rb -- extract version information from files
 #
-# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
+# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2015
 #
 # CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/version.rb,v 1.9 2011/01/22 12:34:39 bk1 Exp $
 # CVS-Label: $Name:  $

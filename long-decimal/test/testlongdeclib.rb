@@ -2,8 +2,9 @@
 #
 # library for tests for long-decimal.rb and long-decimal-extra.rb
 #
-# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
+# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2015
 #
+# TAG:       $TAG$
 # CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdeclib.rb,v 1.42 2011/02/03 00:22:39 bk1 Exp $
 # CVS-Label: $Name:  $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
