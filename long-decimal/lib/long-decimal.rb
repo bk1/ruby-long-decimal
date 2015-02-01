@@ -303,9 +303,9 @@ module LongDecimalRoundingMode
           on_boundary = true
         end
       elsif (major == MAJOR_CUBIC)
-        cube = unrounded * unrounded * unrounded
+        cube = unrounded ** 3
         lhs = 2 * cube
-        rhs = lower * lower * lower + upper * upper * upper
+        rhs = lower ** 3 + upper ** 3
         d = lhs <=> rhs
         if (d < 0)
           # unrounded < x_cubic(lower, upper)
@@ -4089,7 +4089,7 @@ module LongMath
     end
     cache_key = nil
     y_arr = nil
-    unless (with_rem)
+    unless (with_rem || mode.major == MAJOR_GEOMETRIC || mode.major == MAJOR_QUADRATIC)
       cache_key = get_cache_key("sqrt", x, mode, [2, 3, 5, 6, 7, 8, 10])
       y_arr = get_cached(cache_key, x, prec)
     end
@@ -4120,7 +4120,7 @@ module LongMath
         end
         # puts "mode=#{mode} x=#{x} gm2=#{y_lower * y_upper} qm2=#{arithmetic_mean(prec*2+1, ROUND_HALF_UP, y_lower*y_lower, y_upper*y_upper)}"
         if (mode.major == MAJOR_GEOMETRIC && x == y_lower * y_upper \
-            || mode.major == MAJOR_QUADRATIC && x == arithmetic_mean(prec*2+1, ROUND_HALF_UP, y_lower*y_lower, y_upper*y_upper))
+            || mode.major == MAJOR_QUADRATIC && x == arithmetic_mean(prec1*2+1, ROUND_HALF_UP, y_lower*y_lower, y_upper*y_upper))
           if (mode.minor == MINOR_UP || mode.minor == MINOR_CEILING)
             # puts "r=0 y=#{y} on boundary: y_upper=#{y_upper} (x=#{x} y_lower=#{y_lower} mode=#{mode})"
             return y_upper;
@@ -4192,7 +4192,7 @@ module LongMath
     end
     cache_key = nil
     y_arr = nil
-    unless (with_rem)
+    unless (with_rem || mode.major == MAJOR_CUBIC)
       cache_key = get_cache_key("cbrt", x, mode, [2, 3, 5, 6, 7, 8, 10])
       y_arr = get_cached(cache_key, x, prec)
     end
@@ -4207,6 +4207,40 @@ module LongMath
       return y_arr
     else
       y, r = y_arr
+      if (mode.major == MAJOR_CUBIC)
+        # we need to deal with the case that the square root is on the exact border
+        y_lower = y.round_to_scale(prec, ROUND_DOWN)
+        y_upper = y.round_to_scale(prec, ROUND_UP)
+        # puts "mode=#{mode} x=#{x} y=#{y} r=#{r} y_lower=#{y_lower} y_upper=#{y_upper} prec=#{prec} prec1=#{prec1}"
+        if (r == 0)
+          if (y == y_lower)
+            # puts "r=0 y=y_lower=#{y_lower} (x=#{x} y_upper=#{y_upper} mode=#{mode})"
+            return y_lower
+          elsif (y == y_upper)
+            # puts "r=0 y=y_upper=#{y_upper} (x=#{x} y_lower=#{y_lower} mode=#{mode})"
+            return y_upper
+          end
+        end
+        # puts "mode=#{mode} x=#{x} gm2=#{y_lower * y_upper} qm2=#{arithmetic_mean(prec*2+1, ROUND_HALF_UP, y_lower*y_lower, y_upper*y_upper)}"
+        if (mode.major == MAJOR_CUBIC && x == arithmetic_mean(prec1*3+1, ROUND_HALF_UP, y_lower.cube(), y_upper.cube()))
+          if (mode.minor == MINOR_UP || mode.minor == MINOR_CEILING)
+            # puts "r=0 y=#{y} on boundary: y_upper=#{y_upper} (x=#{x} y_lower=#{y_lower} mode=#{mode})"
+            return y_upper;
+          elsif (mode.minor == MINOR_DOWN || mode.minor == MINOR_FLOOR)
+            # puts "r=0 y=#{y} on boundary: y_lower=#{y_lower} (x=#{x} y_upper=#{y_upper} mode=#{mode})"
+            return y_lower;
+          elsif (mode.minor == MINOR_EVEN && y_upper[0] == 0 || mode.minor == MINOR_ODD && y_upper[0] == 1)
+            # puts "r=0 y=#{y} on boundary odd/even: y_upper=#{y_upper} (x=#{x} y_lower=#{y_lower} y_upper=#{y_upper} mode=#{mode})"
+            return y_upper;
+          elsif (mode.minor == MINOR_EVEN && y_lower[0] == 0 || mode.minor == MINOR_ODD && y_lower[0] == 1)
+            # puts "r=0 y=#{y} on boundary odd/even: y_lower=#{y_lower} (x=#{x} y_lower=#{y_lower} y_upper=#{y_upper} mode=#{mode})"
+            return y_lower;
+          else
+            raise ArgumentError, "unsupported combination: x=#{x} prec=#{prec} prec1=#{prec1} mode=#{mode} y=#{y} r=#{r} y_lower=#{y_lower} y_upper=#{y_upper}"
+          end
+        end
+      end
+
       if ((mode.minor == MINOR_EVEN || mode.minor == MINOR_ODD || mode.minor == MINOR_DOWN || mode.minor == MINOR_FLOOR) && r > 0) then
         mode = MODE_LOOKUP[[mode.major, MINOR_UP]];
       end
@@ -5042,7 +5076,7 @@ module LongMath
     if (args.empty?)
       raise ArgumentError, "cannot calculate average of empty array"
     end
-    sum = args.inject(0) do |psum,x|
+    sum = args.inject(LongDecimal.zero!(new_scale)) do |psum,x|
       psum + x
     end
     raw_result = if (sum.kind_of? Integer)
@@ -5068,7 +5102,7 @@ module LongMath
     if (has_zero)
       return LongDecimal.zero!(new_scale)
     end
-    prod = args.inject(1) do |pprod,x|
+    prod = args.inject(LongDecimal.one!(new_scale)) do |pprod, x|
       pprod * x.abs
     end
     result = nil
@@ -5097,11 +5131,11 @@ module LongMath
     if (has_zero)
       raise ArgumentError, "cannot calculate harmonic mean of argument list containing zero #{args.inspect}"
     end
-    sum = args.inject(0) do |psum, x|
+    sum = args.inject(LongDecimal.zero!) do |psum, x|
       psum + if (x.kind_of? Integer)
                Rational(1, x)
              else
-               1/x
+               LongDecimal.one!(new_scale+1)/x
              end
     end
     raw_result = args.size / sum
@@ -5153,7 +5187,10 @@ module LongMath
     if (all_same)
       return args[0].to_ld(new_scale, rounding_mode)
     end
-    sum = args.inject(0) do |psum, x|
+    sum = args.inject(LongDecimal.zero!) do |psum, x|
+      if (! (x.kind_of? LongDecimalBase) && ! (x.kind_of? Rational))
+        x = x.to_ld(2*new_scale + 20)
+      end
       psum + x*x
     end
     quot = if (sum.kind_of? Integer)
@@ -5174,11 +5211,14 @@ module LongMath
     if (all_same)
       return args[0].to_ld(new_scale, rounding_mode)
     end
-    sum = args.inject(0) do |psum, x|
+    sum = args.inject(LongDecimal.zero!) do |psum, x|
       if (x.kind_of? Complex)
         raise ArgumentError, "cubic mean not supported for complex numbers args=#{args.inspect}"
       end
-      psum + x*x*x
+      if (! (x.kind_of? LongDecimalBase) && ! (x.kind_of? Rational))
+        x = x.to_ld(2*new_scale + 20)
+      end
+      psum + x ** 3
     end
     quot = if (sum.kind_of? Integer)
              Rational(sum, args.size)
