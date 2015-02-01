@@ -2379,8 +2379,8 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   #
   # test rounding with ROUND_HARMONIC_ODD
   #
-  def test_round_to_scale_harmonic_even
-    print "\ntest_round_to_scale_harmonic_even [#{Time.now}]: "
+  def test_round_to_scale_harmonic_odd
+    print "\ntest_round_to_scale_harmonic_odd [#{Time.now}]: "
     l = LongDecimal("2.39")
     r = l.round_to_scale(0, ROUND_HARMONIC_ODD)
     assert_equal("2", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
@@ -5641,33 +5641,6 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   end
 
   # test sqare roots that come to lie exactly on the geometric mean of the two rounding candidates
-  def test_sqrt_of_6_on_geometric_boundary
-    print "\ntest_sqrt_of_6_on_geometric_boundary [#{Time.now}]: "
-    int_val = 24
-    10.times do |scale|
-      y_lower = LongDecimal(int_val, scale)
-      y_upper = y_lower.succ
-      x = y_lower * y_upper
-      msg = "x=#{x} scale=#{scale} y_lower=#{y_lower} y_upper=#{y_upper} "
-      # puts msg
-      [ ROUND_GEOMETRIC_UP, ROUND_GEOMETRIC_CEILING ].each do |mode|
-        y = LongMath.sqrt(x, scale, mode)
-        assert_equal(y_upper, y, msg + "y=#{y} mode=#{mode}")
-      end
-      [ ROUND_GEOMETRIC_DOWN, ROUND_GEOMETRIC_FLOOR ].each do |mode|
-        y = LongMath.sqrt(x, scale, mode)
-        assert_equal(y_lower, y, msg + "y=#{y} mode=#{mode}")
-      end
-      y = LongMath.sqrt(x, scale, ROUND_GEOMETRIC_EVEN)
-      assert(y == y_lower || y == y_upper, msg + "y=#{y} mode=#{ROUND_GEOMETRIC_EVEN}")
-      assert(y[0] == 0, msg + "y=#{y} mode=#{ROUND_GEOMETRIC_EVEN}")
-      y = LongMath.sqrt(x, scale, ROUND_GEOMETRIC_ODD)
-      assert(y == y_lower || y == y_upper, msg + "y=#{y} mode=#{ROUND_GEOMETRIC_ODD}")
-      assert(y[0] == 1, msg + "y=#{y} mode=#{ROUND_GEOMETRIC_ODD}")
-    end
-  end
-
-  # test sqare roots that come to lie exactly on the geometric mean of the two rounding candidates
   def test_sqrt_zero_on_geometric_boundary
     print "\ntest_sqrt_on_geometric_boundary [#{Time.now}]: "
     100.times do |scale|
@@ -7580,61 +7553,6 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
               end
             end
           end
-        end
-      end
-    end
-  end
-
-  #
-  # test x=3.141592653589793 y=3.141592653589793 z=3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170680
-  # prec=99 rm=ROUND_UP i=2
-  #
-  def test_means_pi_pi_pi_agm_hgm
-    print "\ntest_means_pi_pi_pi_agm_hgm [#{Time.now}] (4 min): "
-    x = Math::PI
-    y = Math::PI
-    z = LongMath.pi(100)
-    100.times do |i|
-      prec=i+100
-      ALL_ROUNDING_MODES.each do |rm|
-        if (rm == ROUND_UNNECESSARY)
-          next
-        end
-        xx = x.to_ld(prec, rm)
-        yy = y.to_ld(prec, rm)
-        zz = z.to_ld(prec, rm)
-        mi = [xx, yy, zz].min
-        am = LongMath.arithmetic_mean(prec, rm, x, y, z)
-        agm = LongMath.arithmetic_geometric_mean(prec, rm, x, y, z)
-        gm = LongMath.geometric_mean(prec, rm, x, y, z)
-        if (x.sgn == 0 || y.sgn == 0 || z.sgn == 0)
-          hm = gm
-          hgm = gm
-        else
-          hm = LongMath.harmonic_mean(prec, rm, x, y, z)
-          hgm = LongMath.harmonic_geometric_mean(prec, rm, x, y, z)
-        end
-        qm = LongMath.quadratic_mean(prec, rm, x, y, z)
-        cm = LongMath.cubic_mean(prec, rm, x, y, z)
-        ma = [xx, yy, zz].max
-        text = " mi=#{mi}\n hm=#{hm}\nhgm=#{hgm}\n gm=#{gm}\nagm=#{agm}\n am=#{am}\n qm=#{qm}\n cm=#{cm}\n ma=#{ma}\nprec=#{prec}\nrm=#{rm}\nx=#{x}\ny=#{y}\nz=#{z}\ni=#{i} prec=#{prec}"
-        assert(mi <= hm.succ, text)
-        assert(hm <= hgm.succ, text)
-        assert(hgm <= gm.succ, text)
-        assert(gm <= agm.succ, text)
-        assert(agm <= am.succ, text)
-        assert(am <= qm.succ, text)
-        assert(qm <= cm.succ, text)
-        assert(cm <= ma.succ, text)
-        if (x == y && y == z)
-          assert_equal(mi, hm, text)
-          assert_equal(hm, hgm, text)
-          assert_equal(hgm, gm, text)
-          assert_equal(gm, agm, text)
-          assert_equal(agm, am, text)
-          assert_equal(am, qm, text)
-          assert_equal(qm, cm, text)
-          assert_equal(cm, ma, text)
         end
       end
     end
