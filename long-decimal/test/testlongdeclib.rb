@@ -4,7 +4,7 @@
 #
 # (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2015
 #
-# TAG:       $TAG v1.00.03$
+# TAG:       $TAG pre-v1.00.03$
 # CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdeclib.rb,v 1.42 2011/02/03 00:22:39 bk1 Exp $
 # CVS-Label: $Name:  $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
@@ -506,6 +506,7 @@ module TestLongDecHelper
     prec_dp = 2*prec+1
     z_dp = LongMath.power(x, y, prec_dp)
     msg = "x=#{x}\ny=#{y}\nz=#{z}\nz_dp=#{z_dp}\nprec=#{prec}"
+    # puts msg
     assert((z - z_dp).abs <= 2*z.unit, msg)
 
     corr2 = (x - 1).abs*1000000000 # 10**9
@@ -517,21 +518,26 @@ module TestLongDecHelper
       zf = z.to_f
       qf = 1e9
       delta = [ z.unit.to_f, zf.abs / qf ].max
+      # puts "delta=#{delta} z=#{z} zu=#{z.unit} zuf=#{z.unit.to_f} zf=#{zf} |zf/qf|=#{zf.abs/qf}"
       if (yf.abs > 1)
         l = Math.log(yf.abs)
         if (l > 1)
           delta *= l
         end
+        # puts "delta=#{delta} l=#{l}"
       end
       corr = corr2 * 0.5
       if corr > 1
         corr_f = [ corr.to_f, 5.0 ].min
         delta *= corr_f
       end
+      # puts "delta=#{delta} corr_f=#{corr_f} corr=#{corr}"
 
       diff  = (zf - wf).abs
       msg = "z=#{z}=#{zf} and wf=#{wf.to_s} should be almost equal\nx=#{x}=#{xf}\ny=#{y}=#{yf}\ndelta=#{delta}\nl=#{l}\ndiff=#{diff}\nprec=#{prec}\ncorr=#{corr}=#{corr.to_f}\ncorr2=#{corr2}=#{corr2.to_f}\ncorr_f=#{corr_f}"
+      # puts msg
       assert_equal_float(zf, wf, delta, msg)
+      # puts "OK"
       print "."
     end
 
@@ -837,6 +843,7 @@ module TestLongDecHelper
   def check_cbrtb_with_remainder(x, s)
     y, r = LongMath.cbrtb_with_remainder(x)
     z0 = y.cube
+    # puts "x=#{x} y=#{y} z0=#{z0} r=#{r}"
     z1 = z0 + r
     z2 = (y+1).cube
     assert(0 <= y, "cbrt _with_remainder must be >= 0" + s)
