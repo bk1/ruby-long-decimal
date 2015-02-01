@@ -7496,6 +7496,45 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     end
   end
 
+  def test_means_two_param_round_up
+    print "\ntest_means_two_param_round_up [#{Time.now}] (20 sec): "
+    arr = [ 0, 1, 2, 7, 0.0, 1.0, 2.0, Math::PI, Rational(40, 9), Rational(0, 1), Rational(1,1), Rational(2,3), LongDecimal(3333333333333333, 10), LongDecimal(33, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ]
+    x = Math::PI
+    y = Math::PI
+    print "."
+    prec = 0
+    rm = ROUND_UP
+    xx = x.to_ld(prec, rm)
+    yy = y.to_ld(prec, rm)
+    mi = [xx, yy].min
+    am = LongMath.arithmetic_mean(prec, rm, x, y)
+    gm = LongMath.geometric_mean(prec, rm, x, y)
+    if (x.sgn == 0 || y.sgn == 0)
+      hm = gm
+    else
+      hm = LongMath.harmonic_mean(prec, rm, x, y)
+    end
+    qm = LongMath.quadratic_mean(prec, rm, x, y)
+    cm = LongMath.cubic_mean(prec, rm, x, y)
+    ma = [xx, yy].max
+    
+    text = "mi=#{mi} hm=#{hm} gm=#{gm} am=#{am} qm=#{qm} cm=#{cm} ma=#{ma} prec=#{prec} rm=#{rm} x=#{x} y=#{y}"
+    assert(mi <= hm.succ, text)
+    assert(hm <= gm.succ, text)
+    assert(gm <= am.succ, text)
+    assert(am <= qm.succ, text)
+    assert(qm <= cm.succ, text)
+    assert(cm <= ma.succ, text)
+    if (x == y)
+      assert_equal(mi, hm, text)
+      assert_equal(hm, gm, text)
+      assert_equal(gm, am, text)
+      assert_equal(am, qm, text)
+      assert_equal(qm, cm, text)
+      assert_equal(cm, ma, text)
+    end
+  end
+
   # test the right ordering of the means excluding agm/hgm
   def test_means_three_param
     print "\ntest_means_three_param [#{Time.now}] (4 min): "
