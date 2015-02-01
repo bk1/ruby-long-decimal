@@ -1,12 +1,13 @@
 #
 # long-decimal.rb -- Arbitrary precision decimals with fixed decimal point
 #
-# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
+# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2015
 #
 # This class contains the basic functionality for working with LongDecimal
 # additional functionality, mostly transcendental functions,
 # may be found in long-decimal-extra.rb
 #
+# TAG:       $TAG pre-v1.00.03$
 # CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal.rb,v 1.87 2011/01/30 20:01:40 bk1 Exp $
 # CVS-Label: $Name:  $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
@@ -298,9 +299,9 @@ module LongDecimalRoundingMode
           on_boundary = true
         end
       elsif (major == MAJOR_CUBIC)
-        cube = unrounded * unrounded * unrounded
+        cube = unrounded ** 3
         lhs = 2 * cube
-        rhs = lower * lower * lower + upper * upper * upper
+        rhs = lower ** 3 + upper ** 3
         d = lhs <=> rhs
         if (d < 0)
           # unrounded < x_cubic(lower, upper)
@@ -1668,9 +1669,19 @@ class LongDecimal < LongDecimalBase
   #
   def sint_digits10
     if (@digits10.nil?)
-      @digits10 = LongMath.int_digits10(int_val) - scale
+      result = LongMath.int_digits10(int_val) - scale
+      if frozen?
+        return result
+      end
+      @digits10 = result
     end
     @digits10
+  end
+
+  # freeze but calcuate sint_digits10 before
+  def freeze_ld
+    sint_digits10
+    freeze
   end
 
   #
@@ -2803,6 +2814,9 @@ class Numeric
   # optional second argument gives the rouding mode
   #
   def to_ld(prec = nil, mode = LongMath.standard_mode)
+    if (kind_of? Complex)
+      return Complex(real.to_ld(prec, mode), imaginary.to_ld(prec, mode))
+    end
     l = LongDecimal(self)
     if (prec.nil?)
       return l
@@ -3172,6 +3186,21 @@ module LongMath
         if (val.scale <= oval.scale)
           return
         end
+      end
+      key.freeze
+      if (val.kind_of? LongDecimal)
+        val.freeze_ld
+      elsif (val.kind_of? Array)
+        val.each do |entry|
+          if (entry.kind_of? LongDecimal)
+            entry.freeze_ld
+          else
+            entry.freeze
+          end
+        end
+        val.freeze
+      else
+        val.freeze
       end
       @@cache[key] = val
     end
@@ -4031,7 +4060,7 @@ module LongMath
     end
     cache_key = nil
     y_arr = nil
-    unless (with_rem)
+    unless (with_rem || mode.major == MAJOR_GEOMETRIC || mode.major == MAJOR_QUADRATIC)
       cache_key = get_cache_key("sqrt", x, mode, [2, 3, 5, 6, 7, 8, 10])
       y_arr = get_cached(cache_key, x, prec)
     end
@@ -4046,8 +4075,43 @@ module LongMath
       return y_arr
     else
       y, r = y_arr
-      if ((mode == ROUND_HALF_EVEN || mode == ROUND_HALF_ODD || mode == ROUND_HALF_DOWN) && r > 0) then
-        mode = ROUND_HALF_UP
+      if (mode.major == MAJOR_GEOMETRIC || mode.major == MAJOR_QUADRATIC)
+        # we need to deal with the case that the square root is on the exact border
+        y_lower = y.round_to_scale(prec, ROUND_DOWN)
+        y_upper = y.round_to_scale(prec, ROUND_UP)
+        # puts "mode=#{mode} x=#{x} y=#{y} r=#{r} y_lower=#{y_lower} y_upper=#{y_upper} prec=#{prec} prec1=#{prec1}"
+        if (r == 0)
+          if (y == y_lower)
+            # puts "r=0 y=y_lower=#{y_lower} (x=#{x} y_upper=#{y_upper} mode=#{mode})"
+            return y_lower
+          elsif (y == y_upper)
+            # puts "r=0 y=y_upper=#{y_upper} (x=#{x} y_lower=#{y_lower} mode=#{mode})"
+            return y_upper
+          end
+        end
+        # puts "mode=#{mode} x=#{x} gm2=#{y_lower * y_upper} qm2=#{arithmetic_mean(prec*2+1, ROUND_HALF_UP, y_lower*y_lower, y_upper*y_upper)}"
+        if (mode.major == MAJOR_GEOMETRIC && x == y_lower * y_upper \
+            || mode.major == MAJOR_QUADRATIC && x == arithmetic_mean(prec1*2+1, ROUND_HALF_UP, y_lower*y_lower, y_upper*y_upper))
+          if (mode.minor == MINOR_UP || mode.minor == MINOR_CEILING)
+            # puts "r=0 y=#{y} on boundary: y_upper=#{y_upper} (x=#{x} y_lower=#{y_lower} mode=#{mode})"
+            return y_upper;
+          elsif (mode.minor == MINOR_DOWN || mode.minor == MINOR_FLOOR)
+            # puts "r=0 y=#{y} on boundary: y_lower=#{y_lower} (x=#{x} y_upper=#{y_upper} mode=#{mode})"
+            return y_lower;
+          elsif (mode.minor == MINOR_EVEN && y_upper[0] == 0 || mode.minor == MINOR_ODD && y_upper[0] == 1)
+            # puts "r=0 y=#{y} on boundary odd/even: y_upper=#{y_upper} (x=#{x} y_lower=#{y_lower} y_upper=#{y_upper} mode=#{mode})"
+            return y_upper;
+          elsif (mode.minor == MINOR_EVEN && y_lower[0] == 0 || mode.minor == MINOR_ODD && y_lower[0] == 1)
+            # puts "r=0 y=#{y} on boundary odd/even: y_lower=#{y_lower} (x=#{x} y_lower=#{y_lower} y_upper=#{y_upper} mode=#{mode})"
+            return y_lower;
+          else
+            raise ArgumentError, "unsupported combination: x=#{x} prec=#{prec} prec1=#{prec1} mode=#{mode} y=#{y} r=#{r} y_lower=#{y_lower} y_upper=#{y_upper}"
+          end
+        end
+      end
+            
+      if ((mode.minor == MINOR_EVEN || mode.minor == MINOR_ODD || mode.minor == MINOR_DOWN || mode.minor == MINOR_FLOOR) && r > 0) then
+        mode = MODE_LOOKUP[[mode.major, MINOR_UP]];
       end
       y = y.round_to_scale(prec, mode)
       return y
@@ -4099,7 +4163,7 @@ module LongMath
     end
     cache_key = nil
     y_arr = nil
-    unless (with_rem)
+    unless (with_rem || mode.major == MAJOR_CUBIC)
       cache_key = get_cache_key("cbrt", x, mode, [2, 3, 5, 6, 7, 8, 10])
       y_arr = get_cached(cache_key, x, prec)
     end
@@ -4114,8 +4178,42 @@ module LongMath
       return y_arr
     else
       y, r = y_arr
-      if ((mode == ROUND_HALF_EVEN || mode == ROUND_HALF_ODD || mode == ROUND_HALF_DOWN) && r > 0) then
-        mode = ROUND_HALF_UP
+      if (mode.major == MAJOR_CUBIC)
+        # we need to deal with the case that the square root is on the exact border
+        y_lower = y.round_to_scale(prec, ROUND_DOWN)
+        y_upper = y.round_to_scale(prec, ROUND_UP)
+        # puts "mode=#{mode} x=#{x} y=#{y} r=#{r} y_lower=#{y_lower} y_upper=#{y_upper} prec=#{prec} prec1=#{prec1}"
+        if (r == 0)
+          if (y == y_lower)
+            # puts "r=0 y=y_lower=#{y_lower} (x=#{x} y_upper=#{y_upper} mode=#{mode})"
+            return y_lower
+          elsif (y == y_upper)
+            # puts "r=0 y=y_upper=#{y_upper} (x=#{x} y_lower=#{y_lower} mode=#{mode})"
+            return y_upper
+          end
+        end
+        # puts "mode=#{mode} x=#{x} gm2=#{y_lower * y_upper} qm2=#{arithmetic_mean(prec*2+1, ROUND_HALF_UP, y_lower*y_lower, y_upper*y_upper)}"
+        if (mode.major == MAJOR_CUBIC && x == arithmetic_mean(prec1*3+1, ROUND_HALF_UP, y_lower.cube(), y_upper.cube()))
+          if (mode.minor == MINOR_UP || mode.minor == MINOR_CEILING)
+            # puts "r=0 y=#{y} on boundary: y_upper=#{y_upper} (x=#{x} y_lower=#{y_lower} mode=#{mode})"
+            return y_upper;
+          elsif (mode.minor == MINOR_DOWN || mode.minor == MINOR_FLOOR)
+            # puts "r=0 y=#{y} on boundary: y_lower=#{y_lower} (x=#{x} y_upper=#{y_upper} mode=#{mode})"
+            return y_lower;
+          elsif (mode.minor == MINOR_EVEN && y_upper[0] == 0 || mode.minor == MINOR_ODD && y_upper[0] == 1)
+            # puts "r=0 y=#{y} on boundary odd/even: y_upper=#{y_upper} (x=#{x} y_lower=#{y_lower} y_upper=#{y_upper} mode=#{mode})"
+            return y_upper;
+          elsif (mode.minor == MINOR_EVEN && y_lower[0] == 0 || mode.minor == MINOR_ODD && y_lower[0] == 1)
+            # puts "r=0 y=#{y} on boundary odd/even: y_lower=#{y_lower} (x=#{x} y_lower=#{y_lower} y_upper=#{y_upper} mode=#{mode})"
+            return y_lower;
+          else
+            raise ArgumentError, "unsupported combination: x=#{x} prec=#{prec} prec1=#{prec1} mode=#{mode} y=#{y} r=#{r} y_lower=#{y_lower} y_upper=#{y_upper}"
+          end
+        end
+      end
+
+      if ((mode.minor == MINOR_EVEN || mode.minor == MINOR_ODD || mode.minor == MINOR_DOWN || mode.minor == MINOR_FLOOR) && r > 0) then
+        mode = MODE_LOOKUP[[mode.major, MINOR_UP]];
       end
       y = y.round_to_scale(prec, mode)
       return y
@@ -4934,7 +5032,7 @@ module LongMath
     if (args.empty?)
       raise ArgumentError, "cannot calculate average of empty array"
     end
-    sum = args.inject(0) do |psum,x|
+    sum = args.inject(LongDecimal.zero!((1.5*new_scale + 25).to_i)) do |psum,x|
       psum + x
     end
     raw_result = if (sum.kind_of? Integer)
@@ -4943,6 +5041,21 @@ module LongMath
         sum / args.size
     end
     result = raw_result.to_ld(new_scale, rounding_mode)
+    # puts "sum=#{sum} args.size=#{args.size} raw_result=#{raw_result} result=#{result} new_scale=#{new_scale} rounding_mode=#{rounding_mode}"
+    return result
+  end
+
+  # arithmetic mean with LongDecimalQuot as result (experimental)
+  # parameters arguments for which arithmetic mean is calculated
+  # result is exact if parameters are Integer, LongDecimal, LongDecimalQuot or Rational
+  def LongMath.arithmetic_mean_ldq(*args)
+    if (args.empty?)
+      raise ArgumentError, "cannot calculate average of empty array"
+    end
+    sum = args.inject(LongDecimalQuot(0, 0)) do |psum,x|
+      psum + x
+    end
+    result = sum / args.size
     return result
   end
 
@@ -4959,7 +5072,7 @@ module LongMath
     if (has_zero)
       return LongDecimal.zero!(new_scale)
     end
-    prod = args.inject(1) do |pprod,x|
+    prod = args.inject(LongDecimal.one!(new_scale + 20)) do |pprod, x|
       pprod * x.abs
     end
     result = nil
@@ -4988,15 +5101,37 @@ module LongMath
     if (has_zero)
       raise ArgumentError, "cannot calculate harmonic mean of argument list containing zero #{args.inspect}"
     end
-    sum = args.inject(0) do |psum, x|
+    sum = args.inject(LongDecimal.zero!) do |psum, x|
       psum + if (x.kind_of? Integer)
                Rational(1, x)
              else
-               1/x
+               LongDecimal.one!(new_scale+1)/x
              end
     end
     raw_result = args.size / sum
     result = raw_result.to_ld(new_scale, rounding_mode)
+    return result
+  end
+
+  # harmonic mean with LongDecimalQuot as result (experimental)
+  # parameters arguments for which arithmetic mean is calculated
+  # result is exact if parameters are Integer, LongDecimal, LongDecimalQuot or Rational
+  def LongMath.harmonic_mean_ldq(*args)
+    result_sign, all_same, has_neg, has_zero, has_pos = sign_check_for_mean(true, *args)
+    if (all_same)
+      return LongDecimalQuot(args)
+    end
+    if (has_zero)
+      raise ArgumentError, "cannot calculate harmonic mean of argument list containing zero #{args.inspect}"
+    end
+    sum = args.inject(LongDecimalQuot(0, 0)) do |psum, x|
+      psum + if (x.kind_of? Integer)
+               Rational(1, x)
+             else
+               1 / x
+             end
+    end
+    result = args.size / sum
     return result
   end
 
@@ -5044,7 +5179,10 @@ module LongMath
     if (all_same)
       return args[0].to_ld(new_scale, rounding_mode)
     end
-    sum = args.inject(0) do |psum, x|
+    sum = args.inject(LongDecimal.zero!) do |psum, x|
+      if (! (x.kind_of? LongDecimalBase) && ! (x.kind_of? Rational))
+        x = x.to_ld(2*new_scale + 20)
+      end
       psum + x*x
     end
     quot = if (sum.kind_of? Integer)
@@ -5065,11 +5203,14 @@ module LongMath
     if (all_same)
       return args[0].to_ld(new_scale, rounding_mode)
     end
-    sum = args.inject(0) do |psum, x|
+    sum = args.inject(LongDecimal.zero!) do |psum, x|
       if (x.kind_of? Complex)
         raise ArgumentError, "cubic mean not supported for complex numbers args=#{args.inspect}"
       end
-      psum + x*x*x
+      if (! (x.kind_of? LongDecimalBase) && ! (x.kind_of? Rational))
+        x = x.to_ld(2*new_scale + 20)
+      end
+      psum + x ** 3
     end
     quot = if (sum.kind_of? Integer)
              Rational(sum, args.size)
@@ -5107,6 +5248,7 @@ module LongMath
 
   # round elements in such a way that round(new_scale, rounding_mode_sum, sum(elements)) = sum(elements_rounded)
   # HAARE_NIEMEYER
+  #  (experimental)
   def LongMath.round_sum_hm(new_scale, rounding_mode_sum, *elements)
     if (elements.empty?)
       return elements
@@ -5136,6 +5278,7 @@ module LongMath
 
   # round elements in such a way that round(new_scale, rounding_mode, sum(elements)) = sum(elements_rounded)
   # where rounding_mode_set is
+  #  (experimental)
   def LongMath.round_sum_divisor(new_scale, rounding_mode_sum, rounding_mode_set, *elements)
     if (elements.empty?)
       return elements

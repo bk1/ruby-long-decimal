@@ -2,8 +2,9 @@
 #
 # testrandom-extra.rb -- randem tests for long-decimal-extra.rb
 #
-# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
+# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2015
 #
+# TAG:       $TAG pre-v1.00.03$
 # CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testrandom-extra.rb,v 1.5 2011/02/03 00:22:39 bk1 Exp $
 # CVS-Label: $Name:  $
 # Author:    $Author: bk1 $ (Karl Brodowsky)

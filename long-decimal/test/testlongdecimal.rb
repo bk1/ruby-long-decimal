@@ -2,8 +2,9 @@
 #
 # testlongdecimal.rb -- runit test for long-decimal.rb
 #
-# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
+# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2015
 #
+# TAG:       $TAG pre-v1.00.03$
 # CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.86 2011/01/16 22:16:59 bk1 Exp $
 # CVS-Label: $Name:  $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
@@ -2378,8 +2379,8 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   #
   # test rounding with ROUND_HARMONIC_ODD
   #
-  def test_round_to_scale_harmonic_even
-    print "\ntest_round_to_scale_harmonic_even [#{Time.now}]: "
+  def test_round_to_scale_harmonic_odd
+    print "\ntest_round_to_scale_harmonic_odd [#{Time.now}]: "
     l = LongDecimal("2.39")
     r = l.round_to_scale(0, ROUND_HARMONIC_ODD)
     assert_equal("2", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
@@ -3526,6 +3527,11 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   # test remainder rounding geometric
   #
   def check_int_round_major_to_two_allowed_remainders(remainder_sets, boundary_exact_integral, major_mode, &block)
+
+    if RUBY_VERSION.match /^1\.8/
+      puts "Warning: this test is not supported for Ruby #{RUBY_VERSION}"
+      return
+    end
 
     mode_up = MODE_LOOKUP[[major_mode, MINOR_UP]]
     mode_down = MODE_LOOKUP[[major_mode, MINOR_DOWN]]
@@ -5489,15 +5495,20 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   #
   def test_sqrt
     print "\ntest_sqrt [#{Time.now}]: "
+
+    # sqrt of 0 is always 0 without need to round
     x = LongDecimal.zero!(101)
     y = check_sqrt(x, 120, ROUND_UNNECESSARY, 0, 0, "zero")
     assert(y.zero?, "sqrt(0)")
 
+    # sqrt of 1 is always 1 without need to round
     x = LongDecimal.one!(101)
     y = check_sqrt(x, 120, ROUND_UNNECESSARY, 0, 0, "one")
     assert(y.one?, "sqrt(1)")
 
+    # sqrt of 2 always gets rounded somehow
     x = LongDecimal.two!(101)
+    x.freeze
     y0 = check_sqrt(x, 120, ROUND_DOWN, 0, 1, "two")
     assert(y0.square < x, "y0*y0")
     assert(y0.succ.square > x, "(y0.succ).square")
@@ -5548,6 +5559,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     assert(y0 <= y1, "y0 y1")
     assert(y1 <= y2, "y1 y2")
 
+    # sqrt of 3 always gets rounded somehow
     x = 3.to_ld
     y0 = check_sqrt(x, 120, ROUND_DOWN, 0, 1, "three")
     assert(y0.square < x, "y0*y0")
@@ -5559,6 +5571,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     assert(y0 <= y1, "y0 y1")
     assert(y1 <= y2, "y1 y2")
 
+    # sqrt of 4 always gets rounded somehow
     x  = 4.to_ld(101)
     y0 = check_sqrt(x, 120, ROUND_DOWN, 0, 0, "four")
     y1 = check_sqrt(x, 120, ROUND_HALF_EVEN, 0, 0, "four")
@@ -5598,6 +5611,81 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
 
     x = 5.to_ld
     check_sqrt_with_remainder(x, 120, "five")
+  end
+
+  # test sqare roots that come to lie exactly on the geometric mean of the two rounding candidates
+  def test_sqrt_on_geometric_boundary
+    print "\ntest_sqrt_on_geometric_boundary [#{Time.now}]: "
+    1.upto(100) do |int_val|
+      100.times do |scale|
+        y_lower = LongDecimal(int_val, scale)
+        y_upper = y_lower.succ
+        x = y_lower * y_upper
+        msg = "x=#{x} y_lower=#{y_lower} y_upper=#{y_upper} "
+        # puts msg
+        [ ROUND_GEOMETRIC_UP, ROUND_GEOMETRIC_CEILING ].each do |mode|
+          y = LongMath.sqrt(x, scale, mode)
+          assert_equal(y_upper, y, msg + "y=#{y} mode=#{mode}")
+        end
+        [ ROUND_GEOMETRIC_DOWN, ROUND_GEOMETRIC_FLOOR ].each do |mode|
+          y = LongMath.sqrt(x, scale, mode)
+          assert_equal(y_lower, y, msg + "y=#{y} mode=#{mode}")
+        end
+        y = LongMath.sqrt(x, scale, ROUND_GEOMETRIC_EVEN)
+        assert(y == y_lower || y == y_upper, msg + "y=#{y} mode=#{ROUND_GEOMETRIC_EVEN}")
+        assert(y[0] == 0, msg + "y=#{y} mode=#{ROUND_GEOMETRIC_EVEN}")
+        y = LongMath.sqrt(x, scale, ROUND_GEOMETRIC_ODD)
+        assert(y == y_lower || y == y_upper, msg + "y=#{y} mode=#{ROUND_GEOMETRIC_ODD}")
+        assert(y[0] == 1, msg + "y=#{y} mode=#{ROUND_GEOMETRIC_ODD}")
+      end
+    end
+  end
+
+  # test sqare roots that come to lie exactly on the geometric mean of the two rounding candidates
+  def test_sqrt_zero_on_geometric_boundary
+    print "\ntest_sqrt_on_geometric_boundary [#{Time.now}]: "
+    100.times do |scale|
+      y_lower = LongDecimal(0, scale)
+      y_upper = y_lower.succ
+      x = y_lower * y_upper
+      msg = "x=#{x} y_lower=#{y_lower} y_upper=#{y_upper} "
+      ALL_MINOR.each do |minor|
+        if (minor == MINOR_UNUSED)
+          next
+        end
+        mode = MODE_LOOKUP[[MAJOR_GEOMETRIC, minor]]
+        y = LongMath.sqrt(x, scale, mode)
+        assert_equal(0, y, msg + "y=#{y} mode=#{mode}")
+      end
+    end
+  end
+
+  # test sqare roots that come to lie exactly on the quadratic mean of the two rounding candidates
+  def test_sqrt_on_quadratic_boundary
+    print "\ntest_sqrt_on_quadratic_boundary [#{Time.now}]: "
+    100.times do |int_val|
+      100.times do |scale|
+        y_lower = LongDecimal(int_val, scale)
+        y_upper = y_lower.succ
+        x = LongMath.arithmetic_mean(2*scale + 2, ROUND_HALF_EVEN, y_lower * y_lower, y_upper * y_upper)
+        msg = "x=#{x} y_lower=#{y_lower} y_upper=#{y_upper} "
+        # puts msg
+        [ ROUND_QUADRATIC_UP, ROUND_QUADRATIC_CEILING ].each do |mode|
+          y = LongMath.sqrt(x, scale, mode)
+          assert_equal(y_upper, y, msg + "y=#{y} mode=#{mode}")
+        end
+        [ ROUND_QUADRATIC_DOWN, ROUND_QUADRATIC_FLOOR ].each do |mode|
+          y = LongMath.sqrt(x, scale, mode)
+          assert_equal(y, y_lower, msg + "y=#{y} mode=#{mode}")
+        end
+        y = LongMath.sqrt(x, scale, ROUND_QUADRATIC_EVEN)
+        assert(y == y_lower || y == y_upper, msg + "y=#{y} mode=#{ROUND_QUADRATIC_EVEN}")
+        assert(y[0] == 0, msg + "y=#{y} mode=#{ROUND_QUADRATIC_EVEN}")
+        y = LongMath.sqrt(x, scale, ROUND_QUADRATIC_ODD)
+        assert(y == y_lower || y == y_upper, msg + "y=#{y} mode=#{ROUND_QUADRATIC_ODD}")
+        assert(y[0] == 1, msg + "y=#{y} mode=#{ROUND_QUADRATIC_ODD}")
+      end
+    end
   end
 
   #
@@ -5738,6 +5826,34 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
 
     x = 5.to_ld
     check_cbrt_with_remainder(x, 120, "five")
+  end
+
+  # test sqare roots that come to lie exactly on the cubic mean of the two rounding candidates
+  def test_cbrt_on_cubic_boundary
+    print "\ntest_cbrt_on_cubic_boundary [#{Time.now}]: "
+    100.times do |int_val|
+      100.times do |scale|
+        y_lower = LongDecimal(int_val, scale)
+        y_upper = y_lower.succ
+        x = LongMath.arithmetic_mean(3*scale + 2, ROUND_HALF_EVEN, y_lower.cube(), y_upper.cube())
+        msg = "x=#{x} y_lower=#{y_lower} y_upper=#{y_upper} "
+        # puts msg
+        [ ROUND_CUBIC_UP, ROUND_CUBIC_CEILING ].each do |mode|
+          y = LongMath.cbrt(x, scale, mode)
+          assert_equal(y_upper, y, msg + "y=#{y} mode=#{mode}")
+        end
+        [ ROUND_CUBIC_DOWN, ROUND_CUBIC_FLOOR ].each do |mode|
+          y = LongMath.cbrt(x, scale, mode)
+          assert_equal(y, y_lower, msg + "y=#{y} mode=#{mode}")
+        end
+        y = LongMath.cbrt(x, scale, ROUND_CUBIC_EVEN)
+        assert(y == y_lower || y == y_upper, msg + "y=#{y} mode=#{ROUND_CUBIC_EVEN}")
+        assert(y[0] == 0, msg + "y=#{y} mode=#{ROUND_CUBIC_EVEN}")
+        y = LongMath.cbrt(x, scale, ROUND_CUBIC_ODD)
+        assert(y == y_lower || y == y_upper, msg + "y=#{y} mode=#{ROUND_CUBIC_ODD}")
+        assert(y[0] == 1, msg + "y=#{y} mode=#{ROUND_CUBIC_ODD}")
+      end
+    end
   end
 
   #
@@ -7354,6 +7470,46 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     end
   end
 
+  def test_means_two_param_round_up
+    print "\ntest_means_two_param_round_up [#{Time.now}] (20 sec): "
+    arr = [ 0, 1, 2, 7, 0.0, 1.0, 2.0, Math::PI, Rational(40, 9), Rational(0, 1), Rational(1,1), Rational(2,3), LongDecimal(3333333333333333, 10), LongDecimal(33, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ]
+    x = Math::PI
+    y = Math::PI
+    print "."
+    prec = 0
+    rm = ROUND_UP
+    xx = x.to_ld(prec, rm)
+    yy = y.to_ld(prec, rm)
+    mi = [xx, yy].min
+    am = LongMath.arithmetic_mean(prec, rm, x, y)
+    gm = LongMath.geometric_mean(prec, rm, x, y)
+    if (x.sgn == 0 || y.sgn == 0)
+      hm = gm
+    else
+      hm = LongMath.harmonic_mean(prec, rm, x, y)
+    end
+    qm = LongMath.quadratic_mean(prec, rm, x, y)
+    cm = LongMath.cubic_mean(prec, rm, x, y)
+    ma = [xx, yy].max
+    
+    text = "mi=#{mi} hm=#{hm} gm=#{gm} am=#{am} qm=#{qm} cm=#{cm} ma=#{ma} prec=#{prec} rm=#{rm} x=#{x} y=#{y}"
+    assert(mi <= hm.succ, text)
+    assert(hm <= gm.succ, text)
+    assert(gm <= am.succ, text)
+    assert(am <= qm.succ, text)
+    assert(qm <= cm.succ, text)
+    assert(cm <= ma.succ, text)
+    if (x == y)
+      assert_equal(mi, hm, text)
+      assert_equal(hm, gm, text)
+      assert_equal(gm, am, text)
+      assert_equal(am, qm, text)
+      assert_equal(qm, cm, text)
+      assert_equal(cm, ma, text)
+    end
+  end
+
+  # test the right ordering of the means excluding agm/hgm
   def test_means_three_param
     print "\ntest_means_three_param [#{Time.now}] (4 min): "
     arr = [ 0, 1, 2, 0.0, 1.0, Math::PI, Rational(40, 9), Rational(0, 1), Rational(1,1), LongDecimal(3333333333333333, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ]
@@ -7363,6 +7519,60 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
         arr.each do |z|
           print "."
           12.times do |prec|
+            ALL_ROUNDING_MODES.each do |rm|
+              if (rm == ROUND_UNNECESSARY)
+                next
+              end
+              xx = x.to_ld(prec, rm)
+              yy = y.to_ld(prec, rm)
+              zz = z.to_ld(prec, rm)
+              mi = [xx, yy, zz].min
+              am = LongMath.arithmetic_mean(prec, rm, x, y, z)
+              gm = LongMath.geometric_mean(prec, rm, x, y, z)
+              if (x.sgn == 0 || y.sgn == 0 || z.sgn == 0)
+                hm = gm
+              else
+                hm = LongMath.harmonic_mean(prec, rm, x, y, z)
+              end
+              qm = LongMath.quadratic_mean(prec, rm, x, y, z)
+              cm = LongMath.cubic_mean(prec, rm, x, y, z)
+              ma = [xx, yy, zz].max
+              text = "mi=#{mi} hm=#{hm} gm=#{gm} am=#{am} qm=#{qm} cm=#{cm} ma=#{ma} prec=#{prec} rm=#{rm} x=#{x} y=#{y} z=#{z}"
+              assert(mi <= hm.succ, text)
+              assert(hm <= gm.succ, text)
+              assert(gm <= am.succ, text)
+              assert(am <= qm.succ, text)
+              assert(qm <= cm.succ, text)
+              assert(cm <= ma.succ, text)
+              if (x == y && y == z)
+                assert_equal(mi, hm, text)
+                assert_equal(hm, gm, text)
+                assert_equal(gm, am, text)
+                assert_equal(am, qm, text)
+                assert_equal(qm, cm, text)
+                assert_equal(cm, ma, text)
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+
+  # test the right ordering of the means (including agm/hgm)
+  def test_means_three_param_agm_hgm
+    print "\ntest_means_three_param_agm_hgm [#{Time.now}] (4 min): "
+    arr = [ 0, 1, 2, 0.0, 1.0, Math::PI, Rational(40, 9), Rational(0, 1), Rational(1,1), LongDecimal(3333333333333333, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ]
+    arr.each do |x|
+      x.freeze
+      arr.each do |y|
+        y.freeze
+        print ":"
+        arr.each do |z|
+          z.freeze
+          print "."
+          prec = 0
+          3.times do |i|
             ALL_ROUNDING_MODES.each do |rm|
               if (rm == ROUND_UNNECESSARY)
                 next
@@ -7384,7 +7594,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
               qm = LongMath.quadratic_mean(prec, rm, x, y, z)
               cm = LongMath.cubic_mean(prec, rm, x, y, z)
               ma = [xx, yy, zz].max
-              text = "mi=#{mi} hm=#{hm} gm=#{gm} am=#{am} qm=#{qm} cm=#{cm} ma=#{ma} prec=#{prec} rm=#{rm} x=#{x} y=#{y} z=#{z}"
+              text = "mi=#{mi} hm=#{hm} gm=#{gm} am=#{am} qm=#{qm} cm=#{cm} ma=#{ma} prec=#{prec} rm=#{rm} x=#{x} y=#{y} z=#{z} i=#{i}"
               assert(mi <= hm.succ, text)
               assert(hm <= hgm.succ, text)
               assert(hgm <= gm.succ, text)
@@ -7398,12 +7608,13 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
                 assert_equal(hm, hgm, text)
                 assert_equal(hgm, gm, text)
                 assert_equal(gm, agm, text)
-                assert_equal(gm, agm, text)
+                assert_equal(agm, am, text)
                 assert_equal(am, qm, text)
                 assert_equal(qm, cm, text)
                 assert_equal(cm, ma, text)
               end
             end
+            prec = (prec << 3) + 11
           end
         end
       end

@@ -3,6 +3,7 @@ README2
 doc
 *.log
 *.aux
+*.gem
 pkg
 tmp.rb
 todo
