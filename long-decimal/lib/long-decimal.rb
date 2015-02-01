@@ -7,7 +7,7 @@
 # additional functionality, mostly transcendental functions,
 # may be found in long-decimal-extra.rb
 #
-# TAG:       $TAG pre-v1.00.03$
+# TAG:       $TAG v1.00.03$
 # CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal.rb,v 1.87 2011/01/30 20:01:40 bk1 Exp $
 # CVS-Label: $Name:  $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
