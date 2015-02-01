@@ -124,6 +124,7 @@ class TestLongDecimalExperimental_class < UnitTest
     end
     puts
     puts "t1sum=#{t1sum} t2sum=#{t2sum} t3sum=#{t3sum} t4sum=#{t4sum} t5sum=#{t5sum} t6sum=#{t6sum}"
+    # puts "bad_1=#{bad_1.inspect} bad_2=#{bad_2.inspect} bad_3=#{bad_3.inspect} bad_4=#{bad_4.inspect} bad_5=#{bad_5.inspect} bad_6=#{bad_6.inspect}"
     puts "bad_count_1=#{bad_1.size} bad_count_2=#{bad_2.size} bad_count_3=#{bad_3.size} bad_count_4=#{bad_4.size} bad_count_5=#{bad_5.size} bad_count_6=#{bad_6.size}"
   end
 
@@ -211,6 +212,7 @@ class TestLongDecimalExperimental_class < UnitTest
     end
     puts
     puts "t1sum=#{t1sum} t2sum=#{t2sum} t3sum=#{t3sum} t4sum=#{t4sum} t5sum=#{t5sum} t6sum=#{t6sum}"
+    # puts "bad_1=#{bad_1.inspect} bad_2=#{bad_2.inspect} bad_3=#{bad_3.inspect} bad_4=#{bad_4.inspect} bad_5=#{bad_5.inspect} bad_6=#{bad_6.inspect}"
     puts "bad_count_1=#{bad_1.size} bad_count_2=#{bad_2.size} bad_count_3=#{bad_3.size} bad_count_4=#{bad_4.size} bad_count_5=#{bad_5.size} bad_count_6=#{bad_6.size}"
     l = LongDecimal.zero!(0)
   end
@@ -300,6 +302,7 @@ class TestLongDecimalExperimental_class < UnitTest
     end
     puts
     puts "t1sum=#{t1sum} t2sum=#{t2sum} t3sum=#{t3sum} t4sum=#{t4sum} t5sum=#{t5sum} t6sum=#{t6sum}"
+    # puts "bad_1=#{bad_1.inspect} bad_2=#{bad_2.inspect} bad_3=#{bad_3.inspect} bad_4=#{bad_4.inspect} bad_5=#{bad_5.inspect} bad_6=#{bad_6.inspect}"
     puts "bad_count_1=#{bad_1.size} bad_count_2=#{bad_2.size} bad_count_3=#{bad_3.size} bad_count_4=#{bad_4.size} bad_count_5=#{bad_5.size} bad_count_6=#{bad_6.size}"
     l = LongDecimal.zero!(0)
   end

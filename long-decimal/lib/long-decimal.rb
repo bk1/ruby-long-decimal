@@ -51,6 +51,8 @@ module LongDecimalRoundingMode
   private
 
   ALL_MINOR = [ MINOR_UP, MINOR_DOWN, MINOR_CEILING, MINOR_FLOOR, MINOR_EVEN, MINOR_ODD ]
+  # puts(ALL_MINOR)
+  # puts
 
   NO_MINOR = [ MINOR_UNUSED ]
 
@@ -106,6 +108,9 @@ module LongDecimalRoundingMode
 
   ALL_MAJOR_MODES = [  MAJOR_UP, MAJOR_DOWN, MAJOR_CEILING, MAJOR_FLOOR, MAJOR_UNNECESSARY, MAJOR_HALF, MAJOR_GEOMETRIC, MAJOR_HARMONIC, MAJOR_QUADRATIC, MAJOR_CUBIC ]
 
+  # puts("ALL_MAJOR_MODES:")
+  # puts(ALL_MAJOR_MODES)
+  # puts
 
   MUL_INVERSE_MAJOR_MODE = {
     MAJOR_UP           =>   MAJOR_DOWN,
@@ -383,7 +388,9 @@ module LongDecimalRoundingMode
   end
 
   ALL_ROUNDING_MODES.freeze
+  # puts(ALL_ROUNDING_MODES)
   MODE_LOOKUP.freeze
+  # puts(MODE_LOOKUP)
 
   ALL_ROUNDING_MODES.each do |rm|
     majm = rm.major
@@ -392,6 +399,7 @@ module LongDecimalRoundingMode
     MUL_INVERSE_MODE[rm] = mul_inv
     add_inv = MODE_LOOKUP[[ ADD_INVERSE_MAJOR_MODE[majm], ADD_INVERSE_MINOR_MODE[minm]]]
     ADD_INVERSE_MODE[rm] = add_inv
+    # puts("rm=#{rm} mul_inv=#{mul_inv} add_inv=#{add_inv}")
   end
 
   MUL_INVERSE_MODE.freeze
@@ -615,6 +623,7 @@ class Integer
     end
     lower = self - (r_self - r_lower)
     upper = self + (r_upper - r_self)
+    # puts "round_to_allowed_remainders(remainders_param=#{remainders_param} modulus=#{modulus} rounding_mode=#{rounding_mode} zero_rounding_mode=#{zero_rounding_mode}) remainders=#{remainders} lower=#{lower} upper=#{upper} r_lower=#{r_lower} r_upper=#{r_upper} r_self=#{r_self}"
 
     unless (lower < self && self < upper)
       raise ArgumentError, "self=#{self} not in (#{lower}, #{upper}) with r_self=#{r_self} r_lower=#{r_lower} r_upper=#{r_upper}"
@@ -1441,6 +1450,7 @@ class LongDecimal < LongDecimalBase
     # result 0.0 if int_val == 0
     if (int_val == 0)
       # t1
+      # puts "t1 #{self.to_s}=#{self.inspect} -> 0.0"
       return 0.0
     end
 
@@ -1448,12 +1458,15 @@ class LongDecimal < LongDecimalBase
       if (int_val.abs <= LongMath::MAX_FLOATABLE)
         y = int_val.to_f
         # t2
+        # puts "t2 #{self.to_s}=#{self.inspect} -> #{y}"
         return y
       elsif int_val < 0
         # t13
+        # puts "t13 #{self.to_s}=#{self.inspect} -> -Infinity"
         return -1.0/0.0
       elsif int_val > 0
         # t14
+        # puts "t13 #{self.to_s}=#{self.inspect} -> Infinity"
         return 1.0/0.0
       end
     end
@@ -1462,6 +1475,7 @@ class LongDecimal < LongDecimalBase
     if (self < 0) then
       y = -(-self).to_f
       # t3
+      # puts "t3 #{self.to_s}=#{self.inspect} -> #{y}"
       return y
     end
 
@@ -1469,6 +1483,7 @@ class LongDecimal < LongDecimalBase
     if (int_val <= LongMath::MAX_FLOATABLE && scale <= Float::MAX_10_EXP)
       y = to_f_simple(int_val, scale)
       # t4
+      # puts "t4 #{self.to_s}=#{self.inspect} -> #{y}"
       return y
     end
 
@@ -1478,6 +1493,7 @@ class LongDecimal < LongDecimalBase
     # handle overflow: raise exception
     if (int_val > divisor * LongMath::MAX_FLOATABLE) then
       # t5
+      # puts "t5 #{self.to_s}=#{self.inspect} -> Infinity"
       return 1/0.0 # Infinity
     end
 
@@ -1485,6 +1501,7 @@ class LongDecimal < LongDecimalBase
     # handle underflow: return 0.0
     if (int_val * LongMath::INV_MIN_FLOATABLE * 20 < divisor) then
       # t6
+      # puts "t6 #{self.to_s}=#{self.inspect} -> 0.0"
       p = int_val * LongMath::INV_MIN_FLOATABLE * 20
       d = divisor
       n = int_val
@@ -1504,11 +1521,13 @@ class LongDecimal < LongDecimalBase
         y *= q
         if (y == 0.0)
           # t7
+          # puts "t7 #{self.to_s}=#{self.inspect} -> #{y}"
           return y
         end
         s -= qe
       end
       # t8
+      # puts "t8 #{self.to_s}=#{self.inspect} -> #{y}"
       return y
     end
 
@@ -1521,6 +1540,7 @@ class LongDecimal < LongDecimalBase
       # scale = 0, 0 < int_val <= MAX_FLOATABLE
       y = to_f_simple(rounded_ld.int_val, rounded_ld.scale)
       # t9
+      # puts "t9 #{self.to_s}=#{self.inspect} #{rounded_ld.to_s}=#{rounded_ld.inspect} -> #{y}"
       return y
     end
 
@@ -1531,6 +1551,7 @@ class LongDecimal < LongDecimalBase
 
     if (cmp == 0)
       # t10
+      # puts "t10 #{self.to_s}=#{self.inspect} -> 1.0"
       return 1.0
     elsif (cmp > 0)
       # self > 1, retain MAX_SIGNIFICANT_FLOATABLE_DIGITS
@@ -1538,6 +1559,7 @@ class LongDecimal < LongDecimalBase
       # self >= LongMath::FLOATABLE_WITHOUT_FRACTION > self > 1, scale = 16,
       y = to_f_simple(rounded_ld.int_val, rounded_ld.scale)
       # t11
+      # puts "t11 #{self.to_s}=#{self.inspect} #{rounded_ld.to_s}=#{rounded_ld.inspect} -> #{y}"
       return y
     else
       # self < 1
@@ -1553,6 +1575,7 @@ class LongDecimal < LongDecimalBase
       rounded_ld = round_to_scale(new_scale, ROUND_HALF_UP)
       y = to_f_simple(rounded_ld.int_val, rounded_ld.scale)
       # t12
+      # puts "t12 #{self.to_s}=#{self.inspect} #{rounded_ld.to_s}=#{rounded_ld.inspect} sd=#{sd} #{self <=> 1} -> #{y}"
       return y
     end
   end
@@ -2202,9 +2225,11 @@ class LongDecimal < LongDecimalBase
       # s, o = other.coerce(self.to_f)
       if (RUNNING_19)
         s, o = other.coerce(self)
+        # puts "complex coerce 19: #{self}, #{other} -> #{s}, #{o}"
         return o, s
       else
         s, o = other.coerce(Complex(self, 0))
+        # puts "complex coerce 18/J: #{self}, #{other} -> #{s}, #{o}"
         return o, s
       end
       # s, o = other.coerce(Complex(self.to_f, 0))
@@ -2540,6 +2565,7 @@ class LongDecimalQuot < LongDecimalBase
     if (s.kind_of? LongDecimalQuot) then
       LongDecimalQuot(s.rat - o.rat, [s.scale, o.scale].max)
     else
+      # puts "ldq-coerce: s=#{s} o=#{o} self=#{self} other=#{other}"
       s - o
     end
   end
@@ -2951,7 +2977,9 @@ class Rational
     def to_f
       num = numerator
       den = denominator
+      # puts("num=#{num} den=#{den}")
       sign = num <=> 0
+      # puts("num=#{num} den=#{den} sign=#{sign}")
       if (sign.zero?)
         return 0.0
       elsif sign < 0
@@ -3036,7 +3064,9 @@ module LongMath
     if (power.nil?)
       power = powers_big_base ** n1
       @@powers_of_big_base[n1] = power
+      # puts "npower_of_big_base(n1=#{n1}) c->#{power.size}"
     else
+      # puts "npower_of_big_base(n1=#{n1}) c<-#{power.size}"
    end
     power
   end
@@ -3273,8 +3303,11 @@ module LongMath
     n1 = n >> POWERS_MED_EXP_PARAM
     p  = npower10_cached(n0)
     if (n1 > 0) then
+      # puts "n0=#{n0} n1=#{n1}"
       p1 = npower_of_big_base(n1)
+      # puts "n0=#{n0} n1=#{n1} p1"
       p *= p1
+      # puts "n0=#{n0} n1=#{n1} p"
     end
     return p
   end
@@ -4759,6 +4792,7 @@ module LongMath
     raise TypeError, "x=#{x.inspect} must not negative" unless x >= 0
     prec = check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
+    # puts "LongMath.power(x=#{x} y=#{y} prec=#{prec} mode=#{mode})"
 
     # handle the special cases where base or exponent are 0 or 1 explicitely
     if y.zero? then
@@ -4775,8 +4809,10 @@ module LongMath
     # x ** y <= 10**-s/2  <=> y * log(x) <= -s log(10) - log(2)
 
     iprec, iprec_x, iprec_y, logx_y_f = calc_iprec_for_power(x, y, prec)
+    # puts "x=#{x} y=#{y} prec=#{prec} iprec=#{iprec} iprec_x=#{iprec_x} iprec_y=#{iprec_y} logx_y_f=#{logx_y_f}: checking x < 1 && y > 0 || x > 1 && y < 0=#{x < 1 && y > 0 || x > 1 && y < 0}"
     $stdout.flush
     if (x < 1 && y > 0 || x > 1 && y < 0) then
+      # puts "checking if zero logx_y_f=#{logx_y_f} <= #{- prec * LOG10 - LOG2}"
       if (logx_y_f <= - prec * LOG10 - LOG2) then
         return LongDecimal.zero!(prec)
       end
@@ -4826,8 +4862,10 @@ module LongMath
       y = -y
       x = (1/x).round_to_scale(iprec_x*2, mode)
       iprec, iprec_x, iprec_y, logx_y_f = calc_iprec_for_power(x, y, prec)
+      # puts "x=#{x} y=#{y} prec=#{prec} iprec=#{iprec} iprec_x=#{iprec_x} iprec_y=#{iprec_y} logx_y_f=#{logx_y_f}: checking x < 1 && y > 0 || x > 1 && y < 0=#{x < 1 && y > 0 || x > 1 && y < 0}"
       $stdout.flush
       if (x < 1 && y > 0 || x > 1 && y < 0) then
+        # puts "checking if zero logx_y_f=#{logx_y_f} <= #{- prec * LOG10 - LOG2}"
         if (logx_y_f <= - prec * LOG10 - LOG2) then
           return LongDecimal.zero!(prec)
         end
@@ -4839,12 +4877,14 @@ module LongMath
     y0 = y.round_to_scale(0, LongMath.standard_imode).to_i
     x0 = x
     point_shift = 0
+    # puts "x0=#{x0} y0=#{y0}"
     while x0 > LongMath::MAX_FLOATABLE
       x0 = x0.move_point_left(100)
       point_shift += 100
     end
     iprec2 = 2 * (iprec + point_shift)
     iprec3 = [ iprec2, LongMath.prec_limit() - 24 ].min
+    # puts "x0=#{x0} y0=#{y0} point_shift=#{point_shift} iprec=#{iprec} iprec2=#{iprec2} iprec3=#{iprec3}"
     z0 = LongMath.ipower(x0, y0, iprec3, mode)
     if (point_shift > 0)
       unless z0.kind_of? LongDecimal
@@ -4860,6 +4900,7 @@ module LongMath
     # z1 = LongMath.power_internal(x, y1, prec+prec_extra , mode)
     z1 = LongMath.power_internal(x, y1, prec+prec_extra + 4, mode)
     z  = z0 * z1
+    # puts("x=#{x} y=#{y} z=#{z} y not int")
     return z.to_ld(prec, mode)
   end
 
@@ -4878,10 +4919,12 @@ module LongMath
     raise TypeError, "exponent y=#{y.inspect} must not be greater MAX_FLOATABLE=#{MAX_FLOATABLE}" unless y.abs <= MAX_FLOATABLE
     prec = check_is_prec(prec, "prec")
     check_is_mode(mode, "mode")
+    # puts "LongMath.ipower(x=#{x} y=#{y} prec=#{prec} mode=#{mode})"
 
     if (y.zero?)
       return 1
     elsif ! (x.kind_of? LongDecimalBase) || x.scale * y.abs <= prec
+      # puts "x=#{x} y=#{y} using **"
       return x ** y
     elsif (y < 0)
       l = Math.log10(x.abs.to_f)
@@ -4890,10 +4933,12 @@ module LongMath
       end
       # return (1/LongMath.ipower(x, -y, prec + 2, mode)).round_to_scale(prec, mode)
       xi = 1/x
+      # puts "x=#{x} y=#{y} prec=#{prec} using (1/x)**y xi=#{xi}"
       xr = xi.round_to_scale(prec + 6, mode)
       return LongMath.ipower(xr, -y, prec, mode)
     else
       # y > 0
+      # puts "x=#{x} y=#{y} regular"
       cnt = 0
       z  = x
       y0 = y
@@ -4914,6 +4959,7 @@ module LongMath
             x = x.round_to_scale(prec+4, mode)
           end
           if (cnt > 1000)
+            # puts("ipower x=#{x} y=#{y} cnt=#{cnt} z=#{z} t=#{Time.now - t0}")
             cnt = 0
           end
 
@@ -4926,7 +4972,9 @@ module LongMath
           end
         end
       end
+      # puts "z=#{z} rounding prec=#{prec}"
       z = z.round_to_scale(prec, mode)
+      # puts "rounded -> z=#{z}"
       return z
     end
   end

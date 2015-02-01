@@ -1148,6 +1148,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
             y = Complex(yr, yi)
             z = x/y
             msg = "x=#{x} y=#{y} z=#{z} xr=#{xr.inspect} (#{tw_c}) xi=#{xi.inspect} (#{fi_c}) yr=#{yr.inspect} (#{th_c}) yi=#{yi.inspect} (#{fo_c})"
+            # puts msg
             if (xr.kind_of? Integer) && (xi.kind_of? Integer) && (yr.kind_of? Integer) && (yi.kind_of? Integer) # && ! LongDecimal::RUNNING_19
               # ruby 1.9 creates rational result even from integers, ruby 1.8 uses integers as results.
               zc = (x.cdiv y)
@@ -2910,6 +2911,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
         end
 
         text0 = "m=#{modulus} x=#{x} s=#{remainders.inspect}"
+        # puts text0
         print "."
         $stdout.flush
         n = 3*modulus
@@ -3062,6 +3064,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
         end
 
         text = "m=#{modulus} x=#{x} s=#{remainders.inspect}"
+        # puts text
         print "."
         $stdout.flush
 
@@ -3540,6 +3543,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
 
     20.upto 25 do |modulus|
       remainder_sets.each do |remainders|
+        # puts text
         print "."
         $stdout.flush
 
@@ -4032,6 +4036,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
       end
     end
     map.each do |x, x1|
+      # puts "x=#{x} x1=#{x1}"
       print ":"
       $stdout.flush
       map.each do |y, y1|
@@ -7704,6 +7709,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
         @powers_of_10[x] = zz
       end
       assert_equal(z, zz)
+      # puts("exp=" + x.to_s)
       $stdout.flush
     else
       @powers_of_10[x] ||= z
@@ -7723,10 +7729,12 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
 
     12.times do |i|
       check_npower10(3**i)
+      # puts(3**i)
     end
 
     12.times do |i|
       check_npower10(3**i)
+      # puts(3**i)
     end
 
     y = 1
@@ -7741,6 +7749,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     x0 = 2046
     y0 = 10**x0
     60.times do |i|
+      # puts "i=" + i.to_s
       $stdout.flush
       y = y0
       x = x0

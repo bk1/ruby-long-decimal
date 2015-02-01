@@ -325,12 +325,14 @@ class LongDecimal
     elsif dividend < divisor
       # self is between 0 and 1 and dividend > LongMath::MAX_FLOATABLE
       # return LongDecimal(dividend.div(LongMath.npower10(digits)), scale -digits).to_f
+      # puts "via s (1): #{self.inspect}"
       return self.to_s.to_f
     else
       q = dividend.abs / divisor
       if (q.abs > 1000000000000000000000)
         return q.to_f
       else
+        # puts "via s (2): #{self.inspect}"
         return self.to_s.to_f
       end
     end
