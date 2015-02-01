@@ -1,11 +1,17 @@
 Version
 -------
 
-This version (1.00.02) is fixing bugs from version 1.00.01.
-It also can be considered as a release candidate from the upcoming
-version 1.01.00, adding new features.
+This version (1.00.03) is fixing bugs from version 1.00.02.
+It can be considered as a release candidate from the upcoming
+version 1.01.00.
 
-Improvements over the previous version:
+Improvements in 1.00.03
+- tests improved
+- bug fixes in mean calculation functionality for non-LongDecimal paramters
+- calculation of sqrt on arguments that result in the exact square root being the boundary for geometric or quadratic rounding recognized and fixed
+- calculation of cbrt on arguments that result in the exact cube root being the boundary for cubic rounding recognized and fixed
+
+Improvements over the previous version in 1.00.02
 
 - migration from CVS (rubyforge) to GIT (github)
 - bug fixed with frozen string attempted to be changed when parsing a string for a long-decimal number.
@@ -238,7 +244,7 @@ License
 
 Ruby's license or LGPL
 Find copies of these licenses on http://www.gnu.org/ or http://www.ruby-lang.org/
-© Karl Brodowsky (IT Sky Consulting GmbH) 2006-2014
+© Karl Brodowsky (IT Sky Consulting GmbH) 2006-2015
 http://www.it-sky-consulting.com/
 
 Warranty
