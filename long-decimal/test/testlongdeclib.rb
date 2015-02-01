@@ -30,7 +30,7 @@ module TestLongDecHelper
   include LongDecimalRoundingMode
 
   @RCS_ID='-$Id: testlongdeclib.rb,v 1.42 2011/02/03 00:22:39 bk1 Exp $-'
-  
+
   def assert_equal_float(lhs, rhs, delta=0, msg="")
     if ((lhs - rhs).abs >= delta)
       msg2 = "delta=#{delta} #{msg}"
