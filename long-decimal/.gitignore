@@ -4,6 +4,7 @@ doc
 *.log
 *.aux
 *.gem
+*.tar.gz
 pkg
 tmp.rb
 todo
