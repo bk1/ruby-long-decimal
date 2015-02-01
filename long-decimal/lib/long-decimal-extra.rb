@@ -1,8 +1,13 @@
 #
 # long-decimal-extra.rb -- Arbitrary precision decimals with fixed decimal point
 #
-# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2009
+# additional features: all functionality in this file is experimental
+# and can be removed without notice in future versions. Or moved to
+# long-decimal.rb, if useful.
 #
+# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2015
+#
+# TAG:       $TAG$
 # CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal-extra.rb,v 1.29 2011/02/04 23:17:21 bk1 Exp $
 # CVS-Label: $Name:  $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
@@ -456,6 +461,35 @@ class Bignum
     end
   end
 
+end
+
+def LongMath.continued_fraction(x, steps)
+  if (x == 0)
+    x
+  end
+  arr = []
+  steps.times do
+    xi = x.to_ld(0, LongMath::ROUND_FLOOR)
+    xd = x-xi
+    if xd.zero?
+      return arr
+    end
+    x = 1/xd
+    arr.push(xi.to_i)
+  end
+  arr
+end
+
+def LongMath.continued_fraction_to_r(arr)
+  result = nil
+  arr.reverse.each do |x|
+    if (result.nil?)
+      result = Rational(x)
+    else
+      result = Rational(x) + 1/result
+    end
+  end
+  result
 end
 
 # end of file long-decimal-extra.rb
