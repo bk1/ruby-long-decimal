@@ -2839,6 +2839,9 @@ class Numeric
   # optional second argument gives the rouding mode
   #
   def to_ld(prec = nil, mode = LongMath.standard_mode)
+    if (kind_of? Complex)
+      return Complex(real.to_ld(prec, mode), imaginary.to_ld(prec, mode))
+    end
     l = LongDecimal(self)
     if (prec.nil?)
       return l
