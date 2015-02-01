@@ -4142,7 +4142,7 @@ module LongMath
           end
         end
       end
-            
+
       if ((mode.minor == MINOR_EVEN || mode.minor == MINOR_ODD || mode.minor == MINOR_DOWN || mode.minor == MINOR_FLOOR) && r > 0) then
         mode = MODE_LOOKUP[[mode.major, MINOR_UP]];
       end

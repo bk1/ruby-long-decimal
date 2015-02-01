@@ -7496,7 +7496,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     qm = LongMath.quadratic_mean(prec, rm, x, y)
     cm = LongMath.cubic_mean(prec, rm, x, y)
     ma = [xx, yy].max
-    
+
     text = "mi=#{mi} hm=#{hm} gm=#{gm} am=#{am} qm=#{qm} cm=#{cm} ma=#{ma} prec=#{prec} rm=#{rm} x=#{x} y=#{y}"
     assert(mi <= hm.succ, text)
     assert(hm <= gm.succ, text)
