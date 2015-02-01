@@ -3531,6 +3531,11 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   #
   def check_int_round_major_to_two_allowed_remainders(remainder_sets, boundary_exact_integral, major_mode, &block)
 
+    if RUBY_VERSION.match /^1\.8/
+      puts "Warning: this test is not supported for Ruby #{RUBY_VERSION}"
+      return
+    end
+
     mode_up = MODE_LOOKUP[[major_mode, MINOR_UP]]
     mode_down = MODE_LOOKUP[[major_mode, MINOR_DOWN]]
     mode_floor = MODE_LOOKUP[[major_mode, MINOR_FLOOR]]

@@ -103,6 +103,11 @@ require 'long-decimal'
 Test
 ----
 
+Tests have been run with Ruby 1.8.7, 1.9.3, 2.0.0 and 2.1.1
+Some tests do not work with 1.8.7 because of missing language features.
+They are skipped.  No major effort for adapting tests to this version
+will be allocated.
+
 Some runit tests have been included.  They give some indication of the
 correctness of this library and allow changes to be checked in order
 to make sure that what was running before would still work afterwards.
