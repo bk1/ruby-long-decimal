@@ -5076,7 +5076,7 @@ module LongMath
     if (args.empty?)
       raise ArgumentError, "cannot calculate average of empty array"
     end
-    sum = args.inject(LongDecimal.zero!(new_scale)) do |psum,x|
+    sum = args.inject(LongDecimal.zero!((1.5*new_scale + 25).to_i)) do |psum,x|
       psum + x
     end
     raw_result = if (sum.kind_of? Integer)
@@ -5102,7 +5102,7 @@ module LongMath
     if (has_zero)
       return LongDecimal.zero!(new_scale)
     end
-    prod = args.inject(LongDecimal.one!(new_scale)) do |pprod, x|
+    prod = args.inject(LongDecimal.one!(new_scale + 20)) do |pprod, x|
       pprod * x.abs
     end
     result = nil
