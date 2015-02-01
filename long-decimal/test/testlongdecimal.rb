@@ -4,7 +4,7 @@
 #
 # (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2015
 #
-# TAG:       $TAG pre-v1.00.03$
+# TAG:       $TAG v1.00.03$
 # CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal.rb,v 1.86 2011/01/16 22:16:59 bk1 Exp $
 # CVS-Label: $Name:  $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
@@ -1148,7 +1148,6 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
             y = Complex(yr, yi)
             z = x/y
             msg = "x=#{x} y=#{y} z=#{z} xr=#{xr.inspect} (#{tw_c}) xi=#{xi.inspect} (#{fi_c}) yr=#{yr.inspect} (#{th_c}) yi=#{yi.inspect} (#{fo_c})"
-            # puts msg
             if (xr.kind_of? Integer) && (xi.kind_of? Integer) && (yr.kind_of? Integer) && (yi.kind_of? Integer) # && ! LongDecimal::RUNNING_19
               # ruby 1.9 creates rational result even from integers, ruby 1.8 uses integers as results.
               zc = (x.cdiv y)
@@ -2911,7 +2910,6 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
         end
 
         text0 = "m=#{modulus} x=#{x} s=#{remainders.inspect}"
-        # puts text0
         print "."
         $stdout.flush
         n = 3*modulus
@@ -3064,7 +3062,6 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
         end
 
         text = "m=#{modulus} x=#{x} s=#{remainders.inspect}"
-        # puts text
         print "."
         $stdout.flush
 
@@ -3543,7 +3540,6 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
 
     20.upto 25 do |modulus|
       remainder_sets.each do |remainders|
-        # puts text
         print "."
         $stdout.flush
 
@@ -4036,7 +4032,6 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
       end
     end
     map.each do |x, x1|
-      # puts "x=#{x} x1=#{x1}"
       print ":"
       $stdout.flush
       map.each do |y, y1|
@@ -5627,7 +5622,6 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
         y_upper = y_lower.succ
         x = y_lower * y_upper
         msg = "x=#{x} y_lower=#{y_lower} y_upper=#{y_upper} "
-        # puts msg
         [ ROUND_GEOMETRIC_UP, ROUND_GEOMETRIC_CEILING ].each do |mode|
           y = LongMath.sqrt(x, scale, mode)
           assert_equal(y_upper, y, msg + "y=#{y} mode=#{mode}")
@@ -5674,7 +5668,6 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
         y_upper = y_lower.succ
         x = LongMath.arithmetic_mean(2*scale + 2, ROUND_HALF_EVEN, y_lower * y_lower, y_upper * y_upper)
         msg = "x=#{x} y_lower=#{y_lower} y_upper=#{y_upper} "
-        # puts msg
         [ ROUND_QUADRATIC_UP, ROUND_QUADRATIC_CEILING ].each do |mode|
           y = LongMath.sqrt(x, scale, mode)
           assert_equal(y_upper, y, msg + "y=#{y} mode=#{mode}")
@@ -5842,7 +5835,6 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
         y_upper = y_lower.succ
         x = LongMath.arithmetic_mean(3*scale + 2, ROUND_HALF_EVEN, y_lower.cube(), y_upper.cube())
         msg = "x=#{x} y_lower=#{y_lower} y_upper=#{y_upper} "
-        # puts msg
         [ ROUND_CUBIC_UP, ROUND_CUBIC_CEILING ].each do |mode|
           y = LongMath.cbrt(x, scale, mode)
           assert_equal(y_upper, y, msg + "y=#{y} mode=#{mode}")
@@ -7709,7 +7701,6 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
         @powers_of_10[x] = zz
       end
       assert_equal(z, zz)
-      # puts("exp=" + x.to_s)
       $stdout.flush
     else
       @powers_of_10[x] ||= z
@@ -7729,12 +7720,10 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
 
     12.times do |i|
       check_npower10(3**i)
-      # puts(3**i)
     end
 
     12.times do |i|
       check_npower10(3**i)
-      # puts(3**i)
     end
 
     y = 1
@@ -7749,7 +7738,6 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     x0 = 2046
     y0 = 10**x0
     60.times do |i|
-      # puts "i=" + i.to_s
       $stdout.flush
       y = y0
       x = x0
