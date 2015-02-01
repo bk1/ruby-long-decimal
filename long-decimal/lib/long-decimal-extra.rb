@@ -7,7 +7,7 @@
 #
 # (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2015
 #
-# TAG:       $TAG v1.00.03$
+# TAG:       $TAG pre-v1.00.03$
 # CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/lib/long-decimal-extra.rb,v 1.29 2011/02/04 23:17:21 bk1 Exp $
 # CVS-Label: $Name:  $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
@@ -325,12 +325,14 @@ class LongDecimal
     elsif dividend < divisor
       # self is between 0 and 1 and dividend > LongMath::MAX_FLOATABLE
       # return LongDecimal(dividend.div(LongMath.npower10(digits)), scale -digits).to_f
+      # puts "via s (1): #{self.inspect}"
       return self.to_s.to_f
     else
       q = dividend.abs / divisor
       if (q.abs > 1000000000000000000000)
         return q.to_f
       else
+        # puts "via s (2): #{self.inspect}"
         return self.to_s.to_f
       end
     end

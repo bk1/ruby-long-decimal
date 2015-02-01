@@ -4,7 +4,7 @@
 #
 # (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2015
 #
-# TAG:       $TAG v1.00.03$
+# TAG:       $TAG pre-v1.00.03$
 # CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal-extra.rb,v 1.19 2009/05/07 20:21:43 bk1 Exp $
 # CVS-Label: $Name:  $
 # Author:    $Author: bk1 $ (Karl Brodowsky)
@@ -124,6 +124,7 @@ class TestLongDecimalExperimental_class < UnitTest
     end
     puts
     puts "t1sum=#{t1sum} t2sum=#{t2sum} t3sum=#{t3sum} t4sum=#{t4sum} t5sum=#{t5sum} t6sum=#{t6sum}"
+    # puts "bad_1=#{bad_1.inspect} bad_2=#{bad_2.inspect} bad_3=#{bad_3.inspect} bad_4=#{bad_4.inspect} bad_5=#{bad_5.inspect} bad_6=#{bad_6.inspect}"
     puts "bad_count_1=#{bad_1.size} bad_count_2=#{bad_2.size} bad_count_3=#{bad_3.size} bad_count_4=#{bad_4.size} bad_count_5=#{bad_5.size} bad_count_6=#{bad_6.size}"
   end
 
@@ -211,6 +212,7 @@ class TestLongDecimalExperimental_class < UnitTest
     end
     puts
     puts "t1sum=#{t1sum} t2sum=#{t2sum} t3sum=#{t3sum} t4sum=#{t4sum} t5sum=#{t5sum} t6sum=#{t6sum}"
+    # puts "bad_1=#{bad_1.inspect} bad_2=#{bad_2.inspect} bad_3=#{bad_3.inspect} bad_4=#{bad_4.inspect} bad_5=#{bad_5.inspect} bad_6=#{bad_6.inspect}"
     puts "bad_count_1=#{bad_1.size} bad_count_2=#{bad_2.size} bad_count_3=#{bad_3.size} bad_count_4=#{bad_4.size} bad_count_5=#{bad_5.size} bad_count_6=#{bad_6.size}"
     l = LongDecimal.zero!(0)
   end
@@ -300,6 +302,7 @@ class TestLongDecimalExperimental_class < UnitTest
     end
     puts
     puts "t1sum=#{t1sum} t2sum=#{t2sum} t3sum=#{t3sum} t4sum=#{t4sum} t5sum=#{t5sum} t6sum=#{t6sum}"
+    # puts "bad_1=#{bad_1.inspect} bad_2=#{bad_2.inspect} bad_3=#{bad_3.inspect} bad_4=#{bad_4.inspect} bad_5=#{bad_5.inspect} bad_6=#{bad_6.inspect}"
     puts "bad_count_1=#{bad_1.size} bad_count_2=#{bad_2.size} bad_count_3=#{bad_3.size} bad_count_4=#{bad_4.size} bad_count_5=#{bad_5.size} bad_count_6=#{bad_6.size}"
     l = LongDecimal.zero!(0)
   end
