@@ -2885,7 +2885,7 @@ class Complex
         p = self*other.conjugate
         d = other.abs2
         r = p.real/d
-        i = p.image/d
+        i = p.imag/d
         Complex(r, i)
       elsif Complex.generic?(other)
         Complex(@real/other, @image/other)
@@ -2896,9 +2896,9 @@ class Complex
         x/y
       end
     end
-  else
+  elsif (RUBY_VERSION.match /^1\.9/) || (RUBY_VERSION.match /^2\.0/)
     #
-    # Division by real or complex number for Ruby 1.9
+    # Division by real or complex number for Ruby >=1.9
     #
     def / (other)
       if other.kind_of?(Complex)
@@ -2911,10 +2911,10 @@ class Complex
         else
           r = p.real/d
         end
-        if (d.kind_of? Integer) && (p.image.kind_of? Integer)
-          i = Rational(p.image, d)
+        if (d.kind_of? Integer) && (p.imag.kind_of? Integer)
+          i = Rational(p.imag, d)
         else
-          i = p.image/d
+          i = p.imag/d
         end
         Complex(r, i)
       elsif Complex.generic?(other)
@@ -2925,14 +2925,14 @@ class Complex
         else
           r = real/other
         end
-        if (other.kind_of? Integer) && (image.kind_of? Integer)
-          i = Rational(image, other)
+        if (other.kind_of? Integer) && (imag.kind_of? Integer)
+          i = Rational(imag, other)
         else
-          i = image/other
+          i = imag/other
         end
         Complex(r, i)
       elsif other.kind_of? BigDecimal
-        Complex(real/other, image/other)
+        Complex(real/other, imag/other)
       else
         x, y = other.coerce(self)
         x/y

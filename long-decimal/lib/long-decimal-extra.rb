@@ -470,12 +470,12 @@ def LongMath.continued_fraction(x, steps)
   arr = []
   steps.times do
     xi = x.to_ld(0, LongMath::ROUND_FLOOR)
+    arr.push(xi.to_i)
     xd = x-xi
     if xd.zero?
       return arr
     end
     x = 1/xd
-    arr.push(xi.to_i)
   end
   arr
 end
