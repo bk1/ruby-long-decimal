@@ -41,20 +41,22 @@ module TestLongDecHelper
   def assert_equal_rbo(lhs, rhs, msg="", lhsname="lhs", rhsname="rhs", delta=0)
     msg2 = "#{lhsname}=#{lhs} (#{lhs.class}) #{rhsname}=#{rhs} (#{rhs.class}) " + msg
     if (lhs.kind_of? Rational) && (rhs.kind_of? BigDecimal) || (lhs.kind_of? BigDecimal) && (rhs.kind_of? Rational)
-      assert_equal(lhs.to_ld, rhs.to_ld, msg2)
+      lhs_ld = lhs.to_ld
+      rhs_ld = rhs.to_ld
+      assert(lhs_ld == rhs_ld || (lhs_ld - rhs_ld).abs <= delta, msg2 + " as ld: #{lhs_ld} #{rhs_ld}")
     elsif (delta > 0 && ((lhs.kind_of? Float) || (rhs.kind_of? Float)))
       assert_equal_float(lhs, rhs, delta, msg2 + " d=#{delta}")
     elsif ((lhs.kind_of? Rational) && (rhs.kind_of? Rational))
-      assert_equal(lhs.numerator*rhs.denominator, lhs.denominator*rhs.numerator, msg)
+      assert_equal(lhs.numerator*rhs.denominator, lhs.denominator*rhs.numerator, msg + " rational")
     else
-      assert_equal(lhs, rhs, msg2)
+      assert_equal(lhs, rhs, msg2 + " exact")
     end
   end
 
   def assert_equal_complex(lhs, rhs, msg="", delta=0)
     msg2 = "lhs=#{lhs} rhs=#{rhs} " + msg
-    assert_equal_rbo(lhs.real, rhs.real,   "real: #{lhs.real==rhs.real} "   + msg2, "lhsr", "rhsr", delta)
-    assert_equal_rbo(lhs.image, rhs.image, "imag: #{lhs.image==rhs.image} " + msg2, "lhsi", "rhsi", delta)
+    assert_equal_rbo(lhs.real, rhs.real, "real: #{lhs.real==rhs.real} " + msg2, "lhsr", "rhsr", delta)
+    assert_equal_rbo(lhs.imag, rhs.imag, "imag: #{lhs.imag==rhs.imag} " + msg2, "lhsi", "rhsi", delta)
   end
 
   #
@@ -879,6 +881,12 @@ module TestLongDecHelper
     assert(z0 <= x && x < z1, "y=#{y}=cbrt(#{x}) and x in [#{z0}, #{z1}) " + str)
     assert((x - z0 - r).zero?, "x=y**3+r x=#{x} z0=#{z0} z1=#{z1} y=#{y} r=#{r} total=#{x - z0 - r} " + str)
     r
+  end
+
+  def deep_freeze_complex(z)
+    z.imag.freeze
+    z.real.freeze
+    z.freeze
   end
 
 end

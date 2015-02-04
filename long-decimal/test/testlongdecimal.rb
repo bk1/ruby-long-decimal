@@ -1145,20 +1145,20 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
             z = x/y
             msg = "x=#{x} y=#{y} z=#{z} xr=#{xr.inspect} (#{tw_c}) xi=#{xi.inspect} (#{fi_c}) yr=#{yr.inspect} (#{th_c}) yi=#{yi.inspect} (#{fo_c})"
             # puts msg
-            if (xr.kind_of? Integer) && (xi.kind_of? Integer) && (yr.kind_of? Integer) && (yi.kind_of? Integer) # && ! LongDecimal::RUNNING_19
+            if (xr.kind_of? Integer) && (xi.kind_of? Integer) && (yr.kind_of? Integer) && (yi.kind_of? Integer) # && ! LongDecimal::RUNNING_AT_LEAST_19
               # ruby 1.9 creates rational result even from integers, ruby 1.8 uses integers as results.
               zc = (x.cdiv y)
               assert_equal_complex(zc, z, "all int zc=#{zc} " + msg)
               next
             end
             unless has_bigdecimal
-              assert_equal_complex(zr, z, msg)
+              assert_equal_complex(zr, z, msg, 1e-15)
             end
             unless has_rational
-              assert_equal_complex(zb, z, msg)
+              assert_equal_complex(zb, z, msg, 1e-15)
             end
-            assert_equal_complex(zf, z, msg)
-            assert_equal_complex(zl, z, msg)
+            assert_equal_complex(zf, z, msg, 1e-15)
+            assert_equal_complex(zl, z, msg, 1e-15)
             unless (xr.kind_of? LongDecimalBase) || (xi.kind_of? LongDecimalBase) || (yr.kind_of? LongDecimalBase) || (yi.kind_of? LongDecimalBase)
               zc = x.cdiv(y)
               assert_equal_complex(z, zc, msg, 1.0e-15)
@@ -1225,12 +1225,17 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     threes   = [ 3, 3.0, BigDecimal("3.0"), Rational(3, 1), LongDecimal("3.0"), LongDecimalQuot(3, 1) ]
     fours    = [ 4, 4.0, BigDecimal("4.0"), Rational(4, 1), LongDecimal("4.0"), LongDecimalQuot(4, 1) ]
     zr = Complex(Rational(24,10),Rational(-32,10))
+    deep_freeze_complex(zr)
     zb = Complex(BigDecimal("2.4"),BigDecimal("-3.2"))
+    deep_freeze_complex(zb)
     zf = Complex(2.4,-3.2)
+    deep_freeze_complex(zf)
     zl = Complex(LongDecimal("2.4"),LongDecimal("-3.2"))
+    deep_freeze_complex(zl)
     zi = nil
     if ($test_type == :v20)
       zi = Complex(2, -4)
+      deep_freeze_complex(zi)
     else
       zi = zr
     end
@@ -1244,12 +1249,14 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
             next
           end
           y = Complex(yr, yi)
+          # puts "x=#{x} y=#{y}"
           z = x/y
-          msg = "x=#{x} y=#{y} z=#{z} yr=#{yr.inspect} yi=#{yi.inspect} x=#{x.inspect}"
-          if (x.kind_of? Integer) && (yr.kind_of? Integer) && (yi.kind_of? Integer) && LongDecimal::RUNNING_19
+          # puts "x=#{x} y=#{y} z=#{z}"
+          msg = "x=#{x} y=#{y} z=#{z} -- zr=#{zr} zb=#{zb} zf=#{zf} zl=#{zl} zi=#{zi} -- yr=#{yr.inspect} yi=#{yi.inspect} x=#{x.inspect}"
+          if (x.kind_of? Integer) && (yr.kind_of? Integer) && (yi.kind_of? Integer) && LongDecimal::RUNNING_AT_LEAST_19
             has_rational # quotients of ints within Complex are Rational in 1.9
           end
-          if (x.kind_of? Integer) && (yr.kind_of? Integer) && (yi.kind_of? Integer) && ! LongDecimal::RUNNING_19
+          if (x.kind_of? Integer) && (yr.kind_of? Integer) && (yi.kind_of? Integer) && ! LongDecimal::RUNNING_AT_LEAST_19
             assert_equal_complex(zi, z, msg)
             next
           end
@@ -1264,6 +1271,36 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
         end
       end
     end
+  end
+
+  #
+  # test division of Complex, which is overriden in long-decimal.rb
+  # due to bug 1454/1455 (redmine.ruby-lang.org) mixing of BigDecimal with Rational or Complex won't work.
+  #
+  def test_real_by_complex_div_single_case
+    print "\ntest_real_by_complex_div [#{Time.now}]: "
+    zr = Complex(Rational(24,10),Rational(-32,10))
+    zb = Complex(BigDecimal("2.4"),BigDecimal("-3.2"))
+    zf = Complex(2.4,-3.2)
+    zl = Complex(LongDecimal("2.4"),LongDecimal("-3.2"))
+    zi = nil
+    if ($test_type == :v20)
+      zi = Complex(2, -4)
+    else
+      zi = zr
+    end
+    x = 20.0
+    yr = 3
+    yi = 4.0
+    has_rational   = false
+    has_bigdecimal = false
+    y = Complex(yr, yi)
+    z = x/y
+    msg = "x=#{x} y=#{y} z=#{z} -- zr=#{zr} zb=#{zb} zf=#{zf} zl=#{zl} zi=#{zi} -- yr=#{yr.inspect} yi=#{yi.inspect} x=#{x.inspect}"
+    assert_equal_complex(zr, z, msg)
+    assert_equal_complex(zb, z, msg)
+    assert_equal_complex(zf, z, msg)
+    assert_equal_complex(zl, z, msg)
   end
 
   #
@@ -3888,7 +3925,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
 
     y = Complex(5, 3)
     z = x + y
-    # if (LongDecimalBase::RUNNING_19)
+    # if (LongDecimalBase::RUNNING_AT_LEAST_19)
     zz = Complex(LongDecimal(724, 2), 3)
     # else
     # zz = Complex(7.24, 3)
@@ -3968,7 +4005,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
 
     y = Complex(5, 3)
     z = x - y
-    #if (LongDecimalBase::RUNNING_19)
+    #if (LongDecimalBase::RUNNING_AT_LEAST_19)
     zz = Complex(LongDecimal(-276, 2), -3)
     #else
     # zz = Complex(-2.76, -3)
@@ -4668,7 +4705,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     x = LongDecimal(224, 2) # 2.24 dx=1 sx=2
 
     y = Complex(5, 3)
-    puts("x=#{x.inspect} y=#{y.inspect}")
+    # puts("x=#{x.inspect} y=#{y.inspect}")
     z = x.divide(y, ROUND_DOWN)
     zz = 2.24 / Complex(5, 3)
     assert_kind_of(Complex, z, "z=#{z.inspect}")
@@ -6677,6 +6714,186 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
       
     end
   end
+  def test_ldq_round_to_scale_harmonic_common
+    print "\ntest_ldq_round_to_scale_harmonic_common [#{Time.now}]: "
+
+    delta = Rational(3, 5463458053)
+    arr = [ Rational(112, 15), Rational(12, 5), Rational(144, 17), Rational(180, 19), Rational(24, 7), Rational(4, 3), Rational(40, 9), Rational(60, 11), Rational(84, 13) ]    
+
+    ALL_ROUNDING_MODES.each do |rounding_mode|
+      unless (rounding_mode.major == MAJOR_HARMONIC)
+        next
+      end
+      # only 0 gets rounded to zero
+      l = LongDecimalQuot(Rational(0, 1), 0)
+      r = l.round_to_scale(0, rounding_mode)
+      assert_equal(0, r, "l=#{l.inspect} r=#{r.inspect}")
+
+      l = LongDecimalQuot(Rational(1, 100), 0)
+      r = l.round_to_scale(0, rounding_mode)
+      assert_equal(1, r, "l=#{l.inspect} r=#{r.inspect}")
+      l = LongDecimalQuot(Rational(50, 100), 0)
+      r = l.round_to_scale(0, rounding_mode)
+      assert_equal(1, r, "l=#{l.inspect} r=#{r.inspect}")
+      l = LongDecimalQuot(Rational(99, 100), 0)
+      r = l.round_to_scale(0, rounding_mode)
+      assert_equal(1, r, "l=#{l.inspect} r=#{r.inspect}")
+      l = LongDecimalQuot(Rational(100, 100), 0)
+      r = l.round_to_scale(0, rounding_mode)
+      assert_equal(1, r, "l=#{l.inspect} r=#{r.inspect}")
+
+      l = LongDecimalQuot(Rational(1, 101), 0)
+      r = l.round_to_scale(0, rounding_mode)
+      assert_equal(1, r, "l=#{l.inspect} r=#{r.inspect}")
+      l = LongDecimalQuot(Rational(50, 101), 0)
+      r = l.round_to_scale(0, rounding_mode)
+      assert_equal(1, r, "l=#{l.inspect} r=#{r.inspect}")
+      l = LongDecimalQuot(Rational(99, 101), 0)
+      r = l.round_to_scale(0, rounding_mode)
+      assert_equal(1, r, "l=#{l.inspect} r=#{r.inspect}")
+      l = LongDecimalQuot(Rational(101, 101), 0)
+      r = l.round_to_scale(0, rounding_mode)
+      assert_equal(1, r, "l=#{l.inspect} r=#{r.inspect}")
+
+      l = LongDecimalQuot(Rational(-1, 100), 0)
+      r = l.round_to_scale(0, rounding_mode)
+      assert_equal(-1, r, "l=#{l.inspect} r=#{r.inspect}")
+      l = LongDecimalQuot(Rational(-50, 100), 0)
+      r = l.round_to_scale(0, rounding_mode)
+      assert_equal(-1, r, "l=#{l.inspect} r=#{r.inspect}")
+      l = LongDecimalQuot(Rational(-99, 100), 0)
+      r = l.round_to_scale(0, rounding_mode)
+      assert_equal(-1, r, "l=#{l.inspect} r=#{r.inspect}")
+      l = LongDecimalQuot(Rational(-100, 100), 0)
+      r = l.round_to_scale(0, rounding_mode)
+      assert_equal(-1, r, "l=#{l.inspect} r=#{r.inspect}")
+
+      l = LongDecimalQuot(Rational(-1, 101), 0)
+      r = l.round_to_scale(0, rounding_mode)
+      assert_equal(-1, r, "l=#{l.inspect} r=#{r.inspect}")
+      l = LongDecimalQuot(Rational(-50, 101), 0)
+      r = l.round_to_scale(0, rounding_mode)
+      assert_equal(-1, r, "l=#{l.inspect} r=#{r.inspect}")
+      l = LongDecimalQuot(Rational(-99, 101), 0)
+      r = l.round_to_scale(0, rounding_mode)
+      assert_equal(-1, r, "l=#{l.inspect} r=#{r.inspect}")
+      l = LongDecimalQuot(Rational(-101, 101), 0)
+      r = l.round_to_scale(0, rounding_mode)
+      assert_equal(-1, r, "l=#{l.inspect} r=#{r.inspect}")
+
+      arr.each do |rat|
+        rat_up = rat + delta
+        rat_down = rat - delta
+        [ -1, 1].each do |sign|
+          l_up = LongDecimalQuot(sign * rat_up, 0)
+          r_up            = l_up.round_to_scale(0, rounding_mode)
+          r_up_expected   = l_up.round_to_scale(0, ROUND_UP)
+          assert_equal(r_up_expected, r_up, "l=#{l_up} r=#{r_up}")
+
+          l_down = LongDecimalQuot(sign * rat_down, 0)
+          r_down          = l_down.round_to_scale(0, rounding_mode)
+          r_down_expected = l_down.round_to_scale(0, ROUND_DOWN)
+          assert_equal(r_down_expected, r_down, "l=#{l_down} r=#{r_down}")
+        end
+      end
+    end
+  end
+
+  #
+  # test rounding of LongDecimalQuot with ROUND_HARMONIC_UP
+  #
+  def test_ldq_round_to_scale_harmonic_up
+    print "\ntest_ldq_round_to_scale_harmonic_up [#{Time.now}]: "
+
+    arr = [ Rational(0, 1), Rational(112, 15), Rational(12, 5), Rational(144, 17), Rational(180, 19), Rational(24, 7), Rational(4, 3), Rational(40, 9), Rational(60, 11), Rational(84, 13) ]    
+    arr.each do |rat|
+      [ -1, 1].each do |sign|
+        l = LongDecimalQuot(sign * rat, 0)
+        r = l.round_to_scale(0, ROUND_HARMONIC_UP)
+        re = l.round_to_scale(0, ROUND_UP)
+        assert_equal(re, r, "l=#{l.inspect} r=#{r.inspect}")
+      end
+    end
+  end
+
+  #
+  # test rounding of LongDecimalQuot with ROUND_HARMONIC_DOWN
+  #
+  def test_ldq_round_to_scale_harmonic_down
+    print "\ntest_ldq_round_to_scale_harmonic_down [#{Time.now}]: "
+
+    arr = [ Rational(0, 1), Rational(112, 15), Rational(12, 5), Rational(144, 17), Rational(180, 19), Rational(24, 7), Rational(4, 3), Rational(40, 9), Rational(60, 11), Rational(84, 13) ]    
+    arr.each do |rat|
+      [ -1, 1].each do |sign|
+        l = LongDecimalQuot(sign * rat, 0)
+        r = l.round_to_scale(0, ROUND_HARMONIC_DOWN)
+        re = l.round_to_scale(0, ROUND_DOWN)
+        assert_equal(re, r, "l=#{l.inspect} r=#{r.inspect}")
+      end
+    end
+  end
+
+  #
+  # test rounding of LongDecimalQuot with ROUND_HARMONIC_CEILING
+  #
+  def test_ldq_round_to_scale_harmonic_ceiling
+    print "\ntest_ldq_round_to_scale_harmonic_ceiling [#{Time.now}]: "
+
+    arr = [ Rational(0, 1), Rational(112, 15), Rational(12, 5), Rational(144, 17), Rational(180, 19), Rational(24, 7), Rational(4, 3), Rational(40, 9), Rational(60, 11), Rational(84, 13) ]    
+    arr.each do |rat|
+      [ -1, 1].each do |sign|
+        l = LongDecimalQuot(sign * rat, 0)
+        r = l.round_to_scale(0, ROUND_HARMONIC_CEILING)
+        re = l.round_to_scale(0, ROUND_CEILING)
+        assert_equal(re, r, "l=#{l.inspect} r=#{r.inspect}")
+      end
+    end
+  end
+
+  #
+  # test rounding of LongDecimalQuot with ROUND_HARMONIC_FLOOR
+  #
+  def test_ldq_round_to_scale_harmonic_floor
+    print "\ntest_ldq_round_to_scale_harmonic_floor [#{Time.now}]: "
+
+    arr = [ Rational(0, 1), Rational(112, 15), Rational(12, 5), Rational(144, 17), Rational(180, 19), Rational(24, 7), Rational(4, 3), Rational(40, 9), Rational(60, 11), Rational(84, 13) ]    
+    arr.each do |rat|
+      [ -1, 1].each do |sign|
+        l = LongDecimalQuot(sign * rat, 0)
+        r = l.round_to_scale(0, ROUND_HARMONIC_FLOOR)
+        re = l.round_to_scale(0, ROUND_FLOOR)
+        assert_equal(re, r, "l=#{l.inspect} r=#{r.inspect}")
+      end
+    end
+  end
+
+  #
+  # test rounding of LongDecimalQuot with ROUND_HARMONIC_EVEN
+  #
+  def test_ldq_round_to_scale_harmonic_odd_even
+    print "\ntest_ldq_round_to_scale_harmonic_even [#{Time.now}]: "
+
+    sorted_arr = [ Rational(0, 1), Rational(112, 15), Rational(12, 5), Rational(144, 17), Rational(180, 19), Rational(24, 7), Rational(4, 3), Rational(40, 9), Rational(60, 11), Rational(84, 13) ].sort
+    sorted_arr.each_with_index do |rat, idx|
+      [ -1, 1].each do |sign|
+        l = LongDecimalQuot(sign * rat, 0)
+        r_even = l.round_to_scale(0, ROUND_HARMONIC_EVEN)
+        r_odd  = l.round_to_scale(0, ROUND_HARMONIC_ODD)
+        r_up   = l.round_to_scale(0, ROUND_UP)
+        r_down = l.round_to_scale(0, ROUND_DOWN)
+        msg = "l=#{l} r_even=#{r_even} r_odd=#{r_odd} r_up=#{r_up} r_down=#{r_down}"
+        if (idx[0] == 1)
+          # idx is odd, lower is odd, upper is even
+          assert_equal(r_down, r_odd, msg)
+          assert_equal(r_up, r_even, msg)
+        else
+          # idx is even, lower is even, upper is odd
+          assert_equal(r_down, r_even, msg)
+          assert_equal(r_up, r_odd, msg)
+        end
+      end
+    end
+  end
 
   # TODO: do tests with rational numbers that approach square and cube roots with continuos fractions
   # TODO: do tests for harmonic that are exact matches
@@ -7580,13 +7797,15 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   # test the right ordering of the means excluding agm/hgm
   def test_means_three_param
     print "\ntest_means_three_param [#{Time.now}] (4 min): "
-    arr = [ 0, 1, 2, 0.0, 1.0, Math::PI, Rational(40, 9), Rational(0, 1), Rational(1,1), LongDecimal(3333333333333333, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ]
+    # arr = [ 0, 1, 2, 0.0, 1.0, Math::PI, Rational(40, 9), Rational(0, 1), Rational(1,1), LongDecimal(3333333333333333, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ]
+    arr = [ 1, 2, 1.0, Math::PI, Rational(40, 9), Rational(1,1), LongDecimal(3333333333333333, 10), LongMath.pi(100) ]
     arr.each do |x|
       arr.each do |y|
         print ":"
         arr.each do |z|
           print "."
-          12.times do |prec|
+          # 12.times do |prec|
+          [0,1,2,5,10,11,12].each do |prec|
             ALL_ROUNDING_MODES.each do |rm|
               if (rm == ROUND_UNNECESSARY)
                 next
@@ -7630,7 +7849,8 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   # test the right ordering of the means (including agm/hgm)
   def test_means_three_param_agm_hgm
     print "\ntest_means_three_param_agm_hgm [#{Time.now}] (4 min): "
-    arr = [ 0, 1, 2, 0.0, 1.0, Math::PI, Rational(40, 9), Rational(0, 1), Rational(1,1), LongDecimal(3333333333333333, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ]
+    # arr = [ 0, 1, 2, 0.0, 1.0, Math::PI, Rational(40, 9), Rational(0, 1), Rational(1,1), LongDecimal(3333333333333333, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ]
+    arr = [ 1, 2, 1.0, Math::PI, Rational(40, 9), Rational(1,1), LongDecimal(3333333333333333, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ]
     arr.each do |x|
       x.freeze
       arr.each do |y|
@@ -7639,8 +7859,9 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
         arr.each do |z|
           z.freeze
           print "."
-          prec = 0
-          3.times do |i|
+          # prec = 0
+          # 3.times do |i|
+          [0, 31].each_with_index do |prec, i|
             ALL_ROUNDING_MODES.each do |rm|
               if (rm == ROUND_UNNECESSARY)
                 next
@@ -7682,7 +7903,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
                 assert_equal(cm, ma, text)
               end
             end
-            prec = (prec << 3) + 11
+            # prec = (prec << 3) + 11
           end
         end
       end

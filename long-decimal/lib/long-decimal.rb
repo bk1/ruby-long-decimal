@@ -766,7 +766,7 @@ class LongDecimalBase < Numeric
   @@RCS_ID='-$Id: long-decimal.rb,v 1.87 2011/01/30 20:01:40 bk1 Exp $-'
 
   # allow easy check if running with version 1.9
-  RUNNING_19 = RUBY_VERSION.match /^1\.9/
+  RUNNING_AT_LEAST_19 = RUBY_VERSION.match /^(1\.9|[2-9]\.)/
 
   include LongDecimalRoundingMode
 
@@ -2223,7 +2223,7 @@ class LongDecimal < LongDecimalBase
       # has too many digits before the decimal point to be expressed
       # as Float.
       # s, o = other.coerce(self.to_f)
-      if (RUNNING_19)
+      if (RUNNING_AT_LEAST_19)
         s, o = other.coerce(self)
         # puts "complex coerce 19: #{self}, #{other} -> #{s}, #{o}"
         return o, s
@@ -2896,7 +2896,7 @@ class Complex
         x/y
       end
     end
-  elsif (RUBY_VERSION.match /^1\.9/) || (RUBY_VERSION.match /^2\.0/)
+  elsif (RUBY_VERSION.match /^1\.9/) || (RUBY_VERSION.match /^2\.[0-9]/)
     #
     # Division by real or complex number for Ruby >=1.9
     #
@@ -2917,7 +2917,7 @@ class Complex
           i = p.imag/d
         end
         Complex(r, i)
-      elsif Complex.generic?(other)
+      elsif other.kind_of? Integer
         r = nil
         i = nil
         if (other.kind_of? Integer) && (real.kind_of? Integer)
@@ -2931,7 +2931,7 @@ class Complex
           i = imag/other
         end
         Complex(r, i)
-      elsif other.kind_of? BigDecimal
+      elsif (other.kind_of? BigDecimal) || (other.kind_of? Float) || (other.kind_of? LongDecimal) || (other.kind_of? Rational)
         Complex(real/other, imag/other)
       else
         x, y = other.coerce(self)
