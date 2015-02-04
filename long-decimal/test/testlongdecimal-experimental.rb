@@ -4,7 +4,7 @@
 #
 # (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2015
 #
-# TAG:       $TAG v1.00.03$
+# TAG:       $TAG v1.00.04$
 # CVS-ID:    $Header: /var/cvs/long-decimal/long-decimal/test/testlongdecimal-extra.rb,v 1.19 2009/05/07 20:21:43 bk1 Exp $
 # CVS-Label: $Name:  $
 # Author:    $Author: bk1 $ (Karl Brodowsky)

@@ -4,7 +4,7 @@
 #
 # (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2015
 #
-# TAG:       $TAG v1.00.03$
+# TAG:       $TAG v1.00.04$
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
