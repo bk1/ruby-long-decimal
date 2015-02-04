@@ -126,7 +126,7 @@ irrational values, this is done in a uniform way.  Since rounding
 operations can also apply to internal intermediate results, it is a
 good idea not to constrain their definition to rational numbers.
 
-Major rounding modes are 
+Major rounding modes are
 
 \begin{tabular}{|l|p{100mm}|}
 \hline
@@ -262,19 +262,19 @@ zero, should it occur, shoud be rounded.
 \section{Division}
 
 Regular division using $/$ yields an instance of {\slshape LongDecimalQuot\/}.  The approximate number of significant digits is estimated by using the partial derivatives of $f(x, y) = \frac{x}{y}$.
-Assume $x=\ld(m, s)$ and $y=\ld(n, t)$.  So we get for $\ld(m, s) / \ld(n, t)$ an result 
+Assume $x=\ld(m, s)$ and $y=\ld(n, t)$.  So we get for $\ld(m, s) / \ld(n, t)$ an result
 
 $$\frac{x}{y} = \ldq(10^{t-s}\frac{m}{n}, r)$$
 
-with 
+with
 
-$$r \approx -\log_{10}\left(10^{-s} \frac{1}{|y|} + 10^{-t} \frac{|x|}{y^2}\right) 
+$$r \approx -\log_{10}\left(10^{-s} \frac{1}{|y|} + 10^{-t} \frac{|x|}{y^2}\right)
     =  2 \log_{10}(y) + s + t -\log_{10}\left(|m| + |n|) \right)$$
 
 In order to avoid expensive logarithmic operation for such basic operations as division this is approximated by
 
 $$r = \max( 0, 2 v + s + t - \max( u + s, v + t) - 3)$$
-with $u = \lfloor\log |m| \rfloor - s + 1$ and $v = \lfloor\log |n| \rfloor - t + 1$ for $m$ and $n$ not zero 
+with $u = \lfloor\log |m| \rfloor - s + 1$ and $v = \lfloor\log |n| \rfloor - t + 1$ for $m$ and $n$ not zero
 and $u=-s$ for $m = 0$ and $v=-t$ for $n=0$.  Using $\max(a, b)$ instead of $log_{10}(10^a + 10^b)$ is a good approximation, when a and b are far apart.
 
 It is recommended to use explicit rounding after having performed
@@ -336,7 +336,7 @@ For the logarithm we first use $x = e^n x_0$ with $n \in \mathbb{N}_0$ and $x_0 
 
 $$\log(x) = n + \log(x_0).$$
 
-From here we make use of the efficient square root calculation facility and use 
+From here we make use of the efficient square root calculation facility and use
 
 $$\bigwedge_{m=0}^\infty x_{m+1} = \sqrt{x_m}$$
 

@@ -1,12 +1,17 @@
 Version
 -------
 
-This version (1.00.03) is fixing bugs from version 1.00.02.
+This version (1.00.04) is fixing bugs from version 1.00.03.
 It can be considered as a release candidate from the upcoming
 version 1.01.00.
 
 Change Log
 ----------
+
+Improvements in 1.00.04
+- tests improved
+- tested against 1.8.7, 1.9.3, 2.0.0, 2.1.1 and 2.2.0
+- some minor bugfixes concerning Complex
 
 Improvements in 1.00.03
 - tests improved
@@ -103,7 +108,7 @@ require 'long-decimal'
 Test
 ----
 
-Tests have been run with Ruby 1.8.7, 1.9.3, 2.0.0 and 2.1.1
+Tests have been run with Ruby 1.8.7, 1.9.3, 2.0.0, 2.1.1 and 2.2.0
 Some tests do not work with 1.8.7 because of missing language features.
 They are skipped.  No major effort for adapting tests to this version
 will be allocated.

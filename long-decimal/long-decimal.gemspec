@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
   spec.homepage      = "https://github.com/bk1/ruby-long-decimal"
   spec.license       = "LGPL or Ruby"
   spec.files         = "./Gemfile", "./LICENSE", "./README", "./Rakefile", "./lib/long-decimal-extra.rb", "./lib/long-decimal.rb", "./test/testlongdecimal.rb", "./test/testlongdeclib.rb", "./test/testrandlib.rb", "./test/testrandom.rb", "./test/testrandpower.rb", "./tex/long-decimal.pdf", "./tex/long-decimal.tex", "./long-decimal.gemspec", "./lib/long-decimal/version.rb"
-  spec.executables   = 
+  spec.executables   =
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
