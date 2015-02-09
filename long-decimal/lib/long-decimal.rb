@@ -88,11 +88,13 @@ module LongDecimalRoundingMode
   MAJOR_CEILING = RoundingMajorMode.new(:MAJOR_CEILING, :CEILING, NO_MINOR)
   # pick the lower of the two possible values
   MAJOR_FLOOR = RoundingMajorMode.new(:MAJOR_FLOOR, :FLOOR, NO_MINOR)
+  # (away from zero if last digit after rounding towards zero would have been 0 or 5; otherwise towards zero)
+  MAJOR_05UP = RoundingMajorMode.new(:MAJOR_05UP, "05UP".to_sym, NO_MINOR)
+  # (away towards zero if last digit after rounding towards zero would have been 0 or 5; otherwise away from zero)
+  MAJOR_05DOWN = RoundingMajorMode.new(:MAJOR_05DOWN, "05DOWN".to_sym, NO_MINOR)
   # use the original value, if it is not already rounded, raise an error
   MAJOR_UNNECESSARY = RoundingMajorMode.new(:MAJOR_UNNECESSARY, :UNNECESSARY, NO_MINOR)
-  # (away from zero if last digit after rounding towards zero would have been 0 or 5; otherwise towards zero)
-  # MAJOR_05UP = RoundingMinorMode.new(:MAJOR_05UP, :_05UP, NO_MINOR)
-
+  
   # the arithmetic mean of two adjacent rounded values is the boundary
   MAJOR_HALF = RoundingMajorMode.new(:MAJOR_HALF, :HALF, ALL_MINOR)
   # the arithmetic mean of two adjacent rounded values is the boundary
@@ -106,7 +108,7 @@ module LongDecimalRoundingMode
 
   private
 
-  ALL_MAJOR_MODES = [  MAJOR_UP, MAJOR_DOWN, MAJOR_CEILING, MAJOR_FLOOR, MAJOR_UNNECESSARY, MAJOR_HALF, MAJOR_GEOMETRIC, MAJOR_HARMONIC, MAJOR_QUADRATIC, MAJOR_CUBIC ]
+  ALL_MAJOR_MODES = [  MAJOR_UP, MAJOR_DOWN, MAJOR_CEILING, MAJOR_FLOOR, MAJOR_05UP, MAJOR_05DOWN, MAJOR_UNNECESSARY, MAJOR_HALF, MAJOR_GEOMETRIC, MAJOR_HARMONIC, MAJOR_QUADRATIC, MAJOR_CUBIC ]
 
   # puts("ALL_MAJOR_MODES:")
   # puts(ALL_MAJOR_MODES)
@@ -117,6 +119,8 @@ module LongDecimalRoundingMode
     MAJOR_DOWN         =>   MAJOR_UP,
     MAJOR_CEILING      =>   MAJOR_FLOOR,
     MAJOR_FLOOR        =>   MAJOR_CEILING,
+    MAJOR_05UP         =>   MAJOR_05DOWN,
+    MAJOR_05DOWN       =>   MAJOR_05UP,
     MAJOR_HALF         =>   MAJOR_HALF,
     MAJOR_UNNECESSARY  =>   MAJOR_UNNECESSARY
   }
@@ -127,6 +131,8 @@ module LongDecimalRoundingMode
     MAJOR_DOWN         =>   MAJOR_DOWN,
     MAJOR_CEILING      =>   MAJOR_FLOOR,
     MAJOR_FLOOR        =>   MAJOR_CEILING,
+    MAJOR_05UP         =>   MAJOR_05UP,
+    MAJOR_05DOWN       =>   MAJOR_05DOWN,
     MAJOR_HALF         =>   MAJOR_HALF,
     MAJOR_UNNECESSARY  =>   MAJOR_UNNECESSARY
   }
@@ -192,6 +198,30 @@ module LongDecimalRoundingMode
         return upper
       elsif (major == MAJOR_FLOOR)
         return lower
+      elsif (major == MAJOR_05UP && sign > 0 || major == MAJOR_05DOWN && sign < 0)
+        lower_int_val = if lower.kind_of? LongDecimal
+                          lower.int_val
+                        else
+                          lower
+                        end
+        if (lower_int_val % 5 == 0)
+          return upper
+        else
+          return lower
+        end
+      elsif (major == MAJOR_05DOWN && sign > 0 || major == MAJOR_05UP && sign < 0)
+        upper_int_val = if upper.kind_of? LongDecimal
+                          upper.int_val
+                        else
+                          upper
+                        end
+        if (upper_int_val % 5 == 0)
+          return lower
+        else
+          return upper
+        end
+      elsif (major == MAJOR_05DOWN && sign == 0 || major == MAJOR_05UP && sign == 0)
+        raise ArgumentError, "unsupported major rounding mode of #{self}: major=#{major} (sign=#{sign}, lower=#{lower}, upper=#{upper} unrounded=#{unrounded})"
       elsif (major == MAJOR_UNNECESSARY)
         raise ArgumentError, "rounding #{name} of unrounded=#{unrounded} (sign=#{sign}) is not applicable for lower=#{lower} and upper=#{upper}"
       end
@@ -585,6 +615,7 @@ class Integer
     raise TypeError, "rounding_mode #{rounding_mode.inspect} must be legal rounding rounding_mode" unless rounding_mode.kind_of? LongDecimalRoundingMode::RoundingModeClass
     raise TypeError, "#{rounding_mode} is not applicable here" if rounding_mode.minor == LongDecimalRoundingMode::MINOR_EVEN
     raise TypeError, "#{rounding_mode} is not applicable here" if rounding_mode.minor == LongDecimalRoundingMode::MINOR_ODD
+    raise TypeError, "#{rounding_mode} is not applicable here" if rounding_mode.major == LongDecimalRoundingMode::MAJOR_05UP || rounding_mode.major == LongDecimalRoundingMode::MAJOR_05DOWN
     raise TypeError, "zero_rounding_mode #{zero_rounding_mode.inspect} must be legal zero_rounding zero_rounding_mode" unless zero_rounding_mode.kind_of? LongDecimalRoundingMode::ZeroRoundingModeClass
 
     remainders = remainders_param.clone
@@ -1353,6 +1384,7 @@ class LongDecimal < LongDecimalBase
     raise TypeError, "rounding_mode #{rounding_mode.inspect} must be legal rounding rounding_mode" unless rounding_mode.kind_of? RoundingModeClass
     raise TypeError, "ROUND_HALF_EVEN is not applicable here" if rounding_mode == LongDecimalRoundingMode::ROUND_HALF_EVEN
     raise TypeError, "ROUND_HALF_ODD is not applicable here" if rounding_mode == LongDecimalRoundingMode::ROUND_HALF_ODD
+    raise TypeError, "#{rounding_mode} is not applicable here" if rounding_mode.major == LongDecimalRoundingMode::MAJOR_05UP || rounding_mode.major == LongDecimalRoundingMode::MAJOR_05DOWN
     raise TypeError, "zero_rounding_mode #{zero_rounding_mode.inspect} must be legal zero_rounding zero_rounding_mode" unless zero_rounding_mode.kind_of? ZeroRoundingModeClass
 
     if @scale < new_scale then

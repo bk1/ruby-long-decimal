@@ -2754,7 +2754,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
                     || rounding_mode.major == MAJOR_CUBIC)
               next;
             end
-            if (rounding_mode.minor == MINOR_EVEN || rounding_mode.minor == MINOR_ODD)
+            if (rounding_mode.minor == MINOR_EVEN || rounding_mode.minor == MINOR_ODD || rounding_mode.major == MAJOR_05UP || rounding_mode.major == MAJOR_05DOWN)
               next
             end
             i_rounded = check_round_to_one_remainder(i, r, modulus, rounding_mode, ZERO_ROUND_TO_PLUS)
@@ -2773,7 +2773,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     2.upto 20 do |modulus|
       text = "m=#{modulus}"
       ALL_ROUNDING_MODES.each do |rounding_mode|
-        if (rounding_mode.minor == MINOR_EVEN || rounding_mode.minor == MINOR_ODD)
+        if (rounding_mode.minor == MINOR_EVEN || rounding_mode.minor == MINOR_ODD || rounding_mode.major == MAJOR_05UP || rounding_mode.major == MAJOR_05DOWN)
           next
         end
         if (rounding_mode.major == MAJOR_UNNECESSARY)
@@ -3045,7 +3045,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
                     || rounding_mode.major == MAJOR_CUBIC)
               next;
             end
-            if (rounding_mode.minor == MINOR_EVEN || rounding_mode.minor == MINOR_ODD)
+            if (rounding_mode.minor == MINOR_EVEN || rounding_mode.minor == MINOR_ODD || rounding_mode.major == MAJOR_05UP || rounding_mode.major == MAJOR_05DOWN)
               next
             end
             i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus, rounding_mode, ZERO_ROUND_TO_PLUS)
@@ -3298,7 +3298,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
                   || rounding_mode.major == MAJOR_CUBIC)
             next;
           end
-          if (rounding_mode.minor == MINOR_EVEN || rounding_mode.minor == MINOR_ODD)
+          if (rounding_mode.minor == MINOR_EVEN || rounding_mode.minor == MINOR_ODD || rounding_mode.major == MAJOR_05UP || rounding_mode.major == MAJOR_05DOWN)
             next
           end
 
