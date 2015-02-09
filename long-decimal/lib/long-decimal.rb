@@ -5179,7 +5179,8 @@ module LongMath
       return args[0].to_ld(new_scale, rounding_mode)
     end
     if (has_zero)
-      raise ArgumentError, "cannot calculate harmonic mean of argument list containing zero #{args.inspect}"
+      # harmonic mean becomes zero if one of the members is zero
+      return LongDecimal.zero!(new_scale)
     end
     sum = args.inject(LongDecimal.zero!) do |psum, x|
       psum + if (x.kind_of? Integer)
