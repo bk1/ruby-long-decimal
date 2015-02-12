@@ -777,6 +777,60 @@ class TestLongDecimalExtra_class < UnitTest # Test::Unit::TestCase # RUNIT::Test
 
   end
 
+  def test_round_sum_divisor_of_one
+    print "\ntest_round_sum_of_one [#{Time.now}]: "
+    [ -1, 0, 1, 7, -1.0, 0.0, 1.0, Math::PI, Rational(-1, 1), Rational(0, 1), Rational(1,1), Rational(2,3), LongDecimal(-10000000000, 10), LongDecimal(-1, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ].each do |x|
+      # , Complex(-1, -2), Complex(0,0), Complex(Rational(3, 2), LongDecimal(4, 3))
+      6.times do |prec|
+        print "."
+        ALL_ROUNDING_MODES.each do |rm|
+          if (rm == ROUND_UNNECESSARY)
+            next
+          end
+          y = x.to_ld(prec, rm)
+          ALL_ROUNDING_MODES.each do |rm2|
+            if (rm2 == ROUND_UNNECESSARY || rm2 == ROUND_05DOWN || rm2 == ROUND_05UP || rm2.minor == MINOR_EVEN || rm2.minor == MINOR_ODD)
+              next
+            end
+            v = LongMath.round_sum_divisor(prec, rm, rm2, x)
+            assert_equal(1, v.size)
+            assert_equal(y, v[0])
+          end
+        end
+      end
+    end
+  end
+
+  def test_round_sum_divisor_of_two
+    print "\ntest_round_sum_of_two [#{Time.now}]: "
+    [ 0, 1, 7, 0.0, 1.0, Math::PI, Rational(0, 1), Rational(1,1), Rational(2,3), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ].each do |x|
+      [ 0, 1, 7, 0.0, 1.0, Math::PI, Rational(0, 1), Rational(1,1), Rational(2,3), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ].each do |y|
+        4.times do |prec|
+          print "."
+          ALL_ROUNDING_MODES.each do |rm|
+            if (rm == ROUND_UNNECESSARY)
+              next
+            end
+            s = (x+y).to_ld(prec, rm)
+            ALL_ROUNDING_MODES.each do |rm2|
+              if (rm2 == ROUND_UNNECESSARY || rm2 == ROUND_05DOWN || rm2 == ROUND_05UP || rm2.minor == MINOR_EVEN || rm2.minor == MINOR_ODD)
+                next
+              end
+              v = LongMath.round_sum_divisor(prec, rm, rm2, x, y)
+              assert_equal(2, v.size, "s=#{s} v=#{v.inspect}")
+              assert_equal(s, v[0] + v[1], "s=#{s} v=#{v.inspect}")
+              if (x < y)
+                assert(v[0] <= v[1], "s=#{s} v=#{v.inspect}")
+              elsif (x > y)
+                assert(v[0] >= v[1], "s=#{s} v=#{v.inspect}")
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+
     # random tests that have failed
 
   def _test_lm_power0a
