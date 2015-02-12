@@ -1649,6 +1649,52 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     assert_equal(y, x, "1234.56 w/o trailing")
   end
 
+  def test_round_common_value_same_scale_less
+    print "\ntest_round_common_value_same_scale_less [#{Time.now}]: "
+    x1 = LongDecimal.one!(100)
+    x2 = LongDecimal(224*10**100, 102)
+    x3 = LongDecimal(123456*10**100, 105)
+    ALL_ROUNDING_MODES.each do |mode|
+      101.times do |i|
+        y = x1.round_to_scale(i, mode)
+        z = LongDecimal.one!(i)
+        assert_equal(y, z)
+        assert(y.scale == z.scale, "x=#{x1} y=#{y} z=#{z} mode=#{mode} i=#{i}")
+        y = x2.round_to_scale(i+2, mode)
+        z = LongDecimal(224*10**i, 2+i)
+        assert_equal(y, z)
+        assert(y.scale == z.scale, "x=#{x2} y=#{y} z=#{z} mode=#{mode} i=#{i}")
+        y = x3.round_to_scale(i+5, mode)
+        z = LongDecimal(123456*10**i, 5+i)
+        assert_equal(y, z, "x=#{x3} y=#{y} z=#{z} mode=#{mode} i=#{i}")
+        assert(y.scale == z.scale)
+      end
+    end
+  end
+
+  def test_round_common_add_precision
+    print "\ntest_round_common_add_precision [#{Time.now}]: "
+    x1 = LongDecimal.one!(0)
+    x2 = LongDecimal(224, 2)
+    x3 = LongDecimal(123456, 5)
+    ALL_ROUNDING_MODES.each do |mode|
+      10.times do |i|
+        y = x1.round_to_scale(i, mode)
+        z = LongDecimal.one!(i)
+        assert_equal(y, z)
+        assert(y.scale == z.scale)
+        y = x2.round_to_scale(i+2, mode)
+        z = LongDecimal(224*10**i, 2+i)
+        assert_equal(y, z)
+        assert(y.scale == z.scale)
+        y = x3.round_to_scale(i+5, mode)
+        z = LongDecimal(123456*10**i, 5+i)
+        assert_equal(y, z)
+        assert(y.scale == z.scale)
+      end
+    end
+  end
+
   #
   # test rounding of LongDecimal with ROUND_UP
   #
@@ -1750,6 +1796,176 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     assert_equal("-2.20", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
     l = LongDecimal("2.24")
     r = l.round_to_scale(4, ROUND_FLOOR)
+    assert_equal("2.2400", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+  end
+
+  #
+  # test rounding with ROUND_05UP
+  #
+  def test_round_to_scale_05up
+    print "\ntest_round_to_scale_05up [#{Time.now}]: "
+    l = LongDecimal("2.29")
+    r = l.round_to_scale(1, ROUND_05UP)
+    assert_equal("2.2", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("2.29", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("-2.29")
+    r = l.round_to_scale(1, ROUND_05UP)
+    assert_equal("-2.2", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("-2.29", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("2.20")
+    r = l.round_to_scale(1, ROUND_05UP)
+    assert_equal("2.2", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("2.20", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("-2.20")
+    r = l.round_to_scale(1, ROUND_05UP)
+    assert_equal("-2.2", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("-2.20", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("2.21")
+    r = l.round_to_scale(1, ROUND_05UP)
+    assert_equal("2.2", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("2.21", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("-2.21")
+    r = l.round_to_scale(1, ROUND_05UP)
+    assert_equal("-2.2", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("-2.21", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+
+    l = LongDecimal("2.09")
+    r = l.round_to_scale(1, ROUND_05UP)
+    assert_equal("2.1", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("2.09", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("-2.09")
+    r = l.round_to_scale(1, ROUND_05UP)
+    assert_equal("-2.1", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("-2.09", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("2.00")
+    r = l.round_to_scale(1, ROUND_05UP)
+    assert_equal("2.0", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("2.00", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("-2.00")
+    r = l.round_to_scale(1, ROUND_05UP)
+    assert_equal("-2.0", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("-2.00", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("2.01")
+    r = l.round_to_scale(1, ROUND_05UP)
+    assert_equal("2.1", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("2.01", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("-2.01")
+    r = l.round_to_scale(1, ROUND_05UP)
+    assert_equal("-2.1", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("-2.01", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+
+    l = LongDecimal("2.59")
+    r = l.round_to_scale(1, ROUND_05UP)
+    assert_equal("2.6", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("2.59", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("-2.59")
+    r = l.round_to_scale(1, ROUND_05UP)
+    assert_equal("-2.6", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("-2.59", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("2.50")
+    r = l.round_to_scale(1, ROUND_05UP)
+    assert_equal("2.5", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("2.50", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("-2.50")
+    r = l.round_to_scale(1, ROUND_05UP)
+    assert_equal("-2.5", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("-2.50", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("2.51")
+    r = l.round_to_scale(1, ROUND_05UP)
+    assert_equal("2.6", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("2.51", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("-2.51")
+    r = l.round_to_scale(1, ROUND_05UP)
+    assert_equal("-2.6", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("-2.51", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+
+    l = LongDecimal("2.24")
+    r = l.round_to_scale(4, ROUND_05UP)
+    assert_equal("2.2400", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+  end
+
+  #
+  # test rounding with ROUND_05DOWN
+  #
+  def test_round_to_scale_05down
+    print "\ntest_round_to_scale_05down [#{Time.now}]: "
+    l = LongDecimal("2.29")
+    r = l.round_to_scale(1, ROUND_05DOWN)
+    assert_equal("2.3", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("2.29", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("-2.29")
+    r = l.round_to_scale(1, ROUND_05DOWN)
+    assert_equal("-2.3", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("-2.29", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("2.20")
+    r = l.round_to_scale(1, ROUND_05DOWN)
+    assert_equal("2.2", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("2.20", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("-2.20")
+    r = l.round_to_scale(1, ROUND_05DOWN)
+    assert_equal("-2.2", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("-2.20", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("2.21")
+    r = l.round_to_scale(1, ROUND_05DOWN)
+    assert_equal("2.3", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("2.21", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("-2.21")
+    r = l.round_to_scale(1, ROUND_05DOWN)
+    assert_equal("-2.3", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("-2.21", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+
+    l = LongDecimal("2.99")
+    r = l.round_to_scale(1, ROUND_05DOWN)
+    assert_equal("2.9", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("2.99", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("-2.99")
+    r = l.round_to_scale(1, ROUND_05DOWN)
+    assert_equal("-2.9", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("-2.99", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("2.00")
+    r = l.round_to_scale(1, ROUND_05DOWN)
+    assert_equal("2.0", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("2.00", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("-2.00")
+    r = l.round_to_scale(1, ROUND_05DOWN)
+    assert_equal("-2.0", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("-2.00", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("2.91")
+    r = l.round_to_scale(1, ROUND_05DOWN)
+    assert_equal("2.9", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("2.91", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("-2.91")
+    r = l.round_to_scale(1, ROUND_05DOWN)
+    assert_equal("-2.9", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("-2.91", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+
+    l = LongDecimal("2.49")
+    r = l.round_to_scale(1, ROUND_05DOWN)
+    assert_equal("2.4", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("2.49", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("-2.49")
+    r = l.round_to_scale(1, ROUND_05DOWN)
+    assert_equal("-2.4", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("-2.49", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("2.50")
+    r = l.round_to_scale(1, ROUND_05DOWN)
+    assert_equal("2.5", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("2.50", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("-2.50")
+    r = l.round_to_scale(1, ROUND_05DOWN)
+    assert_equal("-2.5", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("-2.50", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("2.41")
+    r = l.round_to_scale(1, ROUND_05DOWN)
+    assert_equal("2.4", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("2.41", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    l = LongDecimal("-2.41")
+    r = l.round_to_scale(1, ROUND_05DOWN)
+    assert_equal("-2.4", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
+    assert_equal("-2.41", l.to_s, "l=#{l.inspect} r=#{r.inspect}")
+
+    l = LongDecimal("2.24")
+    r = l.round_to_scale(4, ROUND_05DOWN)
     assert_equal("2.2400", r.to_s, "l=#{l.inspect} r=#{r.inspect}")
   end
 
@@ -6681,8 +6897,8 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   #
   # test rounding with ROUND_GEOMETRIC_*
   #
-  def test_round_to_scale_geometric_common_ldq
-    print "\ntest_round_to_scale_geometric_common [#{Time.now}]: "
+  def test_ldq_round_to_scale_geometric_common
+    print "\ntest_ldq_round_to_scale_geometric_common [#{Time.now}]: "
     ALL_ROUNDING_MODES.each do |rounding_mode|
       unless (rounding_mode.major == MAJOR_GEOMETRIC)
         next
@@ -6714,6 +6930,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
 
     end
   end
+
   def test_ldq_round_to_scale_harmonic_common
     print "\ntest_ldq_round_to_scale_harmonic_common [#{Time.now}]: "
 
@@ -7655,6 +7872,93 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     assert_equal(y, y, "y equals y")
     assert(! (x.eql? y), "! #{x.inspect} eql? #{y.inspect}")
     assert(! (y.eql? x), "! #{y.inspect} eql? #{x.inspect}")
+  end
+
+  def test_round_sum_hn_of_one
+    print "\ntest_round_sum_hn_of_one [#{Time.now}]: "
+    [ -1, 0, 1, 7, -1.0, 0.0, 1.0, Math::PI, Rational(-1, 1), Rational(0, 1), Rational(1,1), Rational(2,3), LongDecimal(-10000000000, 10), LongDecimal(-1, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ].each do |x|
+      # , Complex(-1, -2), Complex(0,0), Complex(Rational(3, 2), LongDecimal(4, 3))
+      6.times do |prec|
+        print "."
+        ALL_ROUNDING_MODES.each do |rm|
+          if (rm == ROUND_UNNECESSARY)
+            next
+          end
+          y = x.to_ld(prec, rm)
+          u = LongMath.round_sum_hn(prec, rm, x)
+          assert_equal(1, u.size)
+          assert_equal(y, u[0])
+        end
+      end
+    end
+  end
+
+  def test_round_sum_hn_of_two
+    print "\ntest_round_sum_hn_of_two [#{Time.now}]: "
+    arr = [ 0, 1, 7, 0.0, 1.0, Math::PI, Rational(0, 1), Rational(1,1), Rational(2,3), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ]
+    arr.each do |x|
+      arr.each do |y|
+        4.times do |prec|
+          print "."
+          ALL_ROUNDING_MODES.each do |rm|
+            if (rm == ROUND_UNNECESSARY)
+              next
+            end
+            s = (x+y).to_ld(prec, rm)
+            u = LongMath.round_sum_hn(prec, rm, x, y)
+            assert_equal(2, u.size, "s=#{s} u=#{u.inspect}")
+            assert_equal(s, u[0] + u[1], "s=#{s} u=#{u.inspect}")
+            if (x < y)
+              assert(u[0] <= u[1], "s=#{s} u=#{u.inspect} x=#{x} y=#{y} rm=#{rm} prec=#{prec}")
+            elsif (x > y)
+              assert(u[0] >= u[1], "s=#{s} u=#{u.inspect}")
+            end
+          end
+        end
+      end
+    end
+  end
+
+  def test_round_sum_hn_of_three
+    print "\ntest_round_sum_hn_of_two [#{Time.now}]: "
+    arr = [ 0, 1, 2, 3, 5, 7, 9, 10, 11, 14, 15, 16, 33, 99, 100, 101]
+    arr.each do |xx|
+      print ":"
+      x = LongDecimal(xx, 2)
+      arr.each do |yy|
+        print "."
+        y = LongDecimal(yy, 2)
+        arr.each do |zz|
+          z = LongDecimal(zz, 2)
+          4.times do |prec|
+            ALL_ROUNDING_MODES.each do |rm|
+              if (rm == ROUND_UNNECESSARY)
+                next
+              end
+              s = (x+y+z).to_ld(prec, rm)
+              u = LongMath.round_sum_hn(prec, rm, x, y, z)
+              assert_equal(3, u.size, "s=#{s} u=#{u.inspect}")
+              assert_equal(s, u[0] + u[1] + u[2], "s=#{s} u=#{u.inspect}")
+              if (x < y)
+                assert(u[0] <= u[1], "s=#{s} u=#{u.inspect} x=#{x} y=#{y} rm=#{rm} prec=#{prec}")
+              elsif (x > y)
+                assert(u[0] >= u[1], "s=#{s} u=#{u.inspect}")
+              end
+              if (y < z)
+                assert(u[1] <= u[2], "s=#{s} u=#{u.inspect} x=#{x} y=#{y} rm=#{rm} prec=#{prec}")
+              elsif (y > z)
+                assert(u[1] >= u[2], "s=#{s} u=#{u.inspect}")
+              end
+              if (x < z)
+                assert(u[0] <= u[2], "s=#{s} u=#{u.inspect} x=#{x} y=#{y} rm=#{rm} prec=#{prec}")
+              elsif (x > z)
+                assert(u[0] >= u[2], "s=#{s} u=#{u.inspect}")
+              end
+            end
+          end
+        end
+      end
+    end
   end
 
   def test_means_one_param

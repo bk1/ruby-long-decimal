@@ -5308,10 +5308,14 @@ module LongMath
   class RawElement
     include LongDecimalRoundingMode
 
-    def initialize(element, new_scale, rounding_mode=ROUND_FLOOR)
+    def initialize(element, new_scale, raw_scale, rounding_mode=ROUND_FLOOR)
       @element = element
       @rounded = element.to_ld(new_scale, rounding_mode)
-      @delta   = @element-@rounded
+      @delta = if (@element.kind_of? Float)
+         @element.to_ld(raw_scale, ROUND_HALF_EVEN)-@rounded
+               else
+         @element-@rounded
+               end
     end
 
     def add(epsilon)
@@ -5323,6 +5327,10 @@ module LongMath
     def <=>(other)
       delta <=> other.delta
     end
+
+    def to_s
+      "RawElement(e=#{@element} r=#{@rounded} d=#{@delta})"
+    end
   end
 
   public
@@ -5330,47 +5338,77 @@ module LongMath
   # round elements in such a way that round(new_scale, rounding_mode_sum, sum(elements)) = sum(elements_rounded)
   # HAARE_NIEMEYER
   #  (experimental)
-  def LongMath.round_sum_hm(new_scale, rounding_mode_sum, *elements)
+  def LongMath.round_sum_hn(new_scale, rounding_mode_sum, *elements)
     if (elements.empty?)
       return elements
     end
-    raw_sum = elements.inject(0) do |psum,x|
-      psum + x
+    raw_sum, raw_prec = elements.inject([0, new_scale]) do |psum_prec,x|
+      xprec = if (x.kind_of? Float)
+                20
+              elsif (x.kind_of? Integer)
+                0
+              elsif (x.kind_of? LongDecimalBase)
+                x.scale
+              else
+                psum_prec[1]
+              end
+      [psum_prec[0] + x, [psum_prec[1], xprec].max]
     end
+    # puts("raw_sum=#{raw_sum} raw_prec=#{raw_prec}")
     sum = raw_sum.to_ld(new_scale, rounding_mode_sum)
     raw_elements = elements.map do |element|
-      RawElement.new(element, new_scale)
+      RawElement.new(element, new_scale, raw_prec)
     end
+    # puts "raw_elements=#{raw_elements}"#=#{raw_elements.inspect}"
     raw_elements_sum = raw_elements.inject(0) do |psum, element|
       psum + element.rounded
     end
+    # puts "raw_elements_sum=#{raw_elements_sum}"
     delta = sum - raw_elements_sum
     epsilon = LongDecimal(1, new_scale)
     raw_elements_sorted = raw_elements.sort.reverse
+    # puts "raw_elements_sorted=#{raw_elements_sorted}"#=#{raw_elements_sorted.inspect}"
     n = (delta / epsilon).to_ld(0, ROUND_HALF_EVEN).to_i
-    puts "delta=#{delta} epsilon=#{epsilon} n=#{n} sum=#{sum} raw_sum=#{raw_sum}"
+    # puts "delta=#{delta} epsilon=#{epsilon} n=#{n} sum=#{sum} raw_sum=#{raw_sum}"
     n.times do |i|
       raw_elements_sorted[i].add(epsilon)
     end
+    # puts "raw_elements_sorted=#{raw_elements_sorted}"#=#{raw_elements_sorted.inspect}"
+    # puts "raw_elements=#{raw_elements}"#=#{raw_elements.inspect}"
     result = raw_elements.map do |x|
       x.rounded
     end
   end
 
-  # round elements in such a way that round(new_scale, rounding_mode, sum(elements)) = sum(elements_rounded)
-  # where rounding_mode_set is
+  # round elements in such a way that round(new_scale, rounding_mode_sum, sum(elements)) = sum(elements_rounded)
+  # where rounding_mode_sum is used for rounding the sum
+  # and rounding_mode_set is used to describe the allocation rule
   #  (experimental)
   def LongMath.round_sum_divisor(new_scale, rounding_mode_sum, rounding_mode_set, *elements)
     if (elements.empty?)
       return elements
+    end
+    if (rounding_mode_set.minor == MINOR_ODD ||rounding_mode_set.minor == MINOR_EVEN || rounding_mode_set == ROUND_UNNECESSARY || rounding_mode_set == ROUND_05UP || rounding_mode_set == ROUND_05DOWN)
+      raise ArgumentError, "rounding_mode_set=#{rounding_mode_set} not supported"
+    end
+    elements.each do |x|
+      if (x.kind_of? Complex)
+        raise ArgumentError, "Complex numbers not supported: #{x}"
+      end
+      if (x < 0)
+        raise ArgumentError, "negative numbers not supported"
+      end
     end
     delta = -1
     raw_sum = elements.inject(0) do |psum,x|
       psum + x
     end
     sum = raw_sum.to_ld(new_scale, rounding_mode_sum)
+    if (sum == 0)
+      return [LongDecimal.zero!(new_scale)]*elements.size
+    end
     raw_elements = elements.map do |element|
-      RawElement.new(element, new_scale, rounding_mode_set)
+      RawElement.new(element, new_scale, new_scale, rounding_mode_set)
     end
     while (true)
       raw_elements_sum = raw_elements.inject(0) do |psum, element|
@@ -5380,10 +5418,13 @@ module LongMath
       if (delta == 0)
         break
       end
-      factor = (1 + delta/raw_elements_sum)
+      if (raw_elements_sum == 0)
+        raw_elements_sum += delta.abs
+      end
+      factor = 1 + (8*delta)/(9*raw_elements_sum)
       puts("delta=#{delta} raw_elements_sum=#{raw_elements_sum} factor=#{factor}")
       raw_elements = raw_elements.map do |element|
-        RawElement.new(element.element * factor, new_scale, rounding_mode_set)
+        RawElement.new(element.element * factor, new_scale, new_scale, rounding_mode_set)
       end
     end
     result = raw_elements.map do |x|
