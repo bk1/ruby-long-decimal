@@ -2,7 +2,7 @@
 #
 # testlongdecimal.rb -- runit test for long-decimal.rb
 #
-# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2015
+# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2016
 #
 # TAG:       $TAG v1.00.04$
 # Author:    $Author: bk1 $ (Karl Brodowsky)
@@ -849,33 +849,41 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   end
 
   #
-  # test method sqrtb for calculating sqrt of short integers
+  # test method sqrtb and sqrtw for calculating sqrt of short integers
   #
-  def test_int_sqrtb_small
+  def test_int_sqrtb_and_sqrtw_small
     print "\ntest_int_sqrtb [#{Time.now}] (120 sec): "
     $stdout.flush
     1024.times do |x|
-      check_sqrtb(x, " loop x=#{x}")
+      yb = check_sqrtb(x, " loop x=#{x}")
+      yw = check_sqrtw(x, " loop x=#{x}")
+      assert_equal(yb, yw);
     end
   end
 
   #
   # test method sqrtb for calculating sqrt of short integers
   #
-  def test_int_sqrtb_small_squares
+  def test_int_sqrtb_sqrtw_small_squares
     print "\ntest_int_sqrtb [#{Time.now}] (120 sec): "
     $stdout.flush
     512.times do |i|
       x1 = i*i
-      y = check_sqrtb(x1, " i*i i=#{i}")
-      assert_equal(i, y, "i=#{i} y=#{y}")
+      yb = check_sqrtb(x1, " i*i i=#{i}")
+      assert_equal(i, yb, "i=#{i} yb=#{yb}")
+      yw = check_sqrtw(x1, " i*i i=#{i}")
+      assert_equal(i, yw, "i=#{i} yw=#{yw}")
       if (i > 0) then
         x2 = x1 + 1
-        y = check_sqrtb(x2, " i*i+1 i=#{i}")
-        assert_equal(i, y, "i=#{i} y=#{y}")
+        yb = check_sqrtb(x2, " i*i+1 i=#{i}")
+        assert_equal(i, yb, "i=#{i} yb=#{yb}")
+        yw = check_sqrtw(x2, " i*i+1 i=#{i}")
+        assert_equal(i, yw, "i=#{i} yw=#{yw}")
         x0 = x1 - 1
-        y = check_sqrtb(x0, " i*i-1 i=#{i}")
-        assert_equal(i-1, y, "i=#{i} y=#{y}")
+        yb = check_sqrtb(x0, " i*i-1 i=#{i}")
+        assert_equal(i-1, yb, "i=#{i} yb=#{yb}")
+        yw = check_sqrtw(x0, " i*i-1 i=#{i}")
+        assert_equal(i-1, yw, "i=#{i} yw=#{yw}")
       end
     end
   end
@@ -934,38 +942,6 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     assert_equal(Complex(0,1), LongMath.sqrtw(-1), "sqrt(-1)=i")
     assert_equal(Complex(0,1), LongMath.sqrtw(-2), "sqrt(-2)=i")
     assert_equal(Complex(0,2), LongMath.sqrtw(-4), "sqrt(-2)=i")
-  end
-
-  #
-  # test method sqrtw for calculating sqrt of short integers
-  #
-  def test_int_sqrtw_small
-    print "\ntest_int_sqrtw [#{Time.now}] (120 sec): "
-    $stdout.flush
-    1024.times do |x|
-      check_sqrtw(x, " loop x=#{x}")
-    end
-  end
-
-  #
-  # test method sqrtw for calculating sqrt of short integers
-  #
-  def test_int_sqrtw_small_squares
-    print "\ntest_int_sqrtw [#{Time.now}] (120 sec): "
-    $stdout.flush
-    512.times do |i|
-      x1 = i*i
-      y = check_sqrtw(x1, " i*i i=#{i}")
-      assert_equal(i, y, "i=#{i} y=#{y}")
-      if (i > 0) then
-        x2 = x1 + 1
-        y = check_sqrtw(x2, " i*i+1 i=#{i}")
-        assert_equal(i, y, "i=#{i} y=#{y}")
-        x0 = x1 - 1
-        y = check_sqrtw(x0, " i*i-1 i=#{i}")
-        assert_equal(i-1, y, "i=#{i} y=#{y}")
-      end
-    end
   end
 
   #
