@@ -3487,7 +3487,7 @@ module LongMath
       return [0, 0]
     elsif (s < 0)
       a = sqrtb_with_remainder(-x)
-      return [ Complex(0, a[0]), a[1]]
+      return [ Complex(0, a[0]), -a[1]]
     end
 
     xwords = split_to_words(x, 2)
@@ -3543,7 +3543,7 @@ module LongMath
       return [0, 0]
     elsif (s < 0)
       a = sqrtw_with_remainder(-x)
-      return [ Complex(0, a[0]), a[1]]
+      return [ Complex(0, a[0]), -a[1]]
     end
 
     xwords = split_to_words(x, n2)
@@ -3558,13 +3558,13 @@ module LongMath
       return a
     end
 
-    xi -= yi*yi
+    # xi -= yi*yi
+    xi = a[1]
     2.upto(xwords.length-1) do |i|
       xi = (xi << n2) + xwords[i]
       d0 = (yi << n1)
       q  = (xi / d0).to_i
-      q0 = q
-      j  = 0
+      j  = 10
       was_negative = false
       while (true) do
         d = d0 + q
@@ -3576,8 +3576,8 @@ module LongMath
         else
           q = q+1
         end
-        j += 1
-        if (j > 10) then
+        j -= 1
+        if (j <= 0) then
           break
         end
       end
