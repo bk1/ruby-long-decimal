@@ -15,7 +15,7 @@
 IT Sky Consulting GmbH\\
 Switzerland}
 
-\date{2011-02-06}
+\date{2018-12-15}
 
 %\makeatletter
 %\makeatother
@@ -130,15 +130,15 @@ Major rounding modes are
 
 \begin{tabular}{|l|p{100mm}|}
 \hline
-  MAJOR\_UP           & always round in such a way that the absolute value does not decrease.No minor rounding mode needed.\\
+  MAJOR\_UP           & always round in such a way that the absolute value does not decrease.No minor rounding mode needed.  In short: round away from zero.\\
 \hline
-  MAJOR\_DOWN         & always round in such a way that the absolute value does not increase. No minor rounding mode needed.\\
+  MAJOR\_DOWN         & always round in such a way that the absolute value does not increase. No minor rounding mode needed.  In short: round towards zero.\\
 \hline
-  MAJOR\_CEILING      & always round in such a way that the rational value does not decrease. No minor rounding mode needed.\\
+  MAJOR\_CEILING      & always round in such a way that the rational value does not decrease. No minor rounding mode needed.  In short: round towards infinity.\\
 \hline
-  MAJOR\_FLOOR        & always round in such a way that the rational value does not increase. No minor rounding mode needed.\\
+  MAJOR\_FLOOR        & always round in such a way that the rational value does not increase. No minor rounding mode needed.  In short: round towards negative infinity.\\
 \hline
-  MAJOR\_HALF         & round to the nearest available value.  The boundary is the arithmetic mean of the two adjacent available values.\\
+  MAJOR\_HALF         & round to the nearest available value.  The boundary is the arithmetic mean of the two adjacent available values. In short: what we usually think of when talking about rounding.\\
 \hline
   MAJOR\_GEOMETRIC    & round to one of the two adjacent available values $x,y$ and use their geometric mean $\sqrt{xy}$ as boundary.  For negative $x,y$ use the negated square root instead.\\
 \hline
@@ -148,7 +148,7 @@ Major rounding modes are
 \hline
   MAJOR\_CUBIC        & round to one of the two adjacent available values $x,y$ and use their cubic mean $\sqrt[3]{\frac{x^3+y^3}{2}}$ as boundary.\\
 \hline
-  MAJOR\_UNNECESSARY  & raise an exception if value changing rounding would be needed\\
+  MAJOR\_UNNECESSARY  & raise an exception if value changing rounding would be needed.\\
 \hline
 \end{tabular}
 
@@ -235,7 +235,7 @@ These combine to rounding modes:
 \hline
 \end{tabular}
 
-
+\newpage
 In addition to these commonly available rounding operations {\slshape long-decimal\/} provides rounding to remainder sets.  This is motivated by the practice in some
 currencies to prefer using certain multiples of the smallest unit.  For example in CHF you commonly use two digits after the decimal point, but the last digit is
 required to be 0 or 5.  This is achieved as a special case of a more general concept {\slshape round\_to\_allowed\_remainders\/}.  A modulus $M \ge 2$ and a set
@@ -381,7 +381,7 @@ harmonic\_geometric\_mean.  See Wikipedia for their definitions.
 
 \section{Rounding with sum constraint}
 
-Experimental support for rounding of several number simultanously in
+Experimental support for rounding of several numbers simultanously in
 such a way that their rounded sum is the sum of the rounded numbers is
 included with the methods {\slshape LongMath.round\_sum\_hm} which uses
 the Haare-Niemeyer-approach and {\slshape LongMath.round\_sum\_divisor}
