@@ -1,12 +1,15 @@
 Version
 -------
 
-This version (1.00.04) is fixing bugs from version 1.00.03.
+This version (1.00.05) is fixing bugs from version 1.00.04.
 It can be considered as a release candidate from the upcoming
 version 1.01.00.
 
 Change Log
 ----------
+Improvements in 1.00.05
+- removed warnings when run with 2.5.3
+- tested against 2.5.3
 
 Improvements in 1.00.04
 - tests improved
@@ -50,7 +53,7 @@ Work to do for 1.02.00 (or 2.00.00):
 - documentation
 - external documentation
 - interoperability with gmp, mpfr, mpfi, flt and other libraries
-- interoparability with rails
+- interoperability with rails
 
 Status
 ------

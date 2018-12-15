@@ -19,6 +19,8 @@ require "bigdecimal"
 
 BYTE_SIZE_OF_ONE = 1.size
 
+MAX_32BIT_FIXNUM = 2147483647
+
 #
 # define rounding modes to be used for LongDecimal
 # this serves the purpose of an "enum" in C/C++/Java
@@ -2039,7 +2041,7 @@ class LongDecimal < LongDecimalBase
   # performs bitwise left shift of self by other
   #
   def <<(other)
-    unless (other.kind_of? Fixnum) && other >= 0 then
+    unless (other.kind_of? Integer) && other >= 0 && other < MAX_32BIT_FIXNUM then
       raise TypeError, "cannot shift by something other than Fixnum >= 0"
     end
     LongDecimal(int_val << other, scale)
@@ -2049,7 +2051,7 @@ class LongDecimal < LongDecimalBase
   # performs bitwise right shift of self by other
   #
   def >>(other)
-    unless (other.kind_of? Fixnum) && other >= 0 then
+    unless (other.kind_of? Integer) && other >= 0 && other < MAX_32BIT_FIXNUM then
       raise TypeError, "cannot shift by something other than Fixnum >= 0"
     end
     LongDecimal(int_val >> other, scale)
@@ -2073,7 +2075,7 @@ class LongDecimal < LongDecimalBase
   # divide by 10**n
   #
   def move_point_left(n)
-    raise TypeError, "only implemented for Fixnum" unless n.kind_of? Fixnum
+    raise TypeError, "only implemented for Fixnum" unless (n.kind_of? Integer) && -MAX_32BIT_FIXNUM < n && n < MAX_32BIT_FIXNUM
     if (n >= 0) then
       move_point_left_int(n)
     else
@@ -2085,7 +2087,7 @@ class LongDecimal < LongDecimalBase
   # multiply by 10**n
   #
   def move_point_right(n)
-    raise TypeError, "only implemented for Fixnum" unless n.kind_of? Fixnum
+    raise TypeError, "only implemented for Fixnum" unless (n.kind_of? Integer) && -MAX_32BIT_FIXNUM < n && n < MAX_32BIT_FIXNUM
     if (n < 0) then
       move_point_left_int(-n)
     else
@@ -3367,7 +3369,7 @@ module LongMath
   # size for splitting a number into parts
   #
   def LongMath.check_word_len(word_len, name="word_len")
-    raise TypeError, "#{name} must be a positive number <= 1024" unless (word_len.kind_of? Fixnum) && word_len > 0 && word_len <= 1024
+    raise TypeError, "#{name} must be a positive number <= 1024" unless (word_len.kind_of? Integer) && word_len > 0 && word_len <= 1024
     word_len
   end
 
@@ -3392,7 +3394,7 @@ module LongMath
   def LongMath.check_is_prec(prec, name="prec", error_handling = nil, pl = prec_limit)
     raise TypeError, "#{name}=#{prec.inspect} must be Fixnum" unless prec.kind_of? Integer
     raise ArgumentError, "#{name}=#{prec.inspect} must be >= 0" unless prec >= 0
-    unless (prec.kind_of? Fixnum) && prec <= pl
+    unless (prec.kind_of? Integer) && prec < MAX_32BIT_FIXNUM && prec <= pl
       poh = LongMath.prec_overflow_handling
       if poh == :raise_error || error_handling == :raise_error
         raise ArgumentError, "#{name}=#{prec.inspect} must be <= #{pl}"
@@ -4333,7 +4335,7 @@ module LongMath
   def LongMath.log_raw(x, prec, iprec, mode)
 
     # we have to rely on iprec being at least 10
-    raise TypeError, "iprec=#{iprec} out of range" unless (iprec.kind_of? Fixnum) && iprec >= 10
+    raise TypeError, "iprec=#{iprec} out of range" unless (iprec.kind_of? Integer) && iprec >= 10 && iprec < MAX_32BIT_FIXNUM
 
     dprec = iprec - 1
 

@@ -6281,7 +6281,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   #
   def test_ldq_sint_digits10
     print "\ntest_ldq_sint_digits10 [#{Time.now}]: "
-    assert_equal(nil, LongDecimalQuot(LongDecimal("0.0000"), 1.to_ld).sint_digits10, "0.0000")
+    assert_nil(LongDecimalQuot(LongDecimal("0.0000"), 1.to_ld).sint_digits10, "0.0000")
     assert_equal(-3, LongDecimalQuot(LongDecimal("0.0009"), 1.to_ld).sint_digits10, "0.0009")
     assert_equal(-2, LongDecimalQuot(LongDecimal("0.0099"), 1.to_ld).sint_digits10, "0.0099")
     assert_equal(-1, LongDecimalQuot(LongDecimal("0.0999"), 1.to_ld).sint_digits10, "0.0999")
@@ -6293,7 +6293,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
     assert_equal(3, LongDecimalQuot(LongDecimal("100.0000"), 1.to_ld).sint_digits10, "100.0000")
     assert_equal(3, LongDecimalQuot(LongDecimal("999.9999"), 1.to_ld).sint_digits10, "999.9999")
 
-    assert_equal(nil, LongDecimalQuot(LongDecimal("-0.0000"), 1.to_ld).sint_digits10, "-0.0000")
+    assert_nil(LongDecimalQuot(LongDecimal("-0.0000"), 1.to_ld).sint_digits10, "-0.0000")
     assert_equal(0, LongDecimalQuot(LongDecimal("-0.9999"), 1.to_ld).sint_digits10, "-0.9999")
     assert_equal(1, LongDecimalQuot(LongDecimal("-1.0000"), 1.to_ld).sint_digits10, "-1.0000")
     assert_equal(1, LongDecimalQuot(LongDecimal("-9.9999"), 1.to_ld).sint_digits10, "-9.9999")
