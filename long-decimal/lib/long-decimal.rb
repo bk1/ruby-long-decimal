@@ -19,7 +19,8 @@ require "bigdecimal"
 
 BYTE_SIZE_OF_ONE = 1.size
 
-MAX_32BIT_FIXNUM = 2147483647
+# one bit is used as marker, so only 31 bits 2s-complement 2**30-1
+MAX_32BIT_FIXNUM = 1073741823
 
 #
 # define rounding modes to be used for LongDecimal
@@ -2041,7 +2042,7 @@ class LongDecimal < LongDecimalBase
   # performs bitwise left shift of self by other
   #
   def <<(other)
-    unless (other.kind_of? Integer) && other >= 0 && other < MAX_32BIT_FIXNUM then
+    unless (other.kind_of? Integer) && other >= 0 && other <= MAX_32BIT_FIXNUM then
       raise TypeError, "cannot shift by something other than Fixnum >= 0"
     end
     LongDecimal(int_val << other, scale)
@@ -2051,7 +2052,7 @@ class LongDecimal < LongDecimalBase
   # performs bitwise right shift of self by other
   #
   def >>(other)
-    unless (other.kind_of? Integer) && other >= 0 && other < MAX_32BIT_FIXNUM then
+    unless (other.kind_of? Integer) && other >= 0 && other <= MAX_32BIT_FIXNUM then
       raise TypeError, "cannot shift by something other than Fixnum >= 0"
     end
     LongDecimal(int_val >> other, scale)
@@ -2075,7 +2076,7 @@ class LongDecimal < LongDecimalBase
   # divide by 10**n
   #
   def move_point_left(n)
-    raise TypeError, "only implemented for Fixnum" unless (n.kind_of? Integer) && -MAX_32BIT_FIXNUM < n && n < MAX_32BIT_FIXNUM
+    raise TypeError, "only implemented for Fixnum" unless (n.kind_of? Integer) && -MAX_32BIT_FIXNUM <= n && n <= MAX_32BIT_FIXNUM
     if (n >= 0) then
       move_point_left_int(n)
     else
@@ -2087,7 +2088,7 @@ class LongDecimal < LongDecimalBase
   # multiply by 10**n
   #
   def move_point_right(n)
-    raise TypeError, "only implemented for Fixnum" unless (n.kind_of? Integer) && -MAX_32BIT_FIXNUM < n && n < MAX_32BIT_FIXNUM
+    raise TypeError, "only implemented for Fixnum" unless (n.kind_of? Integer) && -MAX_32BIT_FIXNUM <= n && n <= MAX_32BIT_FIXNUM
     if (n < 0) then
       move_point_left_int(-n)
     else
@@ -3394,7 +3395,7 @@ module LongMath
   def LongMath.check_is_prec(prec, name="prec", error_handling = nil, pl = prec_limit)
     raise TypeError, "#{name}=#{prec.inspect} must be Fixnum" unless prec.kind_of? Integer
     raise ArgumentError, "#{name}=#{prec.inspect} must be >= 0" unless prec >= 0
-    unless (prec.kind_of? Integer) && prec < MAX_32BIT_FIXNUM && prec <= pl
+    unless (prec.kind_of? Integer) && prec <= MAX_32BIT_FIXNUM && prec <= pl
       poh = LongMath.prec_overflow_handling
       if poh == :raise_error || error_handling == :raise_error
         raise ArgumentError, "#{name}=#{prec.inspect} must be <= #{pl}"
@@ -4335,7 +4336,7 @@ module LongMath
   def LongMath.log_raw(x, prec, iprec, mode)
 
     # we have to rely on iprec being at least 10
-    raise TypeError, "iprec=#{iprec} out of range" unless (iprec.kind_of? Integer) && iprec >= 10 && iprec < MAX_32BIT_FIXNUM
+    raise TypeError, "iprec=#{iprec} out of range" unless (iprec.kind_of? Integer) && iprec >= 10 && iprec <= MAX_32BIT_FIXNUM
 
     dprec = iprec - 1
 

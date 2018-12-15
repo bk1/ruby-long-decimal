@@ -9,7 +9,7 @@
 #
 
 $test_type = nil
-if ((RUBY_VERSION.match /^1\./) || (RUBY_VERSION.match /^2\.0/)) then
+if ((RUBY_VERSION.match /^1\./) || (RUBY_VERSION.match /^2\.[01]/)) then
   require 'test/unit'
   $test_type = :v20
 else
@@ -3462,7 +3462,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
         found = true
       else
         assert(i != i_r, "i=#{i} i_r=#{i_r} i_rounded=#{i_rounded}")
-        closer = ((i_r - i).abs < (i_rounded -i).abs)
+        closer = ((i_r - i).abs < (i_rounded - i).abs)
         if (i < i_r)
           assert(i_rounded < i_r)
           if closer
@@ -3684,7 +3684,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
         else
           boundary_lower = param
         end
-        boundary_upper = param +1
+        boundary_upper = param + 1
 
         1.upto boundary_lower do |x|
           ALL_ROUNDING_MODES.each do |rm|
@@ -7271,7 +7271,7 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
 
     y = Complex(5, 3)
     z = x - y
-    zz = Complex(224.0/225.0 -5, -3)
+    zz = Complex(224.0/225.0 - 5, -3)
     assert_kind_of(Complex, z, "z=#{z.inspect}")
     assert((zz-z).abs < 1e-9, "z=#{z.inspect} zz=#{zz.inspect}")
     zz = -zz
