@@ -16,7 +16,8 @@
 require "test/unit"
 # require "crypt/ISAAC"
 require "rubygems"
-require "crypt-isaac"
+# require "crypt-isaac"
+require "crypt/isaac"
 
 load "lib/long-decimal.rb"
 load "lib/long-decimal-extra.rb"
@@ -24,12 +25,31 @@ load "lib/long-decimal-extra.rb"
 load "test/testlongdeclib.rb"
 load "test/testrandlib.rb"
 
+$test_type = nil
+if ((RUBY_VERSION.match /^1\./) || (RUBY_VERSION.match /^2\.[01]/)) then
+  require 'test/unit'
+  $test_type = :v20
+else
+  require 'minitest/autorun'
+  require 'test/unit/assertions'
+  include Test::Unit::Assertions
+  $test_type = :v21
+end
+
+if ($test_type == :v20)
+  class UnitTest < Test::Unit::TestCase
+  end
+else
+  class UnitTest < MiniTest::Test
+  end
+end
+
 LongMath.prec_overflow_handling = :warn_use_max
 
 #
 # test class for LongDecimal and LongDecimalQuot
 #
-class TestRandom_class < RUNIT::TestCase
+class TestRandom_class < UnitTest #  RUNIT::TestCase
   include TestLongDecHelper
   include TestRandomHelper
 
@@ -79,6 +99,6 @@ class TestRandom_class < RUNIT::TestCase
 
 end
 
-RUNIT::CUI::TestRunner.run(TestRandom_class.suite)
+# RUNIT::CUI::TestRunner.run(TestRandom_class.suite)
 
 # end of file testrandom.rb

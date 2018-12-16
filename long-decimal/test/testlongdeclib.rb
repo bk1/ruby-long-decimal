@@ -124,6 +124,24 @@ module TestLongDecHelper
   end
 
   #
+  # convenience method for comparing two long-decimal numbers. true if and only if
+  # the second can be obtained from the first by rounding with
+  # ROUND_HALF_UP or ROUND_HALF_DOWN.  If the digits that the first
+  # number has in excess to the second are 5000....., it is sufficient
+  # for sucess if either rounding up or rounding down yields the
+  # second number.  In all other cases there is no difference between
+  # using ROUND_HALF_UP, ROUND_HALF_DOWN or ROUND_HALF_EVEN anyway, so
+  # one of these is used.
+  #
+  def assert_equal_rounded_with_mode(expected, actual, mode, message="")
+    expected_rounded = expected.round_to_scale(actual.scale, mode)
+    lhs = (expected_rounded - actual).abs()*2000
+    rhs = actual.unit.abs()*1001
+    full_message = build_message(message, "Expected <?> to match <?> (lhs=#{lhs} rhs=#{rhs})", actual, expected_rounded)
+    assert(lhs < rhs, full_message)
+  end
+
+  #
   # convenience method for comparing three long-decimal numbers.  yd
   # and yu should form a closed interval containing y.  Length of
   # interval is a unit at most.
@@ -217,6 +235,53 @@ module TestLongDecHelper
     # assert_equal(y,  yu, "the result y/yu  should not depend on the internal rounding mode x0=#{x0} x=#{x} p=#{prec} d=#{(y -yu).to_f.to_s}")
     assert_small_interval(yd, yu, y, "the result y/yu  should not depend on the internal rounding mode x0=#{x0} x=#{x} p=#{prec} d=#{(yd-yu).to_f.to_s}")
     y
+  end
+
+  #
+  # helper method for test_exp_rounding_modes
+  # tests if exp(x) with precision prec is calculated correctly
+  #
+  def check_exp_with_rounding_modes(x, prec)
+
+    print "."
+    $stdout.flush
+
+    # make sure x is LongDecimal
+    x0 = x
+    x = x.to_ld
+    # calculate y = exp(x)
+    # eprec = prec+1
+    y_rd  = LongMath.exp(x, prec, ROUND_DOWN)
+    y_rf  = LongMath.exp(x, prec, ROUND_FLOOR)
+    assert_equal(y_rd, y_rf)
+    y_ru  = LongMath.exp(x, prec, ROUND_UP)
+    y_rc  = LongMath.exp(x, prec, ROUND_CEILING)
+    assert_equal(y_ru, y_rc)
+    y_hu  = LongMath.exp(x, prec, ROUND_HALF_UP)
+    y_hc  = LongMath.exp(x, prec, ROUND_HALF_CEILING)
+    y_hd  = LongMath.exp(x, prec, ROUND_HALF_DOWN)
+    y_hf  = LongMath.exp(x, prec, ROUND_HALF_FLOOR)
+    assert_equal(y_hu, y_hc)
+    assert(y_hu >= y_hd)
+    assert(y_hu <= y_hd + y_hd.unit)
+    assert_equal(y_hd, y_hf)
+    assert(y_rd <= y_hu, "y_rd=#{y_rd} y_hu=#{y_hu}")
+    assert(y_hu <= y_ru, "y_hu=#{y_hu} y_ru=#{y_ru}")
+
+    yy_rd = LongMath.exp(x, prec+10, ROUND_DOWN)
+    yy_hu = LongMath.exp(x, prec+10, ROUND_HALF_UP)
+    yy_ru = LongMath.exp(x, prec+10, ROUND_UP)
+    puts
+    puts(" y_rd=#{y_rd}")
+    puts("yy_rd=#{yy_rd}")
+    puts(" y_hu=#{y_hu}")
+    puts("yy_hu=#{yy_hu}")
+    puts(" y_ru=#{y_ru}")
+    puts("yy_ru=#{yy_ru}")
+    assert_equal_rounded_with_mode(yy_rd, y_rd, ROUND_DOWN, "x=#{x} y_rd=#{y_rd} yy_rd=#{yy_rd}")
+    assert_equal_rounded(yy_hu, y_hu, "x=#{x} y_hu=#{y_hu} yy_hu=#{yy_hu}")
+    assert_equal_rounded_with_mode(yy_ru, y_ru, ROUND_UP, "x=#{x} y_ru=#{y_ru} yy_ru=#{yy_ru}")
+    nil
   end
 
   #

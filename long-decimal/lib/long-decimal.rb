@@ -362,13 +362,18 @@ module LongDecimalRoundingMode
 
   end
 
+  # filled using reflection
   MODE_LOOKUP = {}
 
   rounding_mode_counter = 0
 
   public
 
+  # filled using reflection
   ALL_ROUNDING_MODES = []
+
+  # filled using reflection
+  ALL_ROUNDING_MODE_NAMES = []
 
   MUL_INVERSE_MODE = {}
 
@@ -384,14 +389,14 @@ module LongDecimalRoundingMode
       class_eval("#{const_str}.freeze")
       rounding_mode_counter += 1
       class_eval("ALL_ROUNDING_MODES.push(#{const_str})")
+      class_eval("ALL_ROUNDING_MODE_NAMES.push('#{const_str}')")
       class_eval("MODE_LOOKUP[[#{majm.name}, #{minm.name}]] = #{const_str}")
     end
   end
 
   ALL_ROUNDING_MODES.freeze
-  # puts(ALL_ROUNDING_MODES)
+  ALL_ROUNDING_MODE_NAMES.freeze
   MODE_LOOKUP.freeze
-  # puts(MODE_LOOKUP)
 
   ALL_ROUNDING_MODES.each do |rm|
     majm = rm.major

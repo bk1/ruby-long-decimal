@@ -120,6 +120,49 @@ class TestLongDecimal_class < UnitTest # RUNIT::TestCase
   end
 
   #
+  # test the calculation of the exponential function with rounding modes
+  #
+  def test_exp_rounding_modes
+    print "\ntest_exp_rounding_modes [#{Time.now}] (60 sec): "
+    $stdout.flush
+    xx = LongMath.log(10.to_ld, 10)*100
+    check_exp_with_rounding_modes(700, 10)
+    check_exp_with_rounding_modes(100, 10)
+    check_exp_with_rounding_modes(1, 10)
+    check_exp_with_rounding_modes(0.01, 10)
+    check_exp_with_rounding_modes(1e-10, 10)
+    check_exp_with_rounding_modes(1e-90, 10)
+    check_exp_with_rounding_modes(0, 10)
+    check_exp_with_rounding_modes(-1, 10)
+    check_exp_with_rounding_modes(-100, 10)
+    check_exp_with_rounding_modes(-700, 10)
+    check_exp_with_rounding_modes(xx, 10)
+    check_exp_with_rounding_modes(-xx, 10)
+
+    check_exp_with_rounding_modes(700, 100)
+    check_exp_with_rounding_modes(100, 100)
+    check_exp_with_rounding_modes(1, 100)
+    check_exp_with_rounding_modes(0.01, 100)
+    check_exp_with_rounding_modes(1e-10, 100)
+    check_exp_with_rounding_modes(1e-90, 100)
+    check_exp_with_rounding_modes(0, 100)
+    check_exp_with_rounding_modes(-1, 100)
+    check_exp_with_rounding_modes(-100, 100)
+    check_exp_with_rounding_modes(-700, 100)
+    check_exp_with_rounding_modes(xx, 100)
+    check_exp_with_rounding_modes(-xx, 100)
+
+    # random tests that have failed previously
+    check_exp_with_rounding_modes(LongDecimal("0.0000000000000000000000000050000000000000000000000000000000000000000000000000000000000000017066"), 25)
+    check_exp_with_rounding_modes(LongDecimal("0.00000000000000000000000000000000000000000000000000000000000000570000000004000000000000050"), 86)
+    check_exp_with_rounding_modes(LongDecimal("-51.0000000000000000000000000000000000000000000000000000000000000000000002300000000434000994"), 22)
+    check_exp_with_rounding_modes(LongDecimal("0.0000000000000000000000816000000000000000000000000000066500000949"), 55)
+    check_exp_with_rounding_modes(LongDecimal("0.0000000000000000000000000000000000000000000012100000000000000000565000000000000000000000000593"), 94)
+    check_exp_with_rounding_modes(LongDecimal("0.49999999987500000004166666665104166667291666666406250000111607142808314732164558531736266121036184952198542695369806246270654055688438826256113701277472962860048170064139001013692959178218223"), 9)
+    check_exp_with_rounding_modes(LongDecimal("0.000000000000000000000000000000000000000000000000695000000000000000000000000000042500000000000000552"), 50)
+  end
+
+  #
   # test the calculation of the exponential function where result is
   # near zero
   #

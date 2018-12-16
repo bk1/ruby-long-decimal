@@ -12,7 +12,8 @@
 
 require "rubygems"
 # require "crypt/ISAAC"
-require "crypt-isaac"
+# require "crypt-isaac"
+require "crypt/isaac"
 
 #
 # test class for LongDecimal and LongDecimalQuot
