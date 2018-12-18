@@ -1,7 +1,7 @@
 #
 # long-decimal.rb -- Arbitrary precision decimals with fixed decimal point
 #
-# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2016
+# (C) Karl Brodowsky (IT Sky Consulting GmbH) 2006-2018
 #
 # This class contains the basic functionality for working with LongDecimal
 # additional functionality, mostly transcendental functions,
@@ -92,7 +92,7 @@ module LongDecimalRoundingMode
   # use the original value, if it is not already rounded, raise an error
   MAJOR_UNNECESSARY = RoundingMajorMode.new(:MAJOR_UNNECESSARY, :UNNECESSARY, NO_MINOR)
   # (away from zero if last digit after rounding towards zero would have been 0 or 5; otherwise towards zero)
-  # MAJOR_05UP = RoundingMinorMode.new(:MAJOR_05UP, :_05UP, NO_MINOR)
+  MAJOR_05UP        = RoundingMajorMode.new(:MAJOR_05UP, :_05UP, NO_MINOR)
 
   # the arithmetic mean of two adjacent rounded values is the boundary
   MAJOR_HALF = RoundingMajorMode.new(:MAJOR_HALF, :HALF, ALL_MINOR)
@@ -107,7 +107,7 @@ module LongDecimalRoundingMode
 
   private
 
-  ALL_MAJOR_MODES = [  MAJOR_UP, MAJOR_DOWN, MAJOR_CEILING, MAJOR_FLOOR, MAJOR_UNNECESSARY, MAJOR_HALF, MAJOR_GEOMETRIC, MAJOR_HARMONIC, MAJOR_QUADRATIC, MAJOR_CUBIC ]
+  ALL_MAJOR_MODES = [  MAJOR_UP, MAJOR_DOWN, MAJOR_CEILING, MAJOR_FLOOR, MAJOR_UNNECESSARY, MAJOR_05UP, MAJOR_HALF, MAJOR_GEOMETRIC, MAJOR_HARMONIC, MAJOR_QUADRATIC, MAJOR_CUBIC ]
 
   # puts("ALL_MAJOR_MODES:")
   # puts(ALL_MAJOR_MODES)
@@ -118,6 +118,7 @@ module LongDecimalRoundingMode
     MAJOR_DOWN         =>   MAJOR_UP,
     MAJOR_CEILING      =>   MAJOR_FLOOR,
     MAJOR_FLOOR        =>   MAJOR_CEILING,
+    MAJOR_05UP         =>   MAJOR_05UP,
     MAJOR_HALF         =>   MAJOR_HALF,
     MAJOR_UNNECESSARY  =>   MAJOR_UNNECESSARY
   }
@@ -128,6 +129,7 @@ module LongDecimalRoundingMode
     MAJOR_DOWN         =>   MAJOR_DOWN,
     MAJOR_CEILING      =>   MAJOR_FLOOR,
     MAJOR_FLOOR        =>   MAJOR_CEILING,
+    MAJOR_05UP         =>   MAJOR_05UP,
     MAJOR_HALF         =>   MAJOR_HALF,
     MAJOR_UNNECESSARY  =>   MAJOR_UNNECESSARY
   }
@@ -169,11 +171,19 @@ module LongDecimalRoundingMode
       LongDecimalRoundingMode::ADD_INVERSE_MODE[self]
     end
 
+    def rem5(val)
+      if (val.kind_of? Integer)
+        val % 5
+      else
+        val.int_val % 5
+      end
+    end
+
     # internal use
     # no special checks included
     # we assume: lower <= unrounded <= upper
     # we assume: sign = sgn(unrounded)
-    def pick_value(unrounded, sign, lower, upper, even)
+    def pick_value(unrounded, sign, lower, upper, even_or_odd)
       if (sign == 0 || major == MAJOR_UNNECESSARY)
         if (lower == unrounded)
           return lower
@@ -193,6 +203,12 @@ module LongDecimalRoundingMode
         return upper
       elsif (major == MAJOR_FLOOR)
         return lower
+      elsif (major == MAJOR_05UP)
+        if (rem5(upper) == 0)
+          return upper
+        else
+          return lower
+        end
       elsif (major == MAJOR_UNNECESSARY)
         raise ArgumentError, "rounding #{name} of unrounded=#{unrounded} (sign=#{sign}) is not applicable for lower=#{lower} and upper=#{upper}"
       end
@@ -326,19 +342,19 @@ module LongDecimalRoundingMode
         raise ArgumentError, "rounding #{name} of unrounded=#{unrounded} failed for lower=#{lower} and upper=#{upper}: not on boundary"
       end
       if (minor == MINOR_UP)
-        return ROUND_UP.pick_value(unrounded, sign, lower, upper, even)
+        return ROUND_UP.pick_value(unrounded, sign, lower, upper, even_or_odd)
       elsif (minor == MINOR_DOWN)
-        return ROUND_DOWN.pick_value(unrounded, sign, lower, upper, even)
+        return ROUND_DOWN.pick_value(unrounded, sign, lower, upper, even_or_odd)
       elsif (minor == MINOR_CEILING)
-        return ROUND_CEILING.pick_value(unrounded, sign, lower, upper, even)
+        return ROUND_CEILING.pick_value(unrounded, sign, lower, upper, even_or_odd)
       elsif (minor == MINOR_FLOOR)
-        return ROUND_FLOOR.pick_value(unrounded, sign, lower, upper, even)
+        return ROUND_FLOOR.pick_value(unrounded, sign, lower, upper, even_or_odd)
       elsif (minor == MINOR_UNUSED)
         raise ArgumentError, "rounding #{name} of unrounded=#{unrounded} failed for lower=#{lower} and upper=#{upper}: on boundary but no applicable minor mode"
       elsif (minor == MINOR_EVEN)
-        return even
+        return even_or_odd
       elsif (minor == MINOR_ODD)
-        if (lower == even)
+        if (lower == even_or_odd)
           return upper
         else
           return lower
@@ -769,7 +785,6 @@ end
 # common base class for LongDecimal and LongDecimalQuot
 #
 class LongDecimalBase < Numeric
-  @@RCS_ID='-$Id: long-decimal.rb,v 1.87 2011/01/30 20:01:40 bk1 Exp $-'
 
   # allow easy check if running with version 1.9
   RUNNING_AT_LEAST_19 = RUBY_VERSION.match /^(1\.9|[2-9]\.)/
@@ -913,8 +928,8 @@ class LongDecimalBase < Numeric
     # quot < divisor/dividend < quot+1
     lower = quot
     upper = quot+1
-    even = if (mode.minor == MINOR_EVEN || mode.minor == MINOR_ODD)
-             even = if (lower[0] == 1)
+    even_or_odd = if (mode.minor == MINOR_EVEN || mode.minor == MINOR_ODD)
+             even_or_odd = if (lower[0] == 1)
                       upper
                     else
                       lower
@@ -922,7 +937,7 @@ class LongDecimalBase < Numeric
            else
              nil
            end
-    value = mode.pick_value(Rational(dividend, divisor), sign_quot, lower, upper, even)
+    value = mode.pick_value(Rational(dividend, divisor), sign_quot, lower, upper, even_or_odd)
     LongDecimal(value, new_scale)
 
   end
@@ -1047,7 +1062,6 @@ end # class LongDecimalBase
 # digits and the other one the position of the decimal point.
 #
 class LongDecimal < LongDecimalBase
-  @@RCS_ID='-$Id: long-decimal.rb,v 1.87 2011/01/30 20:01:40 bk1 Exp $-'
 
   #  MINUS_ONE = LongDecimal(-1)
   #  ZERO      = LongDecimal(0)
@@ -1155,8 +1169,8 @@ class LongDecimal < LongDecimalBase
 
     # handle some obvious errors with optional second parameter, if present
     LongMath.check_is_prec(s, "scale", :raise_error)
-#    raise TypeError, "non integer 2nd arg \"#{s.inspect}\"" if ! s.kind_of? Integer
-#    raise TypeError, "negative 2nd arg \"#{s.inspect}\""    if s < 0
+    #    raise TypeError, "non integer 2nd arg \"#{s.inspect}\"" if ! s.kind_of? Integer
+    #    raise TypeError, "negative 2nd arg \"#{s.inspect}\""    if s < 0
 
     # scale is the second parameter or 0 if it is missing
     scale   = s
@@ -2354,8 +2368,6 @@ end # LongDecimal
 # providing additional information on how to round the result.
 #
 class LongDecimalQuot < LongDecimalBase
-
-  @@RCS_ID='-$Id: long-decimal.rb,v 1.87 2011/01/30 20:01:40 bk1 Exp $-'
 
   #
   # constructor
