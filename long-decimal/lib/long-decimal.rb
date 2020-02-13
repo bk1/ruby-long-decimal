@@ -381,21 +381,21 @@ module LongDecimalRoundingMode
   end
 
   # filled using reflection
-  MODE_LOOKUP = {}.freeze
+  MODE_LOOKUP = {}
 
   rounding_mode_counter = 0
 
   public
 
   # filled using reflection
-  ALL_ROUNDING_MODES = [].freeze
+  ALL_ROUNDING_MODES = []
 
   # filled using reflection
-  ALL_ROUNDING_MODE_NAMES = [].freeze
+  ALL_ROUNDING_MODE_NAMES = []
 
-  MUL_INVERSE_MODE = {}.freeze
+  MUL_INVERSE_MODE = {}
 
-  ADD_INVERSE_MODE = {}.freeze
+  ADD_INVERSE_MODE = {}
 
   ALL_MAJOR_MODES.each do |majm|
     majm_str = majm.part.to_s
