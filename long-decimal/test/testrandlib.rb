@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
+
 #
 # testrandlib.rb -- library for random tests for long-decimal.rb and long-decimal-extra.rb
 #
@@ -10,17 +12,16 @@
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
-require "rubygems"
+require 'rubygems'
 # require "crypt/ISAAC"
 # require "crypt-isaac"
-require "crypt/isaac"
+require 'crypt/isaac'
 
 #
 # test class for LongDecimal and LongDecimalQuot
 #
 module TestRandomHelper
-
-  @RCS_ID='-$Id: testrandlib.rb,v 1.10 2011/02/03 00:22:39 bk1 Exp $-'
+  @RCS_ID = '-$Id: testrandlib.rb,v 1.10 2011/02/03 00:22:39 bk1 Exp $-'
 
   @@r1 = Crypt::ISAAC.new
   @@r2 = Crypt::ISAAC.new
@@ -29,9 +30,9 @@ module TestRandomHelper
 
   def arr_with_sq(arr)
     result = arr.map do |x|
-      if (x >= 0) then
+      if x >= 0
         r = LongMath.sqrt(x, x.scale, LongMath::ROUND_HALF_UP)
-        [ r, x, r*x, x.square ]
+        [r, x, r * x, x.square]
       else
         x
       end
@@ -45,10 +46,10 @@ module TestRandomHelper
 
   def arr_with_inv(arr)
     result = arr.map do |x|
-      if (x.zero? || x.one?) then
+      if x.zero? || x.one?
         x
       else
-        [x, x.inverse.to_ld(x.scale*2)]
+        [x, x.inverse.to_ld(x.scale * 2)]
       end
     end
     result.flatten
@@ -73,13 +74,13 @@ module TestRandomHelper
   def random_arr
     x0 = @@r1.rand(1000)
     x1 = @@r2.rand(1000)
-    x2 = @@r2.rand(100)+3
+    x2 = @@r2.rand(100) + 3
     x3 = @@r3.rand(1000)
-    x4 = @@r3.rand(100)+4
+    x4 = @@r3.rand(100) + 4
     x5 = @@r4.rand(1000)
-    x6 = @@r4.rand(100)+5
+    x6 = @@r4.rand(100) + 5
     xs = LongDecimal(x1, x2) + LongDecimal(x3, x4) + LongDecimal(x5, x6)
-    xt = (xs / LongMath.pi(xs.scale)).to_ld(xs.scale*2)
+    xt = (xs / LongMath.pi(xs.scale)).to_ld(xs.scale * 2)
     xu = 1 + xs
     xv = 1 + xt
     xw = 2 + xs
@@ -90,20 +91,19 @@ module TestRandomHelper
     xg = LongMath::MAX_EXP_ABLE - xs
     xh = LongMath::MAX_EXP_ABLE + xs
     eprec = @@r1.rand(120)
-    lprec = eprec+1
-    sprec = eprec+((xb.scale+1)>>1)
+    lprec = eprec + 1
+    sprec = eprec + ((xb.scale + 1) >> 1)
     pprec = lprec >> 1
-    arr1 = [ xt, xs, xu, xv, xw, xe, xp, xn, xb, xg, xh ]
-#     f    = LongDecimal("0.25")
-#     arr2 = (0..8).map do |j|
-#       ff = f*j
-#       [ ff + xs, ff**5 + xs ]
-#     end
-#     arr3 = [ arr1, arr2 ].flatten
-    arr  = arr_with_neg(arr_with_inv(arr_with_sq(arr1))).sort.uniq
-    return [ arr, eprec, lprec, sprec, pprec, xb.scale ]
+    arr1 = [xt, xs, xu, xv, xw, xe, xp, xn, xb, xg, xh]
+    #     f    = LongDecimal("0.25")
+    #     arr2 = (0..8).map do |j|
+    #       ff = f*j
+    #       [ ff + xs, ff**5 + xs ]
+    #     end
+    #     arr3 = [ arr1, arr2 ].flatten
+    arr = arr_with_neg(arr_with_inv(arr_with_sq(arr1))).sort.uniq
+    [arr, eprec, lprec, sprec, pprec, xb.scale]
   end
-
 end
 
 # end of file testrandlib.rb
