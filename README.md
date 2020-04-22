@@ -262,7 +262,7 @@ License
 
 Ruby's license or LGPL
 Find copies of these licenses on http://www.gnu.org/ or http://www.ruby-lang.org/
-© Karl Brodowsky (IT Sky Consulting GmbH) 2006-2015
+Â© Karl Brodowsky (IT Sky Consulting GmbH) 2006-2015
 http://www.it-sky-consulting.com/
 
 Warranty
