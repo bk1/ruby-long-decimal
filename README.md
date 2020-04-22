@@ -1,6 +1,7 @@
 ![Ruby](https://github.com/bk1/ruby-long-decimal/workflows/Ruby/badge.svg)
 ![Rubocop](https://github.com/bk1/ruby-long-decimal/workflows/Rubocop/badge.svg)
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
+[![Gem Version](https://badge.fury.io/rb/long-decimal.svg)](https://badge.fury.io/rb/long-decimal)
 
 Version
 -------
