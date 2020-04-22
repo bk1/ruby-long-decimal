@@ -1,4 +1,4 @@
-# encoding: utf-8
+# frozen_string_literal: true
 
 #
 # Rakefile for long-decimal project
@@ -11,7 +11,7 @@
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
-require "bundler/gem_tasks"
+require 'bundler/gem_tasks'
 require 'rubygems'
 require 'bundler'
 
@@ -28,10 +28,11 @@ Rake::RDocTask.new do |rdoc|
 
   rdoc.rdoc_dir = 'rdoc'
   rdoc.title = "long-decimal #{version}"
-  rdoc.main = "README"
+  rdoc.main = 'README'
   rdoc.rdoc_files.include('README*')
   rdoc.rdoc_files.include('lib/*.rb')
 end
 
-# end of file Rakefile
+task default: :test
 
+# end of file Rakefile

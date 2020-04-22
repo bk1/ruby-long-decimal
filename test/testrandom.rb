@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
+
 #
 # testrandom.rb -- random tests for long-decimal.rb
 #
@@ -11,7 +13,7 @@
 #
 
 $test_type = nil
-if ((RUBY_VERSION.match /^1\./) || (RUBY_VERSION.match /^2\.0/)) then
+if (RUBY_VERSION.match /^1\./) || (RUBY_VERSION.match /^2\.0/)
   require 'test/unit'
   $test_type = :v20
 else
@@ -21,16 +23,16 @@ else
   $test_type = :v21
 end
 
-require "rubygems"
-require "crypt-isaac"
+require 'rubygems'
+require 'crypt-isaac'
 
-load "lib/long-decimal.rb"
-load "test/testlongdeclib.rb"
-load "test/testrandlib.rb"
+load 'lib/long-decimal.rb'
+load 'test/testlongdeclib.rb'
+load 'test/testrandlib.rb'
 
 LongMath.prec_overflow_handling = :warn_use_max
 
-if ($test_type == :v20)
+if $test_type == :v20
   class UnitTest < Test::Unit::TestCase
   end
 else
@@ -46,23 +48,19 @@ class TestRandom_class < UnitTest
   include TestRandomHelper
   include LongDecimalRoundingMode
 
-  @RCS_ID='-$Id: testrandom.rb,v 1.18 2011/02/03 00:22:39 bk1 Exp $-'
+  @RCS_ID = '-$Id: testrandom.rb,v 1.18 2011/02/03 00:22:39 bk1 Exp $-'
 
   # for how many seconds should this test run? change to different
   # value on demand
-  @@duration = 1000000
+  @@duration = 1_000_000
 
   def check_exp_log_rand(arr, eprec, lprec, pprec, sprec, sc, cnt)
     arr.each do |x|
       @scnt += 1
       puts("\ncnt=#{cnt} scnt=#{@scnt} x=#{x} ep=#{eprec} lp=#{lprec} sp=#{sprec} pp=#{pprec}\n")
-      if (x <= LongMath::MAX_EXP_ABLE) then
-        check_exp_floated(x, eprec)
-      end
-      if (x > 0)
-        check_log_floated(x, lprec)
-      end
-      if (x > 0)
+      check_exp_floated(x, eprec) if x <= LongMath::MAX_EXP_ABLE
+      check_log_floated(x, lprec) if x > 0
+      if x > 0
         xr = x.round_to_scale(sc, LongMath::ROUND_HALF_UP)
         check_sqrt_with_remainder(xr, sprec, "x=#{x} p=#{sprec}")
       end
@@ -75,17 +73,17 @@ class TestRandom_class < UnitTest
   def test_random
     cnt = 0
     @scnt = 0
-    t0  = Time.new
-    while (true) do
+    t0 = Time.new
+    loop do
       d = Time.new - t0
       break if d >= @@duration
+
       arr, eprec, lprec, sprec, pprec, sc = random_arr
       check_exp_log_rand(arr, eprec, lprec, pprec, sprec, sc, cnt)
       cnt += 1
     end
     puts("done #{cnt} tests\n")
   end
-
 end
 
 # RUNIT::CUI::TestRunner.run(TestRandom_class.suite)
