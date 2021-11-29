@@ -13,8 +13,6 @@
 #
 
 require 'minitest/autorun'
-require 'test/unit/assertions'
-include Test::Unit::Assertions
 
 require 'rubygems'
 require 'crypt-isaac'

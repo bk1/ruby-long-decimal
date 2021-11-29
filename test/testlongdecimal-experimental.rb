@@ -13,8 +13,6 @@
 #
 
 require 'minitest/autorun'
-require 'test/unit/assertions'
-include Test::Unit::Assertions
 
 load 'lib/long-decimal.rb'
 load 'lib/long-decimal-extra.rb'

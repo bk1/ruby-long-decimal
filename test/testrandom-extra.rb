@@ -21,8 +21,6 @@ load 'test/testlongdeclib.rb'
 load 'test/testrandlib.rb'
 
 require 'minitest/autorun'
-require 'test/unit/assertions'
-include Test::Unit::Assertions
 
 LongMath.prec_overflow_handling = :warn_use_max
 

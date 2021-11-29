@@ -32,6 +32,15 @@ module TestLongDecHelper
 
   @RCS_ID = '-$Id: testlongdeclib.rb,v 1.42 2011/02/03 00:22:39 bk1 Exp $-'
 
+  def mu_pp(obj)
+    obj.inspect.chomp
+  end
+
+  def build_message(head, template=nil, *arguments)
+    template &&= template.chomp
+    template.gsub(/\?/) { mu_pp(arguments.shift) }
+  end
+
   def assert_equal_float(lhs, rhs, delta = 0, msg = '')
     if (lhs - rhs).abs >= delta
       msg2 = "delta=#{delta} #{msg}"

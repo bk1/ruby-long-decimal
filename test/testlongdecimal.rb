@@ -11,11 +11,9 @@
 #
 
 require 'minitest/autorun'
-require 'test/unit/assertions'
-include Test::Unit::Assertions
 
-load 'lib/long-decimal.rb'
-load 'test/testlongdeclib.rb'
+require 'long-decimal'
+require 'testlongdeclib'
 
 LongMath.prec_overflow_handling = :warn_use_max
 
