@@ -36,7 +36,7 @@ module TestLongDecHelper
     obj.inspect.chomp
   end
 
-  def build_message(head, template=nil, *arguments)
+  def build_message(_head, template = nil, *arguments)
     template &&= template.chomp
     template.gsub(/\?/) { mu_pp(arguments.shift) }
   end
