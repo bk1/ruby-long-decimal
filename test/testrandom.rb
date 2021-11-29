@@ -17,9 +17,9 @@ require 'minitest/autorun'
 require 'rubygems'
 require 'crypt-isaac'
 
-load 'lib/long-decimal.rb'
-load 'test/testlongdeclib.rb'
-load 'test/testrandlib.rb'
+require 'long-decimal'
+require 'testlongdeclib'
+require 'testrandlib'
 
 LongMath.prec_overflow_handling = :warn_use_max
 

@@ -16,10 +16,6 @@
 #
 require 'bigdecimal'
 
-# require "long-decimal.rb"
-
-# require "bigdecimal/math"
-
 class LongDecimal
   # timer for performance measurements
   def ts(i)

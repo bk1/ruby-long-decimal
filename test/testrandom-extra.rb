@@ -14,11 +14,11 @@
 
 require 'crypt/isaac'
 
-load 'lib/long-decimal.rb'
-load 'lib/long-decimal-extra.rb'
+require 'long-decimal'
+require 'long-decimal-extra'
 
-load 'test/testlongdeclib.rb'
-load 'test/testrandlib.rb'
+require 'testlongdeclib'
+require 'testrandlib'
 
 require 'minitest/autorun'
 

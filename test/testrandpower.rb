@@ -14,11 +14,11 @@
 
 require 'minitest/autorun'
 
-load 'lib/long-decimal.rb'
-load 'lib/long-decimal-extra.rb'
+require 'long-decimal'
+require 'long-decimal-extra'
 
-load 'test/testlongdeclib.rb'
-load 'test/testrandlib.rb'
+require 'testlongdeclib'
+require 'testrandlib'
 
 LongMath.prec_overflow_handling = :warn_use_max
 

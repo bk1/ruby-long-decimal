@@ -12,7 +12,7 @@
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
-# load "lib/long-decimal.rb"
+# require "/long-decimal"
 
 class Integer
   def cube
