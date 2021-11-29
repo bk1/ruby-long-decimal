@@ -12,33 +12,18 @@
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
-$test_type = nil
-if RUBY_VERSION.match(/^1\./) || RUBY_VERSION.match(/^2\.0/)
-  require 'test/unit'
-  $test_type = :v20
-else
-  require 'minitest/autorun'
-  require 'test/unit/assertions'
-  include Test::Unit::Assertions
-  $test_type = :v21
-end
+require 'minitest/autorun'
+require 'test/unit/assertions'
+include Test::Unit::Assertions
 
 load 'lib/long-decimal.rb'
 load 'lib/long-decimal-extra.rb'
 load 'test/testlongdeclib.rb'
 
-if $test_type == :v20
-  class UnitTest < Test::Unit::TestCase
-  end
-else
-  class UnitTest < MiniTest::Test
-  end
-end
-
 #
 # test class for LongDecimal and LongDecimalQuot
 #
-class TestLongDecimalExperimental_class < UnitTest
+class TestLongDecimalExperimental_class < MiniTest::Test
   include TestLongDecHelper
   include LongDecimalRoundingMode
 

@@ -10,39 +10,20 @@
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
-$test_type = nil
-if RUBY_VERSION.match(/^1\./) || RUBY_VERSION.match(/^2\.[01]/)
-  require 'test/unit'
-  $test_type = :v20
-else
-  require 'minitest/autorun'
-  require 'test/unit/assertions'
-  include Test::Unit::Assertions
-  $test_type = :v21
-end
-
-# require "runit/testcase"
-# require "runit/cui/testrunner"
-# require "runit/testsuite"
+require 'minitest/autorun'
+require 'test/unit/assertions'
+include Test::Unit::Assertions
 
 load 'lib/long-decimal.rb'
 load 'test/testlongdeclib.rb'
 
 LongMath.prec_overflow_handling = :warn_use_max
 
-if $test_type == :v20
-  class UnitTest < Test::Unit::TestCase
-  end
-else
-  class UnitTest < MiniTest::Test
-  end
-end
-
 #
 # test class for LongDecimal and LongDecimalQuot
 #
 # RUNIT::TestCase
-class TestLongDecimal_class < UnitTest
+class TestLongDecimal_class < MiniTest::Test
   include TestLongDecHelper
   include LongDecimalRoundingMode
 
@@ -1419,13 +1400,7 @@ class TestLongDecimal_class < UnitTest
     deep_freeze_complex(zf)
     zl = Complex(LongDecimal('2.4'), LongDecimal('-3.2'))
     deep_freeze_complex(zl)
-    zi = nil
-    if $test_type == :v20
-      zi = Complex(2, -4)
-      deep_freeze_complex(zi)
-    else
-      zi = zr
-    end
+    zi = zr
     twenties.each do |x|
       threes.each do |yr|
         fours.each do |yi|
@@ -1471,12 +1446,7 @@ class TestLongDecimal_class < UnitTest
     zb = Complex(BigDecimal('2.4'), BigDecimal('-3.2'))
     zf = Complex(2.4, -3.2)
     zl = Complex(LongDecimal('2.4'), LongDecimal('-3.2'))
-    zi = nil
-    zi = if $test_type == :v20
-           Complex(2, -4)
-         else
-           zr
-         end
+    zi = zr
     x = 20.0
     yr = 3
     yi = 4.0

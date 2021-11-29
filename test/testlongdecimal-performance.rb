@@ -12,11 +12,7 @@
 # Author:    $Author: bk1 $ (Karl Brodowsky)
 #
 
-require 'test/unit'
-
-# require "runit/testcase"
-# require "runit/cui/testrunner"
-# require "runit/testsuite"
+require 'minitest/autorun'
 
 load 'lib/long-decimal.rb'
 load 'lib/long-decimal-extra.rb'
@@ -28,7 +24,7 @@ LongMath.prec_overflow_handling = :warn_use_max
 # test class for LongDecimal and LongDecimalQuot
 #
 # RUNIT::TestCase
-class TestLongDecimalExtra_class < Test::Unit::TestCase
+class TestLongDecimalExtra_class < MiniTest::Test
   include TestLongDecHelper
 
   @RCS_ID = '-$Id: testlongdecimal-performance.rb,v 1.2 2011/01/16 18:12:51 bk1 Exp $-'
