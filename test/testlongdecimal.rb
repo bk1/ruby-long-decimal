@@ -3555,10 +3555,10 @@ class TestLongDecimal_class < MiniTest::Test
     # find members which are closer than i_rounded above and below from the results of rounding to a single remainder
     closer_above = []
     closer_below = []
-    found = false
+    _found = false
     set.each do |i_r|
       if i_r == i_rounded
-        found = true
+        _found = true
       else
         refute_equal(i, i_r, "i=#{i} i_r=#{i_r} i_rounded=#{i_rounded}")
         closer = ((i_r - i).abs < (i_rounded - i).abs)
