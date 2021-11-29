@@ -17,19 +17,22 @@ ARGV.each do |file|
 
   File.open(file, 'r') do |openFile|
     openFile.each_line do |line|
-      if line =~ /\$[H]eader:\s.+,v\s+([0-9.]+)\s*.+\$/
+      case line
+      when /\$Header:\s.+,v\s+([0-9.]+)\s*.+\$/
         version = Regexp.last_match(1)
-      elsif line =~ /\$[N]ame:\s+(\S+)\s+\$/
+      when /\$Name:\s+(\S+)\s+\$/
         name = Regexp.last_match(1)
       end
     end
   end
 
   str = ''
-  str = if name =~ /(PRE_ALPHA|ALPHA|BETA)_(\d+)_(\d+)/
+  str = case name
+        when /(PRE_ALPHA|ALPHA|BETA)_(\d+)_(\d+)/
           format('0.%02d.%02d', Regexp.last_match(2).to_i, Regexp.last_match(3).to_i)
-        elsif name =~ /RELEASE_(\d+)_(\d+)_(\d+)/
-          format('%d.%02d.%02d', Regexp.last_match(1).to_i, Regexp.last_match(2).to_i, Regexp.last_match(3).to_i)
+        when /RELEASE_(\d+)_(\d+)_(\d+)/
+          format('%d.%02d.%02d', Regexp.last_match(1).to_i, Regexp.last_match(2).to_i,
+                 Regexp.last_match(3).to_i)
         else
           version
         end

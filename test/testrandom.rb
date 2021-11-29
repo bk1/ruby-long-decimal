@@ -13,7 +13,7 @@
 #
 
 $test_type = nil
-if (RUBY_VERSION.match /^1\./) || (RUBY_VERSION.match /^2\.0/)
+if RUBY_VERSION.match(/^1\./) || RUBY_VERSION.match(/^2\.0/)
   require 'test/unit'
   $test_type = :v20
 else
@@ -59,8 +59,8 @@ class TestRandom_class < UnitTest
       @scnt += 1
       puts("\ncnt=#{cnt} scnt=#{@scnt} x=#{x} ep=#{eprec} lp=#{lprec} sp=#{sprec} pp=#{pprec}\n")
       check_exp_floated(x, eprec) if x <= LongMath::MAX_EXP_ABLE
-      check_log_floated(x, lprec) if x > 0
-      if x > 0
+      check_log_floated(x, lprec) if x.positive?
+      if x.positive?
         xr = x.round_to_scale(sc, LongMath::ROUND_HALF_UP)
         check_sqrt_with_remainder(xr, sprec, "x=#{x} p=#{sprec}")
       end

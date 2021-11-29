@@ -27,7 +27,8 @@ LongMath.prec_overflow_handling = :warn_use_max
 #
 # test class for LongDecimal and LongDecimalQuot
 #
-class TestLongDecimalExtra_class < Test::Unit::TestCase # RUNIT::TestCase
+# RUNIT::TestCase
+class TestLongDecimalExtra_class < Test::Unit::TestCase
   include TestLongDecHelper
 
   @RCS_ID = '-$Id: testlongdecimal-extra.rb,v 1.26 2009/05/09 23:54:46 bk1 Exp $-'

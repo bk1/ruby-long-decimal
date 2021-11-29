@@ -13,7 +13,7 @@
 #
 
 $test_type = nil
-if (RUBY_VERSION.match /^1\./) || (RUBY_VERSION.match /^2\.0/)
+if RUBY_VERSION.match(/^1\./) || RUBY_VERSION.match(/^2\.0/)
   require 'test/unit'
   $test_type = :v20
 else
@@ -44,7 +44,8 @@ LongMath.prec_overflow_handling = :warn_use_max
 #
 # test class for LongDecimal and LongDecimalQuot
 #
-class TestLongDecimalExtra_class < UnitTest # Test::Unit::TestCase # RUNIT::TestCase
+# Test::Unit::TestCase # RUNIT::TestCase
+class TestLongDecimalExtra_class < UnitTest
   include TestLongDecHelper
 
   @RCS_ID = '-$Id: testlongdecimal-extra.rb,v 1.29 2011/02/03 00:22:38 bk1 Exp $-'
@@ -72,13 +73,13 @@ class TestLongDecimalExtra_class < UnitTest # Test::Unit::TestCase # RUNIT::Test
     assert((l.to_f - 0.0224).abs < 0.0224 * 0.000001, "l=#{l.inspect}")
     assert(((-l).to_f + 0.0224).abs < 0.0224 * 0.000001, "l=#{l.inspect}")
 
-    l = LongDecimal('0.' + ('0' * 30) + '1' + ('0' * 500))
+    l = LongDecimal("0.#{'0' * 30}1#{'0' * 500}")
     assert((l.to_f - 1e-31).abs < 1e-32, "l=#{l.inspect}=#{l}=#{l.to_f}=#{l.to_s.to_f}")
     assert(((-l).to_f + 1e-31).abs < 1e-32, "l=#{l.inspect}=#{l}=#{l.to_f}=#{l.to_s.to_f}")
-    l = LongDecimal('0.' + ('0' * 200) + '1' + ('0' * 500))
+    l = LongDecimal("0.#{'0' * 200}1#{'0' * 500}")
     assert((l.to_f - 1e-201).abs < 1e-202, "l=#{l.inspect}=#{l}=#{l.to_f}=#{l.to_s.to_f}")
     assert(((-l).to_f + 1e-201).abs < 1e-202, "l=#{l.inspect}=#{l}=#{l.to_f}=#{l.to_s.to_f}")
-    l = LongDecimal('0.' + ('0' * 280) + '1' + ('0' * 500))
+    l = LongDecimal("0.#{'0' * 280}1#{'0' * 500}")
     assert((l.to_f - 1e-281).abs < 1e-282, "l=#{l.inspect}=#{l}=#{l.to_f}=#{l.to_s.to_f}")
     assert(((-l).to_f + 1e-281).abs < 1e-282, "l=#{l.inspect}=#{l}=#{l.to_f}=#{l.to_s.to_f}")
 
@@ -86,7 +87,8 @@ class TestLongDecimalExtra_class < UnitTest # Test::Unit::TestCase # RUNIT::Test
     delta1 = (l - LongDecimal('0.0000000000000000000000000000000000000000000000000000209'))
     delta2 = delta1.to_f.abs
     assert(delta2 < 1e-60, "l=#{l.inspect}=#{l} delta1=#{delta1} delta2=#{delta2}")
-    assert(((-l).to_f + 0.0000000000000000000000000000000000000000000000000000209).abs < 1e-60, "l=#{l.inspect}")
+    assert(((-l).to_f + 0.0000000000000000000000000000000000000000000000000000209).abs < 1e-60,
+           "l=#{l.inspect}")
   end
 
   #

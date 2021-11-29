@@ -43,10 +43,10 @@ class LongDecimal
     @@tt[i] ||= 0
     @@tc ||= []
     @@tc[i] ||= 0
-    if @@tc[i] == 0
+    if (@@tc[i]).zero?
       @@tt[i]
     else
-      @@tc[i].to_s + ':' + @@tt[i].to_s + ':' + (@@tt[i] / @@tc[i]).to_s
+      "#{@@tc[i]}:#{@@tt[i]}:#{@@tt[i] / @@tc[i]}"
     end
   end
 
@@ -72,7 +72,7 @@ class LongDecimal
       diff   = new_scale - scale
       factor = LongMath.npower10(diff.abs)
       te 16
-      if diff > 0
+      if diff.positive?
         # we become more precise, no rounding issues
         ts 17
         new_int_val = int_val * factor
@@ -81,7 +81,7 @@ class LongDecimal
         ts 18
         quot, rem = int_val.divmod(factor)
         te 18
-        if rem == 0
+        if rem.zero?
           new_int_val = quot
         elsif mode == ROUND_UNNECESSARY
           raise ArgumentError, "mode ROUND_UNNECESSARY not applicable, remainder #{rem} is not zero"
@@ -89,43 +89,45 @@ class LongDecimal
           ts 19
           sign_self = sign
 
-          if sign_self < 0
+          if sign_self.negative?
             # handle negative sign of self
             rem -= divisor
             quot += 1
           end
           sign_rem = rem <=> 0
-          if sign_rem >= 0 && sign_self < 0
+          if sign_rem >= 0 && sign_self.negative?
             raise Error, "signs do not match self=#{self} f=#{factor} divisor=#{divisor} rem=#{rem}"
           end
 
-          if mode == ROUND_CEILING
+          case mode
+          when ROUND_CEILING
             # ROUND_CEILING goes to the closest allowed number >= self, even
             # for negative numbers.  Since sign is handled separately, it is
             # more conveniant to use ROUND_UP or ROUND_DOWN depending on the
             # sign.
-            mode = sign_self > 0 ? ROUND_UP : ROUND_DOWN
+            mode = sign_self.positive? ? ROUND_UP : ROUND_DOWN
 
-          elsif mode == ROUND_FLOOR
+          when ROUND_FLOOR
             # ROUND_FLOOR goes to the closest allowed number <= self, even
             # for negative numbers.  Since sign is handled separately, it is
             # more conveniant to use ROUND_UP or ROUND_DOWN depending on the
             # sign.
-            mode = sign_self < 0 ? ROUND_UP : ROUND_DOWN
+            mode = sign_self.negative? ? ROUND_UP : ROUND_DOWN
           else
-            if mode == ROUND_HALF_CEILING
+            case mode
+            when ROUND_HALF_CEILING
               # ROUND_HALF_CEILING goes to the closest allowed number >= self, even
               # for negative numbers.  Since sign is handled separately, it is
               # more conveniant to use ROUND_HALF_UP or ROUND_HALF_DOWN depending on the
               # sign.
-              mode = sign_self > 0 ? ROUND_HALF_UP : ROUND_HALF_DOWN
+              mode = sign_self.positive? ? ROUND_HALF_UP : ROUND_HALF_DOWN
 
-            elsif mode == ROUND_HALF_FLOOR
+            when ROUND_HALF_FLOOR
               # ROUND_HALF_FLOOR goes to the closest allowed number <= self, even
               # for negative numbers.  Since sign is handled separately, it is
               # more conveniant to use ROUND_HALF_UP or ROUND_HALF_DOWN depending on the
               # sign.
-              mode = sign_self < 0 ? ROUND_HALF_UP : ROUND_HALF_DOWN
+              mode = sign_self.negative? ? ROUND_HALF_UP : ROUND_HALF_DOWN
 
             end
 
@@ -133,21 +135,22 @@ class LongDecimal
             # or ROUND_DOWN to use
             abs_rem = rem.abs
             half    = (abs_rem << 1) <=> denominator
-            if mode == ROUND_HALF_UP || mode == ROUND_HALF_DOWN || mode == ROUND_HALF_EVEN
-              mode = if half < 0
+            if [ROUND_HALF_UP, ROUND_HALF_DOWN, ROUND_HALF_EVEN].include?(mode)
+              mode = if half.negative?
                        ROUND_DOWN
-                     elsif half > 0
+                     elsif half.positive?
                        ROUND_UP
                      else
                        # half == 0
-                       if mode == ROUND_HALF_UP
+                       case mode
+                       when ROUND_HALF_UP
                          ROUND_UP
-                       elsif mode == ROUND_HALF_DOWN
+                       when ROUND_HALF_DOWN
                          ROUND_DOWN
                        else
                          # mode == ROUND_HALF_EVEN
                          (quot[0] == 1 ? ROUND_UP : ROUND_DOWN)
-                              end
+                       end
                      end
             end
           end
@@ -291,7 +294,7 @@ class LongDecimal
   #
   def to_g
     # make sure we do not have to deal with negative sign beyond this point
-    return -(-self).to_f if self < 0
+    return -(-self).to_f if negative?
 
     # handle overflow: raise exception
     if self > LongMath::MAX_FLOATABLE
@@ -341,8 +344,6 @@ end
 # LongDecimal instead of Float.
 #
 module LongMath
-  private
-
   #
   # internal functionality to calculate the y-th power of x assuming
   # that y is an integer
@@ -366,9 +367,9 @@ module LongMath
       1
     elsif !(x.is_a? LongDecimalBase) || x.scale * y.abs <= prec
       x**y
-    elsif y < 0
+    elsif y.negative?
       l = Math.log10(x.abs.to_f)
-      prec += (2 * l).ceil if l > 0
+      prec += (2 * l).ceil if l.positive?
       1 / LongMath.ipower(x, -y, prec, mode)
     else
       # y > 0
@@ -381,7 +382,7 @@ module LongMath
         y -= 1
         break if y.zero?
 
-        while (y & 0x01) == 0
+        while (y & 0x01).zero?
 
           cnt + +
           y = y >> 1
@@ -400,15 +401,14 @@ module LongMath
     end
   end
 
-  public
-
   # alternative calculations of sqrt using newtons algorithm
   def self.sqrtn(x)
     check_is_int(x, 'x')
     s = (x <=> 0)
-    if s == 0
+    case s
+    when 0
       return 0
-    elsif s == -1
+    when -1
       raise ArgumentError, "x=#{x} is negative"
     end
 
@@ -428,10 +428,10 @@ module LongMath
       y = yn
     end
   end
-end # LongMath
+end
 
 # to be removed again, but needed now to investigate problems with ./usr/lib/ruby/1.8/rational.rb:547: warning: in a**b, b may be too big
-class Bignum
+class Integer
   # Returns a Rational number if the result is in fact rational (i.e. +other+ < 0).
   def rpower(other)
     if other >= 0
@@ -449,7 +449,7 @@ class Bignum
 end
 
 def LongMath.continued_fraction(x, steps)
-  x if x == 0
+  x if x.zero?
   arr = []
   steps.times do
     xi = x.to_ld(0, LongMath::ROUND_FLOOR)

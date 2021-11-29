@@ -13,7 +13,7 @@
 #
 
 $test_type = nil
-if (RUBY_VERSION.match /^1\./) || (RUBY_VERSION.match /^2\.0/)
+if RUBY_VERSION.match(/^1\./) || RUBY_VERSION.match(/^2\.0/)
   require 'test/unit'
   $test_type = :v20
 else

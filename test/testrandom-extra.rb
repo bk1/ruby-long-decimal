@@ -28,7 +28,7 @@ load 'test/testlongdeclib.rb'
 load 'test/testrandlib.rb'
 
 $test_type = nil
-if (RUBY_VERSION.match /^1\./) || (RUBY_VERSION.match /^2\.[01]/)
+if RUBY_VERSION.match(/^1\./) || RUBY_VERSION.match(/^2\.[01]/)
   require 'test/unit'
   $test_type = :v20
 else
@@ -51,7 +51,8 @@ LongMath.prec_overflow_handling = :warn_use_max
 #
 # test class for LongDecimal and LongDecimalQuot
 #
-class TestRandom_class < UnitTest #  RUNIT::TestCase
+#  RUNIT::TestCase
+class TestRandom_class < UnitTest
   include TestLongDecHelper
   include TestRandomHelper
 
@@ -70,12 +71,12 @@ class TestRandom_class < UnitTest #  RUNIT::TestCase
         check_exp2_floated(x, pprec)
         check_exp10_floated(x, pprec)
       end
-      if x > 0
+      if x.positive?
         check_log_floated(x, lprec)
         check_log2_floated(x, lprec)
         check_log10_floated(x, lprec)
       end
-      if x > 0
+      if x.positive?
         xr = x.round_to_scale(sc, LongMath::ROUND_HALF_UP)
         check_sqrt_with_remainder(xr, sprec, "x=#{x} p=#{sprec}")
       end
