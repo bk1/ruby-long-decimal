@@ -1,5 +1,4 @@
 #!/usr/bin/env ruby
-# frozen_string_literal: true
 
 #
 # testlongdecimal.rb -- runit test for long-decimal.rb
