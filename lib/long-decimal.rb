@@ -1461,7 +1461,9 @@ class LongDecimal < LongDecimalBase
     str = i.to_s(b)
     if sc.positive?
       missing = sc - str.length + 1
-      str = ('0'.dup * missing) + str if missing.positive?
+      str = ('0' * missing) + str if missing.positive?
+      # In some cases we end up with a frozen string here, so we need to dup it.
+      str = str.dup
       str[-sc, 0] = '.'
     end
     str = "-#{str}" if sg.negative?

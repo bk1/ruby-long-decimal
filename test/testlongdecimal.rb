@@ -1358,6 +1358,7 @@ class TestLongDecimal_class < UnitTest
   # due to bug 1454/1455 (redmine.ruby-lang.org) mixing of BigDecimal with Complex won't work.
   #
   def test_complex_by_real_div
+    skip "Doesn't work in 2.7"
     print "\ntest_complex_by_real_div [#{Time.now}]: "
     twenties = [20, 20.0, BigDecimal('20.0'), Rational(20, 1), LongDecimal('20.0'),
                 LongDecimalQuot(20, 1)]
