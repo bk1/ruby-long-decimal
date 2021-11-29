@@ -15,8 +15,8 @@ ARGV.each do |file|
   name = ''
   version = ''
 
-  File.open(file, 'r') do |openFile|
-    openFile.each_line do |line|
+  File.open(file, 'r') do |open_file|
+    open_file.each_line do |line|
       case line
       when /\$Header:\s.+,v\s+([0-9.]+)\s*.+\$/
         version = Regexp.last_match(1)
@@ -26,18 +26,21 @@ ARGV.each do |file|
     end
   end
 
-  str = ''
   str = case name
         when /(PRE_ALPHA|ALPHA|BETA)_(\d+)_(\d+)/
-          format('0.%02d.%02d', Regexp.last_match(2).to_i, Regexp.last_match(3).to_i)
+          format('0.%<second_part>02d.%<third_part>02d',
+                 second_part: Regexp.last_match(2).to_i,
+                 third_part: Regexp.last_match(3).to_i)
         when /RELEASE_(\d+)_(\d+)_(\d+)/
-          format('%d.%02d.%02d', Regexp.last_match(1).to_i, Regexp.last_match(2).to_i,
-                 Regexp.last_match(3).to_i)
+          format('%<first_part>d.%<second_part>02d.%<third_part>02d',
+                 first_part: Regexp.last_match(1).to_i,
+                 second_part: Regexp.last_match(2).to_i,
+                 third_part: Regexp.last_match(3).to_i)
         else
           version
         end
 
-  print str, "\n"
+  puts str
 end
 
 # end of file version.rb
