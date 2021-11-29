@@ -1,7 +1,10 @@
 require:
+# TODO: add rubocop-performance
 - rubocop-rake
 - rubocop-minitest
-# TODO: add rubocop-performance
+
+AllCops:
+  TargetRubyVersion: 2.6
 
 # These are temporarily disabled or weakened.
 # TODO: Fix and reenable.
@@ -9,7 +12,6 @@ Layout/LineLength:
   Max: 279
   Exclude:
   - test/*.rb
-  - long-decimal.gemspec
 Metrics/ClassLength:
   Max: 646
   Exclude:
@@ -22,6 +24,7 @@ Metrics/BlockLength:
   Exclude:
   - test/testlongdecimal.rb
   - test/testlongdecimal-experimental.rb
+  - long-decimal.gemspec
 Metrics/BlockNesting:
   Max: 8
 Metrics/CyclomaticComplexity:
@@ -55,8 +58,6 @@ Style/GlobalVars:
   Exclude:
   - make_doc.rb
   - test/*.rb
-Gemspec/RequiredRubyVersion:
-  Enabled: false
 Style/ClassVars:
   Enabled: false
 Style/FormatStringToken:
