@@ -386,15 +386,15 @@ module LongDecimalRoundingMode
   end
 
   # filled using reflection
-  MODE_LOOKUP = {}.freeze
+  MODE_LOOKUP = {} # rubocop:disable Style/MutableConstant
 
   rounding_mode_counter = 0
 
   # filled using reflection
-  ALL_ROUNDING_MODES = [].freeze
+  ALL_ROUNDING_MODES = [] # rubocop:disable Style/MutableConstant
 
   # filled using reflection
-  ALL_ROUNDING_MODE_NAMES = [].freeze
+  ALL_ROUNDING_MODE_NAMES = [] # rubocop:disable Style/MutableConstant
 
   MUL_INVERSE_MODE = {}.freeze
 
