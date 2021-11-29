@@ -279,7 +279,7 @@ class TestLongDecimal_class < UnitTest
   def test_exp2
     print "\ntest_exp2 [#{Time.now}]: "
     10.times do |i|
-      n = (i * i + i) / 2
+      n = ((i * i) + i) / 2
       x = LongDecimal(n, 3 * i) + LongMath.pi(20)
       check_exp2_floated(x, n)
 
@@ -320,7 +320,7 @@ class TestLongDecimal_class < UnitTest
   def test_exp10
     print "\ntest_exp10 [#{Time.now}]: "
     10.times do |i|
-      n  = (i * i + i) / 2
+      n  = ((i * i) + i) / 2
       x  = LongDecimal(n, 3 * i) + LongMath.pi(20)
       check_exp10_floated(x, n)
 
@@ -1027,7 +1027,7 @@ class TestLongDecimal_class < UnitTest
       x3 = x1 - 1
       y = check_sqrtb(x3, " x3=#{x3} x=#{x} i=#{i}")
       assert_equal(x - 1, y, "x=#{x} y=#{y}")
-      x = x * 5 + 1
+      x = (x * 5) + 1
     end
   end
 
@@ -1081,7 +1081,7 @@ class TestLongDecimal_class < UnitTest
       x3 = x1 - 1
       y = check_sqrtw(x3, " x3=#{x3} x=#{x} i=#{i}")
       assert_equal(x - 1, y, "x=#{x} y=#{y}")
-      x = x * 5 + 1
+      x = (x * 5) + 1
     end
   end
 
@@ -1116,7 +1116,7 @@ class TestLongDecimal_class < UnitTest
       check_sqrtb_with_remainder(x, " loop x=#{x}")
     end
     100.times do |i|
-      x = 10 * i + 10
+      x = (10 * i) + 10
       check_sqrtb_with_remainder(x, " loop x=#{x}")
     end
     50.times do |j|
@@ -1157,7 +1157,7 @@ class TestLongDecimal_class < UnitTest
       check_sqrtw_with_remainder(x, " loop x=#{x}")
     end
     100.times do |j|
-      x = 10 * j + 10
+      x = (10 * j) + 10
       check_sqrtw_with_remainder(x, " loop x=#{x}")
     end
     100.times do |j|
@@ -1236,7 +1236,7 @@ class TestLongDecimal_class < UnitTest
       check_cbrtb_with_remainder(x, " loop x=#{x}")
     end
     100.times do |i|
-      x = 10 * i + 10
+      x = (10 * i) + 10
       check_cbrtb_with_remainder(x, " loop x=#{x}")
     end
     50.times do |j|
@@ -1507,7 +1507,7 @@ class TestLongDecimal_class < UnitTest
   #
   def test_rat_long_multiplicity_of_factor
     print "\ntest_rat_long_multiplicity_of_factor [#{Time.now}]: "
-    n = Rational(224 * (10**600 + 1), 225 * (5**800))
+    n = Rational(224 * ((10**600) + 1), 225 * (5**800))
     assert_equal(5, LongMath.multiplicity_of_factor(n, 2), 'ny_2(n) is 5')
     assert_equal(1, LongMath.multiplicity_of_factor(n, 7), 'ny_7(n) is 1')
     assert_equal(-2, LongMath.multiplicity_of_factor(n, 3), 'ny_3(n) is -2')
@@ -1806,11 +1806,11 @@ class TestLongDecimal_class < UnitTest
     assert_equal(0, LongMath.multiplicity_of_10(625), '625')
     assert_equal(1, LongMath.multiplicity_of_10(-1230), '-1230')
     10.times do |i|
-      n = i * i + i + 1
+      n = (i * i) + i + 1
       n /= 10 while (n % 10).zero?
       10.times do |j|
         m = j * j
-        x = n * 10**m
+        x = n * (10**m)
         assert_equal(m, LongMath.multiplicity_of_10(x), "x=#{x} i=#{i} j=#{j} n=#{n} m=#{m}")
       end
     end
@@ -4005,7 +4005,7 @@ class TestLongDecimal_class < UnitTest
 
     x = 224
     y = x.to_ld(20)
-    z = LongDecimal(224 * 10**20, 20)
+    z = LongDecimal(224 * (10**20), 20)
     assert_kind_of(LongDecimal, y, 'must be ld')
     assert_equal(y, z, "x=#{x} y=#{y}")
   end
@@ -5195,7 +5195,7 @@ class TestLongDecimal_class < UnitTest
   def test_square
     print "\ntest_square [#{Time.now}]: "
     10.times do |i|
-      n = (i * i + i) / 2
+      n = ((i * i) + i) / 2
       x = LongDecimal(n, i)
       y = x.square
       z = LongDecimal(n * n, 2 * i)
@@ -5209,7 +5209,7 @@ class TestLongDecimal_class < UnitTest
   def test_cube
     print "\ntest_cube [#{Time.now}]: "
     10.times do |i|
-      n = (i * i + i) / 2
+      n = ((i * i) + i) / 2
       x = LongDecimal(n, i)
       y = x.cube
       z = LongDecimal(n * n * n, 3 * i)
@@ -5223,11 +5223,11 @@ class TestLongDecimal_class < UnitTest
   def test_reciprocal
     print "\ntest_reciprocal [#{Time.now}]: "
     10.times do |i|
-      k = 2 * i + 1
-      n = (k * k + k) / 2
+      k = (2 * i) + 1
+      n = ((k * k) + k) / 2
       x = LongDecimal(n, i)
       y = x.reciprocal
-      z = LongDecimalQuot(Rational(10**i, n), [i + 2 * (Math.log10(n) - i).floor, 0].max)
+      z = LongDecimalQuot(Rational(10**i, n), [i + (2 * (Math.log10(n) - i).floor), 0].max)
       assert_equal(z, y, "reciprocal x=#{x} y=#{y} z=#{z} i=#{i} k=#{k} n=#{n}")
     end
   end
@@ -5308,13 +5308,13 @@ class TestLongDecimal_class < UnitTest
     assert_kind_of(LongDecimal, r, 'r must be LongDecimalQuot')
     assert(r.abs < y.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(224, 30), 0)
-    assert_val_equal(zz, q + r / y, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_val_equal(zz, q + (r / y), "z=q=#{q.inspect} r=#{r.inspect}")
     q, r = y.divmod x
     assert_kind_of(Integer, q, 'q must be integer')
     assert_kind_of(LongDecimal, r, 'r must be LongDecimal')
     assert(r.abs < x.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(30, 224), 0)
-    assert_val_equal(zz, q + r / x, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_val_equal(zz, q + (r / x), "z=q=#{q.inspect} r=#{r.inspect}")
 
     y = LongDecimal(30_000_000, 8)
     q, r = x.divmod y
@@ -5322,13 +5322,13 @@ class TestLongDecimal_class < UnitTest
     assert_kind_of(LongDecimal, r, 'r must be LongDecimalQuot')
     assert(r.abs < y.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(224, 30), 0)
-    assert_val_equal(zz, q + r / y, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_val_equal(zz, q + (r / y), "z=q=#{q.inspect} r=#{r.inspect}")
     q, r = y.divmod x
     assert_kind_of(Integer, q, 'q must be integer')
     assert_kind_of(LongDecimal, r, 'r must be LongDecimal')
     assert(r.abs < x.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(30, 224), 0)
-    assert_val_equal(zz, q + r / x, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_val_equal(zz, q + (r / x), "z=q=#{q.inspect} r=#{r.inspect}")
 
     y = LongDecimal(3_330_000_000, 8)
     q, r = x.divmod y
@@ -5336,13 +5336,13 @@ class TestLongDecimal_class < UnitTest
     assert_kind_of(LongDecimal, r, 'r must be LongDecimalQuot')
     assert(r.abs < y.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(224, 3330), 1)
-    assert_val_equal(zz, q + r / y, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_val_equal(zz, q + (r / y), "z=q=#{q.inspect} r=#{r.inspect}")
     q, r = y.divmod x
     assert_kind_of(Integer, q, 'q must be integer')
     assert_kind_of(LongDecimal, r, 'r must be LongDecimal')
     assert(r.abs < x.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(3330, 224), 0)
-    assert_val_equal(zz, q + r / x, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_val_equal(zz, q + (r / x), "z=q=#{q.inspect} r=#{r.inspect}")
 
     y = 5
     q, r = x.divmod y
@@ -5350,13 +5350,13 @@ class TestLongDecimal_class < UnitTest
     assert_kind_of(LongDecimal, r, 'r must be LongDecimal')
     assert(r.abs < y.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(224, 500), 0)
-    assert_val_equal(zz, q + r / y, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_val_equal(zz, q + (r / y), "z=q=#{q.inspect} r=#{r.inspect}")
     q, r = y.divmod x
     assert_kind_of(Integer, q, 'q must be integer')
     assert_kind_of(LongDecimal, r, 'r must be LongDecimal')
     assert(r.abs < x.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(500, 224), 0)
-    assert_val_equal(zz, q + r / x, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_val_equal(zz, q + (r / x), "z=q=#{q.inspect} r=#{r.inspect}")
 
     y = 5.001
     q, r = x.divmod y
@@ -5364,13 +5364,13 @@ class TestLongDecimal_class < UnitTest
     assert_kind_of(LongDecimal, r, 'r must be LongDecimal')
     assert(r.abs < y.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(224, 500), 0)
-    assert_val_equal(zz, q + r / y, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_val_equal(zz, q + (r / y), "z=q=#{q.inspect} r=#{r.inspect}")
     q, r = y.divmod x
     assert_kind_of(Integer, q, 'q must be integer')
     assert_kind_of(LongDecimal, r, 'r must be LongDecimal')
     assert(r.abs < x.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(500, 224), 3)
-    assert_val_equal(zz, q + r / x, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_val_equal(zz, q + (r / x), "z=q=#{q.inspect} r=#{r.inspect}")
 
     y = Rational(5, 3)
     q, r = x.divmod y
@@ -5378,13 +5378,13 @@ class TestLongDecimal_class < UnitTest
     assert_kind_of(LongDecimalQuot, r, 'r must be LongDecimal')
     assert(r.abs < y.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(224 * 3, 500), 2)
-    assert_val_equal(zz, q + r / y, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_val_equal(zz, q + (r / y), "z=q=#{q.inspect} r=#{r.inspect}")
     q, r = y.divmod x
     assert_kind_of(Integer, q, 'q must be integer')
     assert_kind_of(LongDecimalQuot, r, 'r must be LongDecimal')
     assert(r.abs < x.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(500, 224 * 3), 2)
-    assert_val_equal(zz, q + r / x, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_val_equal(zz, q + (r / x), "z=q=#{q.inspect} r=#{r.inspect}")
 
     y = LongDecimalQuot(Rational(5, 3), 3)
     q, r = x.divmod y
@@ -5392,13 +5392,13 @@ class TestLongDecimal_class < UnitTest
     assert_kind_of(LongDecimalQuot, r, 'r must be LongDecimal')
     assert(r.abs < y.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(224 * 3, 500), 6)
-    assert_val_equal(zz, q + r / y, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_val_equal(zz, q + (r / y), "z=q=#{q.inspect} r=#{r.inspect}")
     q, r = y.divmod x
     assert_kind_of(Integer, q, 'q must be integer')
     assert_kind_of(LongDecimalQuot, r, 'r must be LongDecimal')
     assert(r.abs < x.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(500, 224 * 3), 3)
-    assert_val_equal(zz, q + r / x, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_val_equal(zz, q + (r / x), "z=q=#{q.inspect} r=#{r.inspect}")
 
     y = Complex(5, 3)
     begin
@@ -5940,7 +5940,7 @@ class TestLongDecimal_class < UnitTest
       100.times do |scale|
         y_lower = LongDecimal(int_val, scale)
         y_upper = y_lower.succ
-        x = LongMath.arithmetic_mean(2 * scale + 2, ROUND_HALF_EVEN, y_lower * y_lower,
+        x = LongMath.arithmetic_mean((2 * scale) + 2, ROUND_HALF_EVEN, y_lower * y_lower,
                                      y_upper * y_upper)
         msg = "x=#{x} y_lower=#{y_lower} y_upper=#{y_upper} "
         # puts msg
@@ -6109,7 +6109,7 @@ class TestLongDecimal_class < UnitTest
       100.times do |scale|
         y_lower = LongDecimal(int_val, scale)
         y_upper = y_lower.succ
-        x = LongMath.arithmetic_mean(3 * scale + 2, ROUND_HALF_EVEN, y_lower.cube, y_upper.cube)
+        x = LongMath.arithmetic_mean((3 * scale) + 2, ROUND_HALF_EVEN, y_lower.cube, y_upper.cube)
         msg = "x=#{x} y_lower=#{y_lower} y_upper=#{y_upper} "
         # puts msg
         [ROUND_CUBIC_UP, ROUND_CUBIC_CEILING].each do |mode|
@@ -6360,7 +6360,7 @@ class TestLongDecimal_class < UnitTest
       u = x.unit
       v = LongDecimal(1, n)
       assert_equal(u, v, "unit i=#{i}")
-      n = i * i + i
+      n = (i * i) + i
       x = (-i).to_ld(n)
       u = x.unit
       v = LongDecimal(1, n)
@@ -6379,13 +6379,13 @@ class TestLongDecimal_class < UnitTest
       v = LongDecimal(0, i)
       assert_equal(u, v, "unit i=#{i}")
       n = i * i
-      k = 2 * i + 1
+      k = (2 * i) + 1
       x = k.to_ld(n)
       u = x.sunit
       v = LongDecimal(1, n)
       assert_equal(u, v, "unit i=#{i}")
-      n = i * i + i
-      k = -2 * i - 1
+      n = (i * i) + i
+      k = (-2 * i) - 1
       x = k.to_ld(n)
       u = x.sunit
       v = LongDecimal(-1, n)
@@ -6473,7 +6473,7 @@ class TestLongDecimal_class < UnitTest
     10.times do |i|
       f = 1
       g = 1
-      n = (i * i + i) / 2
+      n = ((i * i) + i) / 2
       f, g = g, f + g
       x = LongDecimal(Rational((n + 1) * f, (n + 2) * g), 3 * i)
       y = 1 / x
@@ -7370,7 +7370,7 @@ class TestLongDecimal_class < UnitTest
 
     y = Complex(5, 3)
     z = x + y
-    zz = Complex(5 + 224.0 / 225.0, 3)
+    zz = Complex(5 + (224.0 / 225.0), 3)
     assert_kind_of(Complex, z, "z=#{z.inspect}")
     assert((zz - z).abs < 1e-9, "z=#{z.inspect}")
     z = y + x
@@ -7437,7 +7437,7 @@ class TestLongDecimal_class < UnitTest
 
     y = Complex(5, 3)
     z = x - y
-    zz = Complex(224.0 / 225.0 - 5, -3)
+    zz = Complex((224.0 / 225.0) - 5, -3)
     assert_kind_of(Complex, z, "z=#{z.inspect}")
     assert((zz - z).abs < 1e-9, "z=#{z.inspect} zz=#{zz.inspect}")
     zz = -zz
@@ -7652,14 +7652,14 @@ class TestLongDecimal_class < UnitTest
     assert_kind_of(LongDecimalQuot, r, 'r must be LongDecimalQuot')
     assert(r.abs < y.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(224 * 10, 225 * 3), 226)
-    assert_equal(zz, q + r / y,
-                 "z=#{(q + r / y).inspect} y=#{y.inspect} q=#{q.inspect} r=#{r.inspect}")
+    assert_equal(zz, q + (r / y),
+                 "z=#{(q + (r / y)).inspect} y=#{y.inspect} q=#{q.inspect} r=#{r.inspect}")
     q, r = y.divmod x
     assert_kind_of(Integer, q, 'q must be integer')
     assert_kind_of(LongDecimalQuot, r, 'r must be LongDecimal')
     assert(r.abs < x.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(225 * 3, 224 * 10), 226 * 2)
-    assert_equal(zz, q + r / x, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_equal(zz, q + (r / x), "z=q=#{q.inspect} r=#{r.inspect}")
 
     y = 5
     q, r = x.divmod y
@@ -7667,13 +7667,13 @@ class TestLongDecimal_class < UnitTest
     assert_kind_of(LongDecimalQuot, r, 'r must be LongDecimal')
     assert(r.abs < y.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(224, 225 * 5), 226)
-    assert_equal(zz, q + r / y, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_equal(zz, q + (r / y), "z=q=#{q.inspect} r=#{r.inspect}")
     q, r = y.divmod x
     assert_kind_of(Integer, q, 'q must be integer')
     assert_kind_of(LongDecimalQuot, r, 'r must be LongDecimal')
     assert(r.abs < x.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(225 * 5, 224), 226 * 2)
-    assert_equal(zz, q + r / x, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_equal(zz, q + (r / x), "z=q=#{q.inspect} r=#{r.inspect}")
 
     y = 5.001
     q, r = x.divmod y
@@ -7681,13 +7681,13 @@ class TestLongDecimal_class < UnitTest
     assert_kind_of(LongDecimalQuot, r, 'r must be LongDecimal')
     assert(r.abs < y.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(8960, 45_009), 226)
-    assert_equal(zz, q + r / y, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_equal(zz, q + (r / y), "z=q=#{q.inspect} r=#{r.inspect}")
     q, r = y.divmod x
     assert_kind_of(Integer, q, 'q must be integer')
     assert_kind_of(LongDecimalQuot, r, 'r must be LongDecimal')
     assert(r.abs < x.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(45_009, 8960), 226 * 2)
-    assert_equal(zz, q + r / x, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_equal(zz, q + (r / x), "z=q=#{q.inspect} r=#{r.inspect}")
 
     y = Rational(5, 3)
     q, r = x.divmod y
@@ -7695,13 +7695,13 @@ class TestLongDecimal_class < UnitTest
     assert_kind_of(LongDecimalQuot, r, 'r must be LongDecimal')
     assert(r.abs < y.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(224 * 3, 225 * 5), 226)
-    assert_equal(zz, q + r / y, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_equal(zz, q + (r / y), "z=q=#{q.inspect} r=#{r.inspect}")
     q, r = y.divmod x
     assert_kind_of(Integer, q, 'q must be integer')
     assert_kind_of(LongDecimalQuot, r, 'r must be LongDecimal')
     assert(r.abs < x.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(225 * 5, 224 * 3), 226 * 2)
-    assert_equal(zz, q + r / x,
+    assert_equal(zz, q + (r / x),
                  "z=q=#{q.inspect} r=#{r.inspect} x=#{x.inspect} r/x=#{(r / x).inspect}")
 
     y = LongDecimalQuot(Rational(5, 3), 3)
@@ -7710,13 +7710,13 @@ class TestLongDecimal_class < UnitTest
     assert_kind_of(LongDecimalQuot, r, 'r must be LongDecimal')
     assert(r.abs < y.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(224 * 3, 225 * 5), 226)
-    assert_equal(zz, q + r / y, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_equal(zz, q + (r / y), "z=q=#{q.inspect} r=#{r.inspect}")
     q, r = y.divmod x
     assert_kind_of(Integer, q, 'q must be integer')
     assert_kind_of(LongDecimalQuot, r, 'r must be LongDecimal')
     assert(r.abs < x.abs, 'remainder must be less then divisor')
     zz = LongDecimalQuot(Rational(225 * 5, 224 * 3), 226 * 2)
-    assert_equal(zz, q + r / x, "z=q=#{q.inspect} r=#{r.inspect}")
+    assert_equal(zz, q + (r / x), "z=q=#{q.inspect} r=#{r.inspect}")
 
     y = Complex(5, 3)
     begin

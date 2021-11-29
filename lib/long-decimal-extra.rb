@@ -468,7 +468,7 @@ def LongMath.continued_fraction_to_r(arr)
     result = if result.nil?
                Rational(x)
              else
-               Rational(x) + 1 / result
+               Rational(x) + (1 / result)
              end
   end
   result

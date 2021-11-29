@@ -41,7 +41,7 @@ module TestLongDecHelper
 
   def assert_equal_rbo(lhs, rhs, msg = '', lhsname = 'lhs', rhsname = 'rhs', delta = 0)
     msg2 = "#{lhsname}=#{lhs} (#{lhs.class}) #{rhsname}=#{rhs} (#{rhs.class}) " + msg
-    if (lhs.is_a? Rational) && (rhs.is_a? BigDecimal) || (lhs.is_a? BigDecimal) && (rhs.is_a? Rational)
+    if ((lhs.is_a? Rational) && (rhs.is_a? BigDecimal)) || ((lhs.is_a? BigDecimal) && (rhs.is_a? Rational))
       lhs_ld = lhs.to_ld
       rhs_ld = rhs.to_ld
       assert(lhs_ld == rhs_ld || (lhs_ld - rhs_ld).abs <= delta,
@@ -535,7 +535,7 @@ module TestLongDecHelper
           ly = Math.log(y.to_f)
         end
         # l10 = (ly * (1.2+2/(prec+1.0)) / Math.log(10)).ceil
-        l10 = (y.to_f * (1.2 + 2 / (prec + 1.0)) / Math.log(10)).ceil
+        l10 = (y.to_f * (1.2 + (2 / (prec + 1.0))) / Math.log(10)).ceil
         # l10 = (y.to_f / Math.log(10)).ceil
         eprec -= l10
       end
@@ -580,7 +580,7 @@ module TestLongDecHelper
     y = y.to_ld
     # calculate z = x**y
     z = LongMath.power(x, y, prec)
-    prec_dp = 2 * prec + 1
+    prec_dp = (2 * prec) + 1
     z_dp = LongMath.power(x, y, prec_dp)
     msg = "x=#{x}\ny=#{y}\nz=#{z}\nz_dp=#{z_dp}\nprec=#{prec}"
     # puts msg
@@ -633,7 +633,7 @@ module TestLongDecHelper
       lprec = 0 if lprec.negative?
       l10y = 0
       l10y = (Math.log(y.abs.to_f) / Math.log(10)).ceil if y.abs > 1
-      lprec_dp = 2 * lprec + 1
+      lprec_dp = (2 * lprec) + 1
       u = LongMath.log(z, lprec)
       u_dp = LongMath.log(z_dp, lprec_dp)
       v = LongMath.log(x, lprec + l10y)
@@ -878,8 +878,8 @@ module TestLongDecHelper
       assert_equal(yy.round_to_scale(y.scale, mode), y, "x=#{x} y=#{y} yy=#{yy}")
     end
 
-    z0 = (y + su0 * y.unit).square
-    z1 = (y + su1 * y.unit).square
+    z0 = (y + (su0 * y.unit)).square
+    z1 = (y + (su1 * y.unit)).square
     assert(y.sign >= 0, "sqrt must be >= 0#{str}")
     assert(z0 <= x && x <= z1, "y=#{y}=sqrt(#{x}) and x in [#{z0}, #{z1}) " + str)
     y
@@ -936,8 +936,8 @@ module TestLongDecHelper
       yy = x.cbrt(scale + 10, mode)
       assert_equal(yy.round_to_scale(y.scale, mode), y, "x=#{x} y=#{y} yy=#{yy}")
     end
-    z0 = (y + su0 * y.unit).cube
-    z1 = (y + su1 * y.unit).cube
+    z0 = (y + (su0 * y.unit)).cube
+    z1 = (y + (su1 * y.unit)).cube
     assert(y.sign >= 0, "cbrt must be >= 0#{str}")
     assert(z0 <= x && x <= z1,
            "y=#{y}=cbrt(#{x}) and x in [#{z0}, #{z1}) su0=#{su0} su1=#{su1}" + str)

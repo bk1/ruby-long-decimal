@@ -268,7 +268,7 @@ class TestLongDecimalExtra_class < UnitTest
 
     # use some value > 1 "in the middle"
     f = 1.34078079299426e+154
-    n = 134_078_079_299_426 * 10**154
+    n = 134_078_079_299_426 * (10**154)
     d = 10**14
     n2 = n**2
     d2 = d**2
@@ -373,7 +373,7 @@ class TestLongDecimalExtra_class < UnitTest
   def _test_ld_to_f_big_numerator
     print "\ntest_ld_to_f_big_numerator [#{Time.now}]: "
     y = 1.7976931348623158
-    z = 0.1**Float::MAX_10_EXP + 1
+    z = (0.1**Float::MAX_10_EXP) + 1
 
     # denominator beyond Float::MAX
     r = LongDecimal(LongMath::MAX_FLOATABLE - 1, Float::MAX_10_EXP + 1)
@@ -396,9 +396,9 @@ class TestLongDecimalExtra_class < UnitTest
   def _test_ld_to_f_big_numerator
     print "\ntest_ld_to_f_big_numerator [#{Time.now}]: "
     y = 1.7976931348623158
-    z = 0.1**Float::MAX_10_EXP + 1
+    z = (0.1**Float::MAX_10_EXP) + 1
     u = 1.3407807929942596e308
-    v = y**2 * 0.1**Float::MAX_10_EXP
+    v = (y**2) * (0.1**Float::MAX_10_EXP)
     w = 10**Float::MAX_10_EXP
     x = 0.1**Float::MAX_10_EXP
 
@@ -412,11 +412,11 @@ class TestLongDecimalExtra_class < UnitTest
     assert_equal_float(v, r.to_f, Float::MIN) # t6
     r = LongDecimal(-LongMath::MAX_FLOATABLE**2, 3 * Float::MAX_10_EXP)
     assert_equal_float(-v, r.to_f, Float::MIN)
-    r = LongDecimal(10 * w + 2, Float::MAX_10_EXP + 1)
+    r = LongDecimal((10 * w) + 2, Float::MAX_10_EXP + 1)
     assert_equal_float(1.0, r.to_f, 1e-15)
-    r = LongDecimal(-10 * w - 2, Float::MAX_10_EXP + 1)
+    r = LongDecimal((-10 * w) - 2, Float::MAX_10_EXP + 1)
     assert_equal_float(-1.0, r.to_f, 1e-15)
-    r = LongDecimal(w**2 - 1, 3 * Float::MAX_10_EXP)
+    r = LongDecimal((w**2) - 1, 3 * Float::MAX_10_EXP)
     assert_equal_float(x, r.to_f, Float::MIN)
     r = LongDecimal(-w**2 - 1, 3 * Float::MAX_10_EXP)
     assert_equal_float(-x, r.to_f, Float::MIN)
@@ -424,34 +424,34 @@ class TestLongDecimalExtra_class < UnitTest
     assert_equal_float(x, r.to_f, Float::MIN)
     r = LongDecimal(-w**2, 3 * Float::MAX_10_EXP)
     assert_equal_float(-x, r.to_f, Float::MIN)
-    r = LongDecimal(w**2 + 1, 3 * Float::MAX_10_EXP)
+    r = LongDecimal((w**2) + 1, 3 * Float::MAX_10_EXP)
     assert_equal_float(x, r.to_f, Float::MIN)
     r = LongDecimal(-w**2 + 1, 3 * Float::MAX_10_EXP)
     assert_equal_float(-x, r.to_f, Float::MIN)
-    r = LongDecimal(w**2 - 1, 3 * Float::MAX_10_EXP + 1)
+    r = LongDecimal((w**2) - 1, (3 * Float::MAX_10_EXP) + 1)
     assert_equal(0.0, r.to_f)
-    r = LongDecimal(-w**2 - 1, 3 * Float::MAX_10_EXP + 1)
+    r = LongDecimal(-w**2 - 1, (3 * Float::MAX_10_EXP) + 1)
     assert_equal(-0.0, r.to_f)
-    r = LongDecimal(w**2, 3 * Float::MAX_10_EXP + 1)
+    r = LongDecimal(w**2, (3 * Float::MAX_10_EXP) + 1)
     assert_equal(0.0, r.to_f)
-    r = LongDecimal(-w**2, 3 * Float::MAX_10_EXP + 1)
+    r = LongDecimal(-w**2, (3 * Float::MAX_10_EXP) + 1)
     assert_equal(-0.0, r.to_f)
-    r = LongDecimal(w**2 + 1, 3 * Float::MAX_10_EXP + 1)
+    r = LongDecimal((w**2) + 1, (3 * Float::MAX_10_EXP) + 1)
     assert_equal(0.0, r.to_f)
-    r = LongDecimal(-w**2 + 1, 3 * Float::MAX_10_EXP + 1)
+    r = LongDecimal(-w**2 + 1, (3 * Float::MAX_10_EXP) + 1)
     assert_equal(-0.0, r.to_f)
-    r = LongDecimal(w**3 + 1, 2 * Float::MAX_10_EXP)
+    r = LongDecimal((w**3) + 1, 2 * Float::MAX_10_EXP)
     assert_equal(w.to_f, r.to_f)
     r = LongDecimal(-w**3 + 1, 2 * Float::MAX_10_EXP)
     assert_equal(-w.to_f, r.to_f)
-    r = LongDecimal(10 * w + 1, 1 + Float::MAX_10_EXP)
+    r = LongDecimal((10 * w) + 1, 1 + Float::MAX_10_EXP)
     assert_equal_float(1.0, r.to_f, 1e-15)
-    r = LongDecimal(-10 * w - 1, 1 + Float::MAX_10_EXP)
+    r = LongDecimal((-10 * w) - 1, 1 + Float::MAX_10_EXP)
     assert_equal_float(-1.0, r.to_f, 1e-15)
-    r = LongDecimal(10 * w + 1, 2 * Float::MAX_10_EXP)
-    assert_equal_float(10 / Float::MAX, r.to_f, 2 * Float::MIN, "d=#{r.to_f - 10 / Float::MAX}")
-    r = LongDecimal(-10 * w + 1, 2 * Float::MAX_10_EXP)
-    assert_equal_float(-10 / Float::MAX, r.to_f, 2 * Float::MIN, "d=#{r.to_f + 10 / Float::MAX}")
+    r = LongDecimal((10 * w) + 1, 2 * Float::MAX_10_EXP)
+    assert_equal_float(10 / Float::MAX, r.to_f, 2 * Float::MIN, "d=#{r.to_f - (10 / Float::MAX)}")
+    r = LongDecimal((-10 * w) + 1, 2 * Float::MAX_10_EXP)
+    assert_equal_float(-10 / Float::MAX, r.to_f, 2 * Float::MIN, "d=#{r.to_f + (10 / Float::MAX)}")
   end
 
   #
@@ -472,7 +472,7 @@ class TestLongDecimalExtra_class < UnitTest
     u2 = u**2
     delta = 10**135
     fi = 1 / f
-    ni = 74_583_407_312_002_050_942_828_544 * 10**100
+    ni = 74_583_407_312_002_050_942_828_544 * (10**100)
     deltai = 1 / delta
 
     r = LongDecimal(n, ds)
@@ -485,12 +485,12 @@ class TestLongDecimalExtra_class < UnitTest
     assert_equal_float(f, r.to_f, delta)
     r = LongDecimal(ni * u, us)
     assert_equal_float(fi, r.to_f, deltai) # t9
-    r = LongDecimal(n * u2, ds + 2 * us)
+    r = LongDecimal(n * u2, ds + (2 * us))
     assert_equal_float(f, r.to_f, delta)
 
     # use some value > 1 "in the middle"
     f = 1.34078079299426e+154
-    n = 134_078_079_299_426 * 10**154
+    n = 134_078_079_299_426 * (10**154)
     ds = 14
     d = 10**ds
     n2 = n**2
@@ -514,9 +514,9 @@ class TestLongDecimalExtra_class < UnitTest
     assert_equal_float(f, r.to_f, delta)
     r = LongDecimal(ni * u, dis + us)
     assert_equal_float(fi, r.to_f, deltai)
-    r = LongDecimal(n * u2, ds + 2 * us)
+    r = LongDecimal(n * u2, ds + (2 * us))
     assert_equal_float(f, r.to_f, delta)
-    r = LongDecimal(ni * u2, dis + 2 * us)
+    r = LongDecimal(ni * u2, dis + (2 * us))
     assert_equal_float(fi, r.to_f, deltai)
   end
 
@@ -542,9 +542,9 @@ class TestLongDecimalExtra_class < UnitTest
     assert(!r.to_f.finite?, "r=#{r}=#{r.to_f}")
     r = LongDecimal(-LongMath::MAX_FLOATABLE**2, 0)
     assert(!r.to_f.finite?, "r=#{r}=#{r.to_f}")
-    r = LongDecimal(LongMath::MAX_FLOATABLE * 10 + 1, 1)
+    r = LongDecimal((LongMath::MAX_FLOATABLE * 10) + 1, 1)
     assert(!r.to_f.finite?, "r=#{r}=#{r.to_f}")
-    r = LongDecimal(-LongMath::MAX_FLOATABLE * 10 - 1, 1)
+    r = LongDecimal((-LongMath::MAX_FLOATABLE * 10) - 1, 1)
     assert(!r.to_f.finite?, "r=#{r}=#{r.to_f}")
     r = LongDecimal(LongMath::MAX_FLOATABLE**2, Float::MAX_10_EXP)
     assert(!r.to_f.finite?, "r=#{r}=#{r.to_f}")
@@ -749,7 +749,7 @@ class TestLongDecimalExtra_class < UnitTest
 
     # use some value > 1 "in the middle"
     f = 1.34078079299426e+154
-    n = 134_078_079_299_426 * 10**154
+    n = 134_078_079_299_426 * (10**154)
     d = 10**14
     n2 = n**2
     d2 = d**2

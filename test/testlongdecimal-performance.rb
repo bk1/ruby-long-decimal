@@ -73,7 +73,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase
   end
 
   def fsqrtx2(i)
-    1001 + i**3 + 202 * i**2 + 603 * i
+    1001 + (i**3) + (202 * (i**2)) + (603 * i)
   end
 
   #
@@ -126,21 +126,21 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase
     m = 10**200
     t0 = Time.new
     a1 = (1..n).collect do |r|
-      x = m * r + 7
+      x = (m * r) + 7
       LongMath.log2int(x)
     end
     t1 = Time.new
     puts "t=#{t1 - t0}"
     $stdout.flush
     a2 = (1..n).collect do |r|
-      x = m * r + 7
+      x = (m * r) + 7
       Math.log(x) / Math.log(2)
     end
     t2 = Time.new
     puts "t=#{t2 - t1}"
     $stdout.flush
     a3 = (1..n).collect do |r|
-      x = m * r + 7
+      x = (m * r) + 7
       LongMath.log2(x, 1).to_f
     end
     t3 = Time.new
@@ -153,7 +153,7 @@ class TestLongDecimalExtra_class < Test::Unit::TestCase
     n.times do |i|
       unless a1[i] <= a2[i] && a2[i] <= a1[i] + 0.1
         r = i + 1
-        x = m * r + 7
+        x = (m * r) + 7
         assert_equal(a1[i], a2[i], "i=#{i} x=#{x}")
       end
       assert((a2[i] - a3[i]).abs <= 0.01)

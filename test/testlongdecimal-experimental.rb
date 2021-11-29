@@ -69,7 +69,7 @@ class TestLongDecimalExperimental_class < UnitTest
       f0 = if x < MAX_FLOAT_I
              x.to_f * "1e-#{s}".to_f
            else
-             (x / 10**s).to_f
+             (x / (10**s)).to_f
            end
       t0 = Time.new
       f1 = l.to_g
@@ -100,8 +100,8 @@ class TestLongDecimalExperimental_class < UnitTest
       li = Math.log(i + 1)
       lli = Math.log(li + 1)
       sum = (f1 + f2 + f3 + f4 + f5 + f6)
-      delta = sum * lli * lli / 2**55
-      delta2 = sum * li * lli**4 / 2**55
+      delta = sum * lli * lli / (2**55)
+      delta2 = sum * li * (lli**4) / (2**55)
       assert_equal_float(f0, f1, delta2,
                          "f1 i=#{i} x=#{x} d=#{f1 - f0} li=#{li} lli=#{lli} delta2=#{delta2}")
       assert_equal_float(f0, f2, delta,
@@ -171,7 +171,7 @@ class TestLongDecimalExperimental_class < UnitTest
       f0 = if x < MAX_FLOAT_I
              x.to_f * "1e-#{s}".to_f
            else
-             (x / 10**s).to_f
+             (x / (10**s)).to_f
            end
       t0 = Time.new
       f1 = l.to_f # t10 # t11
@@ -202,8 +202,8 @@ class TestLongDecimalExperimental_class < UnitTest
       li = Math.log(i + 1)
       lli = Math.log(li + 1)
       sum = (f1 + f2 + f3 + f4 + f5 + f6)
-      delta = sum * lli**4 / 2**45
-      delta2 = sum * li**2 * lli**4 / 2**45
+      delta = sum * (lli**4) / (2**45)
+      delta2 = sum * (li**2) * (lli**4) / (2**45)
       assert_equal_float(f0, f1, delta2,
                          "f1 i=#{i} x=#{x} d=#{f1 - f0} li=#{li} lli=#{lli} delta2=#{delta2}")
       assert_equal_float(f0, f2, delta2,
@@ -274,7 +274,7 @@ class TestLongDecimalExperimental_class < UnitTest
       f0 = if x < MAX_FLOAT_I
              x.to_f * "1e-#{s}".to_f * ff
            else
-             (x / 10**s).to_f * ff
+             (x / (10**s)).to_f * ff
            end
       t0 = Time.new
       f1 = l.to_f # t4 # t8
@@ -305,8 +305,8 @@ class TestLongDecimalExperimental_class < UnitTest
       li = Math.log(i + 1) + 1
       lli = Math.log(li + 1) + 1
       sum = (f1 + f2 + f3 + f4 + f5 + f6)
-      delta = sum * lli**4 / 2**45
-      delta2 = sum * li**2 * lli**4 / 2**45
+      delta = sum * (lli**4) / (2**45)
+      delta2 = sum * (li**2) * (lli**4) / (2**45)
       assert_equal_float(f0, f1, delta2,
                          "f1=#{f1} i=#{i} x=#{x} l=#{l} d=#{f1 - f0} delta2=#{delta2} li=#{li} lli=#{lli}")
       assert_equal_float(f0, f2, delta2,
