@@ -301,7 +301,7 @@ module TestLongDecHelper
     x0 = x
     x  = x.to_ld
     y  = LongMath.exp(x, 0)
-    assert_equal(y.scale, 0, 'scale must be 0')
+    assert_equal(0, y.scale, 'scale must be 0')
 
     # compare y against z = exp(x) calculated using regular floating point arithmetic
     z  = Math.exp(x0.to_f)

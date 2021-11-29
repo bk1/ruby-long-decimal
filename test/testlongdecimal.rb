@@ -1538,8 +1538,8 @@ class TestLongDecimal_class < UnitTest
   def test_zero_init
     print "\ntest_zero_init [#{Time.now}]: "
     l = LongDecimal.zero!(224)
-    assert_equal(l.to_r, 0, 'to_r')
-    assert_equal(l.scale, 224, 'scale')
+    assert_equal(0, l.to_r, 'to_r')
+    assert_equal(224, l.scale, 'scale')
   end
 
   #
@@ -1548,8 +1548,8 @@ class TestLongDecimal_class < UnitTest
   def test_one_init
     print "\ntest_one_init [#{Time.now}]: "
     l = LongDecimal.one!(224)
-    assert_equal(l.to_r, 1, 'to_r')
-    assert_equal(l.scale, 224, 'scale')
+    assert_equal(1, l.to_r, 'to_r')
+    assert_equal(224, l.scale, 'scale')
   end
 
   #
@@ -1558,8 +1558,8 @@ class TestLongDecimal_class < UnitTest
   def test_two_init
     print "\ntest_two_init [#{Time.now}]: "
     l = LongDecimal.two!(224)
-    assert_equal(l.to_r, 2, 'to_r')
-    assert_equal(l.scale, 224, 'scale')
+    assert_equal(2, l.to_r, 'to_r')
+    assert_equal(224, l.scale, 'scale')
   end
 
   #
@@ -1568,8 +1568,8 @@ class TestLongDecimal_class < UnitTest
   def test_ten_init
     print "\ntest_ten_init [#{Time.now}]: "
     l = LongDecimal.ten!(224)
-    assert_equal(l.to_r, 10, 'to_r')
-    assert_equal(l.scale, 224, 'scale')
+    assert_equal(10, l.to_r, 'to_r')
+    assert_equal(224, l.scale, 'scale')
   end
 
   #
@@ -1578,8 +1578,8 @@ class TestLongDecimal_class < UnitTest
   def test_minus_one_init
     print "\ntest_minus_one_init [#{Time.now}]: "
     l = LongDecimal.minus_one!(224)
-    assert_equal(l.to_r, -1, 'to_r')
-    assert_equal(l.scale, 224, 'scale')
+    assert_equal(-1, l.to_r, 'to_r')
+    assert_equal(224, l.scale, 'scale')
   end
 
   #
@@ -1590,7 +1590,7 @@ class TestLongDecimal_class < UnitTest
     20.times do |e|
       l = LongDecimal.power_of_ten!(e, 224)
       assert_equal(l.to_r, 10**e, "to_r e=#{e}")
-      assert_equal(l.scale, 224, 'scale')
+      assert_equal(224, l.scale, 'scale')
     end
   end
 
@@ -3084,7 +3084,7 @@ class TestLongDecimal_class < UnitTest
     end
 
     # make sure that the result is congruent r modulo the modulus and within less than modulus away from i:
-    assert(!i_rounded.nil?, text)
+    refute_nil(i_rounded, text)
     assert_equal(0, (i_rounded - r) % modulus, text)
     assert(i - modulus < i_rounded)
     assert(i_rounded < i + modulus)
@@ -3132,8 +3132,8 @@ class TestLongDecimal_class < UnitTest
           text = "i=#{i} n=#{n} " + text0
           i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus,
                                                                    ROUND_UP, ZERO_ROUND_TO_PLUS)
-          assert(above.empty?)
-          assert(below.empty?)
+          assert_empty(above)
+          assert_empty(below)
           assert(i_rounded.abs >= i.abs, "i_r=#{i_rounded} " + text)
           if i.zero?
             assert(i_rounded >= 0, "i_r=#{i_rounded} " + text)
@@ -3147,15 +3147,15 @@ class TestLongDecimal_class < UnitTest
           else
             # i < 0
             # rounded away from 0, so for negative i to value <= i
-            assert_equal(below.length, 0, text)
+            assert_equal(0, below.length, text)
             assert(i_rounded <= i, "i_r=#{i_rounded} " + text)
             assert(i_rounded <= max_neg_remainder)
           end
 
           i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus,
                                                                    ROUND_DOWN, ZERO_ROUND_TO_PLUS)
-          assert(above.empty?)
-          assert(below.empty?)
+          assert_empty(above)
+          assert_empty(below)
           if i.positive?
             assert(i_rounded <= i, "i_r=#{i_rounded} " + text)
             assert(i_rounded >= max_neg_remainder, "i_r=#{i_rounded} " + text)
@@ -3174,46 +3174,46 @@ class TestLongDecimal_class < UnitTest
 
           i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus,
                                                                    ROUND_CEILING, ZERO_ROUND_TO_PLUS)
-          assert(above.empty?)
-          assert(below.empty?)
+          assert_empty(above)
+          assert_empty(below)
           assert(i_rounded >= i, "i_r=#{i_rounded} " + text)
           # assert_equal(above.length, 0, "i_r=#{i_rounded} " + text)
 
           i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus,
                                                                    ROUND_FLOOR, ZERO_ROUND_TO_PLUS)
-          assert(above.empty?)
-          assert(below.empty?)
+          assert_empty(above)
+          assert_empty(below)
           assert(i_rounded <= i, "i_r=#{i_rounded} " + text)
           # assert_equal(below.length, 0, "i_r=#{i_rounded} " + text)
 
           i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus,
                                                                    ROUND_HALF_UP, ZERO_ROUND_TO_PLUS)
-          assert(above.empty?)
-          assert(below.empty?)
+          assert_empty(above)
+          assert_empty(below)
           dd = 2 * (i_rounded - i).abs
           assert(dd <= modulus, "i_r=#{i_rounded} " + text)
           assert(dd < modulus, "i_r=#{i_rounded} " + text) if i_rounded.abs < i.abs || i_rounded.sgn == - i.sgn
 
           i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus,
                                                                    ROUND_HALF_DOWN, ZERO_ROUND_TO_PLUS)
-          assert(above.empty?)
-          assert(below.empty?)
+          assert_empty(above)
+          assert_empty(below)
           dd = 2 * (i_rounded - i).abs
           assert(dd <= modulus, "i_r=#{i_rounded} " + text)
           assert(dd < modulus, "i_r=#{i_rounded} " + text) if i_rounded.abs > i.abs && i_rounded.sgn == i.sgn
 
           i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus,
                                                                    ROUND_HALF_CEILING, ZERO_ROUND_TO_PLUS)
-          assert(above.empty?)
-          assert(below.empty?)
+          assert_empty(above)
+          assert_empty(below)
           dd = 2 * (i_rounded - i).abs
           assert(dd <= modulus, "i_r=#{i_rounded} " + text)
           assert(dd < modulus, "i_r=#{i_rounded} " + text) if i_rounded < i
 
           i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus,
                                                                    ROUND_HALF_FLOOR, ZERO_ROUND_TO_PLUS)
-          assert(above.empty?)
-          assert(below.empty?)
+          assert_empty(above)
+          assert_empty(below)
           dd = 2 * (i_rounded - i).abs
           assert(dd <= modulus, "i_r=#{i_rounded} " + text)
           assert(dd < modulus, "i_r=#{i_rounded} " + text) if i_rounded > i && i != 0
@@ -3282,10 +3282,10 @@ class TestLongDecimal_class < UnitTest
                                                                   ZERO_ROUND_TO_PLUS)
         zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus,
                                                                   ROUND_DOWN, ZERO_ROUND_TO_PLUS)
-        assert(above1.empty?)
-        assert(below1.empty?)
-        assert(above2.empty?)
-        assert(below2.empty?)
+        assert_empty(above1)
+        assert_empty(below1)
+        assert_empty(above2)
+        assert_empty(below2)
         assert_equal(zero_r1, zero_r2, text)
         assert(zero_r1 >= 0, "0_r=#{zero_r1} " + text)
         assert_equal(min_remainder, zero_r1, "0_r=#{zero_r1} " + text)
@@ -3294,10 +3294,10 @@ class TestLongDecimal_class < UnitTest
                                                                   ZERO_ROUND_TO_MINUS)
         zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus,
                                                                   ROUND_DOWN, ZERO_ROUND_TO_MINUS)
-        assert(above1.empty?)
-        assert(below1.empty?)
-        assert(above2.empty?)
-        assert(below2.empty?)
+        assert_empty(above1)
+        assert_empty(below1)
+        assert_empty(above2)
+        assert_empty(below2)
         assert_equal(zero_r1, zero_r2, text)
         assert(zero_r1 <= 0, "0_r=#{zero_r1} " + text)
         assert_equal(minus_remainder, zero_r1, "0_r=#{zero_r1} " + text)
@@ -3306,10 +3306,10 @@ class TestLongDecimal_class < UnitTest
                                                                   ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
         zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus,
                                                                   ROUND_DOWN, ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
-        assert(above1.empty?)
-        assert(below1.empty?)
-        assert(above2.empty?)
-        assert(below2.empty?)
+        assert_empty(above1)
+        assert_empty(below1)
+        assert_empty(above2)
+        assert_empty(below2)
         assert_equal(zero_r1, zero_r2, text)
         assert_equal(closest_remainder_prefer_plus, zero_r1, text)
         dd = 2 * zero_r1.abs
@@ -3326,10 +3326,10 @@ class TestLongDecimal_class < UnitTest
                                                                   ZERO_ROUND_TO_CLOSEST_PREFER_MINUS)
         zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus,
                                                                   ROUND_DOWN, ZERO_ROUND_TO_CLOSEST_PREFER_MINUS)
-        assert(above1.empty?)
-        assert(below1.empty?)
-        assert(above2.empty?)
-        assert(below2.empty?)
+        assert_empty(above1)
+        assert_empty(below1)
+        assert_empty(above2)
+        assert_empty(below2)
         assert_equal(zero_r1, zero_r2, text)
         assert_equal(closest_remainder_prefer_minus, zero_r1, text)
         # assert_equal(above1, above2, text)
@@ -3344,16 +3344,16 @@ class TestLongDecimal_class < UnitTest
 
         zero_rounded, set0, above0, below0 = check_round_to_remainders(0, remainders, modulus,
                                                                        ROUND_CEILING, ZERO_ROUND_UNNECESSARY)
-        assert(above0.empty?)
-        assert(below0.empty?)
+        assert_empty(above0)
+        assert_empty(below0)
         assert(zero_rounded >= 0, "0_r=#{zero_rounded} " + text)
         assert_equal(min_remainder, zero_rounded, text)
         # assert_equal(above0.length, 0, text)
 
         zero_rounded, set0, above0, below0 = check_round_to_remainders(0, remainders, modulus,
                                                                        ROUND_FLOOR, ZERO_ROUND_UNNECESSARY)
-        assert(above0.empty?)
-        assert(below0.empty?)
+        assert_empty(above0)
+        assert_empty(below0)
         assert(zero_rounded <= 0, "0_r=#{zero_rounded} " + text)
         assert_equal(minus_remainder, zero_rounded, text)
         # assert_equal(below0.length, 0, text)
@@ -3362,10 +3362,10 @@ class TestLongDecimal_class < UnitTest
                                                                   ROUND_HALF_UP, ZERO_ROUND_TO_PLUS)
         zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus,
                                                                   ROUND_HALF_DOWN, ZERO_ROUND_TO_PLUS)
-        assert(above1.empty?)
-        assert(below1.empty?)
-        assert(above2.empty?)
-        assert(below2.empty?)
+        assert_empty(above1)
+        assert_empty(below1)
+        assert_empty(above2)
+        assert_empty(below2)
         assert_equal(zero_r1, zero_r2, text)
         if zero_r1.negative?
           assert_equal(max_neg_remainder, zero_r1)
@@ -3376,10 +3376,10 @@ class TestLongDecimal_class < UnitTest
         # assert_equal(below1, below2, text)
         zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus,
                                                                   ROUND_HALF_UP, ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
-        assert(above1.empty?)
-        assert(below1.empty?)
-        assert(above2.empty?)
-        assert(below2.empty?)
+        assert_empty(above1)
+        assert_empty(below1)
+        assert_empty(above2)
+        assert_empty(below2)
         assert_equal(zero_r1, zero_r2, text)
         if zero_r1.negative?
           assert_equal(max_neg_remainder, zero_r1)
@@ -3390,10 +3390,10 @@ class TestLongDecimal_class < UnitTest
         # assert_equal(below1, below2, text)
         zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus,
                                                                   ROUND_HALF_DOWN, ZERO_ROUND_TO_CLOSEST_PREFER_PLUS)
-        assert(above1.empty?)
-        assert(below1.empty?)
-        assert(above2.empty?)
-        assert(below2.empty?)
+        assert_empty(above1)
+        assert_empty(below1)
+        assert_empty(above2)
+        assert_empty(below2)
         assert_equal(zero_r1, zero_r2, text)
         # assert_equal(above1, above2, text)
         # assert_equal(below1, below2, text)
@@ -3412,10 +3412,10 @@ class TestLongDecimal_class < UnitTest
                                                                   ROUND_HALF_UP, ZERO_ROUND_TO_MINUS)
         zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus,
                                                                   ROUND_HALF_DOWN, ZERO_ROUND_TO_MINUS)
-        assert(above1.empty?)
-        assert(below1.empty?)
-        assert(above2.empty?)
-        assert(below2.empty?)
+        assert_empty(above1)
+        assert_empty(below1)
+        assert_empty(above2)
+        assert_empty(below2)
         assert_equal(zero_r1, zero_r2, text)
         if zero_r1.negative?
           assert_equal(max_neg_remainder, zero_r1)
@@ -3426,19 +3426,19 @@ class TestLongDecimal_class < UnitTest
         # assert_equal(below1, below2, text)
         zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus,
                                                                   ROUND_HALF_UP, ZERO_ROUND_TO_CLOSEST_PREFER_MINUS)
-        assert(above1.empty?)
-        assert(below1.empty?)
-        assert(above2.empty?)
-        assert(below2.empty?)
+        assert_empty(above1)
+        assert_empty(below1)
+        assert_empty(above2)
+        assert_empty(below2)
         assert_equal(zero_r1, zero_r2, text)
         # assert_equal(above1, above2, text)
         # assert_equal(below1, below2, text)
         zero_r2, set2, above2, below2 = check_round_to_remainders(0, remainders, modulus,
                                                                   ROUND_HALF_DOWN, ZERO_ROUND_TO_CLOSEST_PREFER_MINUS)
-        assert(above1.empty?)
-        assert(below1.empty?)
-        assert(above2.empty?)
-        assert(below2.empty?)
+        assert_empty(above1)
+        assert_empty(below1)
+        assert_empty(above2)
+        assert_empty(below2)
         assert_equal(zero_r1, zero_r2, text)
         # assert_equal(above1, above2, text)
         # assert_equal(below1, below2, text)
@@ -3455,8 +3455,8 @@ class TestLongDecimal_class < UnitTest
 
         zero_rounded, set0, above0, below0 = check_round_to_remainders(0, remainders, modulus,
                                                                        ROUND_HALF_CEILING, ZERO_ROUND_UNNECESSARY)
-        assert(above0.empty?)
-        assert(below0.empty?)
+        assert_empty(above0)
+        assert_empty(below0)
         dd = 2 * zero_rounded.abs
         assert(dd <= modulus, "0_r=#{zero_rounded} dd=#{dd} " + text)
         if zero_rounded.negative?
@@ -3470,8 +3470,8 @@ class TestLongDecimal_class < UnitTest
 
         zero_rounded, set0, above0, below0 = check_round_to_remainders(0, remainders, modulus,
                                                                        ROUND_HALF_FLOOR, ZERO_ROUND_UNNECESSARY)
-        assert(above0.empty?)
-        assert(below0.empty?)
+        assert_empty(above0)
+        assert_empty(below0)
         dd = 2 * zero_rounded.abs
         assert(dd <= modulus, "0_r=#{zero_rounded} " + text)
         if zero_rounded.positive?
@@ -3598,7 +3598,7 @@ class TestLongDecimal_class < UnitTest
       if i_r == i_rounded
         found = true
       else
-        assert(i != i_r, "i=#{i} i_r=#{i_r} i_rounded=#{i_rounded}")
+        refute_equal(i, i_r, "i=#{i} i_r=#{i_r} i_rounded=#{i_rounded}")
         closer = ((i_r - i).abs < (i_rounded - i).abs)
         if i < i_r
           assert(i_rounded < i_r)
@@ -4054,7 +4054,7 @@ class TestLongDecimal_class < UnitTest
     x = LongDecimal(1, 0)
     y = LongDecimal(10, 1)
     assert_equal(0, (x - y).sgn, 'difference must be 0')
-    assert(!(x.eql? y), 'x and y have the same value, but are not equal')
+    refute((x.eql? y), 'x and y have the same value, but are not equal')
     assert_equal(x, y)
     u, v = x.equalize_scale(y)
     assert_equal(u, v, 'u and v must be equal')
@@ -5905,7 +5905,7 @@ class TestLongDecimal_class < UnitTest
         assert((y[0]).zero?, msg + "y=#{y} mode=#{ROUND_GEOMETRIC_EVEN}")
         y = LongMath.sqrt(x, scale, ROUND_GEOMETRIC_ODD)
         assert(y == y_lower || y == y_upper, msg + "y=#{y} mode=#{ROUND_GEOMETRIC_ODD}")
-        assert(y[0] == 1, msg + "y=#{y} mode=#{ROUND_GEOMETRIC_ODD}")
+        assert_equal(1, y[0], msg + "y=#{y} mode=#{ROUND_GEOMETRIC_ODD}")
       end
     end
   end
@@ -5952,7 +5952,7 @@ class TestLongDecimal_class < UnitTest
         assert((y[0]).zero?, msg + "y=#{y} mode=#{ROUND_QUADRATIC_EVEN}")
         y = LongMath.sqrt(x, scale, ROUND_QUADRATIC_ODD)
         assert(y == y_lower || y == y_upper, msg + "y=#{y} mode=#{ROUND_QUADRATIC_ODD}")
-        assert(y[0] == 1, msg + "y=#{y} mode=#{ROUND_QUADRATIC_ODD}")
+        assert_equal(1, y[0], msg + "y=#{y} mode=#{ROUND_QUADRATIC_ODD}")
       end
     end
   end
@@ -6120,7 +6120,7 @@ class TestLongDecimal_class < UnitTest
         assert((y[0]).zero?, msg + "y=#{y} mode=#{ROUND_CUBIC_EVEN}")
         y = LongMath.cbrt(x, scale, ROUND_CUBIC_ODD)
         assert(y == y_lower || y == y_upper, msg + "y=#{y} mode=#{ROUND_CUBIC_ODD}")
-        assert(y[0] == 1, msg + "y=#{y} mode=#{ROUND_CUBIC_ODD}")
+        assert_equal(1, y[0], msg + "y=#{y} mode=#{ROUND_CUBIC_ODD}")
       end
     end
   end
@@ -6231,11 +6231,11 @@ class TestLongDecimal_class < UnitTest
     assert(LongDecimal(200, 2).is_int?, '200, 2')
     assert(LongDecimal(1_000_000, 6).is_int?, '1000000, 6')
 
-    assert(!LongDecimal(1, 1).is_int?, '1, 1')
-    assert(!LongDecimal(99, 2).is_int?, '99, 2')
-    assert(!LongDecimal(200, 3).is_int?, '200, 3')
-    assert(!LongDecimal(1_000_001, 6).is_int?, '1000001, 6')
-    assert(!LongDecimal(1_000_000, 7).is_int?, '1000000, 7')
+    refute(LongDecimal(1, 1).is_int?, '1, 1')
+    refute(LongDecimal(99, 2).is_int?, '99, 2')
+    refute(LongDecimal(200, 3).is_int?, '200, 3')
+    refute(LongDecimal(1_000_001, 6).is_int?, '1000001, 6')
+    refute(LongDecimal(1_000_000, 7).is_int?, '1000000, 7')
   end
 
   #
@@ -6246,9 +6246,9 @@ class TestLongDecimal_class < UnitTest
     assert(LongDecimal(0, 1000).zero?, '0, 1000')
     assert(LongDecimal(0, 0).zero?, '0, 0')
     assert(LongDecimal.zero!(100).zero?, '0, 100')
-    assert(!LongDecimal(1, 1000).zero?, '1, 1000')
-    assert(!LongDecimal(1, 0).zero?, '1, 0')
-    assert(!LongDecimal.one!(100).zero?, '1, 0')
+    refute(LongDecimal(1, 1000).zero?, '1, 1000')
+    refute(LongDecimal(1, 0).zero?, '1, 0')
+    refute(LongDecimal.one!(100).zero?, '1, 0')
   end
 
   #
@@ -6259,11 +6259,11 @@ class TestLongDecimal_class < UnitTest
     assert(LongDecimal(10**1000, 1000).one?, '1, 1000')
     assert(LongDecimal(1, 0).one?, '1, 0')
     assert(LongDecimal.one!(100).one?, '1, 100')
-    assert(!LongDecimal(0, 1000).one?, '0, 1000')
-    assert(!LongDecimal(2, 1000).one?, '2, 1000')
-    assert(!LongDecimal(0, 0).one?, '0, 0')
-    assert(!LongDecimal.zero!(100).one?, '0, 0')
-    assert(!LongDecimal.two!(100).one?, '2, 0')
+    refute(LongDecimal(0, 1000).one?, '0, 1000')
+    refute(LongDecimal(2, 1000).one?, '2, 1000')
+    refute(LongDecimal(0, 0).one?, '0, 0')
+    refute(LongDecimal.zero!(100).one?, '0, 0')
+    refute(LongDecimal.two!(100).one?, '2, 0')
   end
 
   #
@@ -6291,14 +6291,14 @@ class TestLongDecimal_class < UnitTest
     y = LongDecimal(2240, 3)
     assert((x <=> y).zero?, 'diff is zero')
     assert_equal(x, y, 'equal')
-    assert(x == y, 'equal ==')
+    assert_equal(x, y, 'equal ==')
     assert(x === y, 'equal ===')
-    assert(!(x.eql? y), 'not eql?')
+    refute((x.eql? y), 'not eql?')
     assert((y <=> x).zero?, 'diff is yero')
     assert_equal(y, x, 'equal')
-    assert(y == x, 'equal ==')
+    assert_equal(y, x, 'equal ==')
     assert(y === x, 'equal ===')
-    assert(!(y.eql? x), 'not eql?')
+    refute((y.eql? x), 'not eql?')
     assert_equal(x, x, 'x equals x')
     assert_equal(y, y, 'y equals y')
   end
@@ -6312,32 +6312,32 @@ class TestLongDecimal_class < UnitTest
     y = LongDecimal(2240, 3)
     assert(x === y, 'value equal')
     assert(y === x, 'value equal')
-    assert(x == y, 'but not equal')
-    assert(y == x, 'but not equal')
+    assert_equal(x, y, 'but not equal')
+    assert_equal(y, x, 'but not equal')
     assert_val_equal(x, y)
     assert_val_equal(y, x)
     assert_val_equal(x, x)
     assert_val_equal(y, y)
-    assert(!(x.eql? y), 'not eql?')
-    assert(!(y.eql? x), 'not eql?')
+    refute((x.eql? y), 'not eql?')
+    refute((y.eql? x), 'not eql?')
     assert(x === x, 'x equals x')
     assert(y === y, 'y equals y')
     x = 1.to_ld(100)
     y = 1
     assert(x === y, 'value equal')
-    assert(x == y, 'but not equal')
+    assert_equal(x, y, 'but not equal')
     assert(x === x, 'x equals x')
     assert(y === y, 'y equals y')
-    assert(!(x.eql? y), 'not eql?')
-    assert(!(y.eql? x), 'not eql?')
+    refute((x.eql? y), 'not eql?')
+    refute((y.eql? x), 'not eql?')
     x = LongDecimal(123_456, 3)
     y = Rational(123_456, 1000)
     assert(x === y, 'value equal')
-    assert(x == y, 'but not equal')
+    assert_equal(x, y, 'but not equal')
     assert(x === x, 'x equals x')
     assert(y === y, 'y equals y')
-    assert(!(x.eql? y), "not eql? x=#{x.inspect} y=#{y.inspect}")
-    assert(!(y.eql? x), "not eql? x=#{x.inspect} y=#{y.inspect}")
+    refute((x.eql? y), "not eql? x=#{x.inspect} y=#{y.inspect}")
+    refute((y.eql? x), "not eql? x=#{x.inspect} y=#{y.inspect}")
   end
 
   #
@@ -7824,10 +7824,10 @@ class TestLongDecimal_class < UnitTest
   #
   def test_ldq_is_int
     print "\ntest_ldq_is_int [#{Time.now}]: "
-    assert(!LongDecimalQuot(Rational(1, 2), 0).is_int?, '1, 2')
-    assert(!LongDecimalQuot(Rational(90, 91), 1).is_int?, '90, 91')
-    assert(!LongDecimalQuot(Rational(200, 3), 2).is_int?, '200, 3')
-    assert(!LongDecimalQuot(Rational(3_333_333, 1_000_000), 6).is_int?, '3333333, 1000000')
+    refute(LongDecimalQuot(Rational(1, 2), 0).is_int?, '1, 2')
+    refute(LongDecimalQuot(Rational(90, 91), 1).is_int?, '90, 91')
+    refute(LongDecimalQuot(Rational(200, 3), 2).is_int?, '200, 3')
+    refute(LongDecimalQuot(Rational(3_333_333, 1_000_000), 6).is_int?, '3333333, 1000000')
 
     assert(LongDecimalQuot(1, 1).is_int?, '1, 1')
     assert(LongDecimalQuot(99, 2).is_int?, '99, 2')
@@ -7843,8 +7843,8 @@ class TestLongDecimal_class < UnitTest
     print "\ntest_ldq_zero [#{Time.now}]: "
     assert(LongDecimalQuot(0, 1000).zero?, '0, 1000')
     assert(LongDecimalQuot(0, 0).zero?, '0, 0')
-    assert(!LongDecimalQuot(1, 1000).zero?, '1, 1000')
-    assert(!LongDecimalQuot(1, 0).zero?, '1, 0')
+    refute(LongDecimalQuot(1, 1000).zero?, '1, 1000')
+    refute(LongDecimalQuot(1, 0).zero?, '1, 0')
   end
 
   #
@@ -7854,9 +7854,9 @@ class TestLongDecimal_class < UnitTest
     print "\ntest_ldq_one [#{Time.now}]: "
     assert(LongDecimalQuot(1, 1000).one?, '1, 1000')
     assert(LongDecimalQuot(1, 0).one?, '1, 0')
-    assert(!LongDecimalQuot(0, 1000).one?, '0, 1000')
-    assert(!LongDecimalQuot(2, 1000).one?, '2, 1000')
-    assert(!LongDecimalQuot(0, 0).one?, '0, 0')
+    refute(LongDecimalQuot(0, 1000).one?, '0, 1000')
+    refute(LongDecimalQuot(2, 1000).one?, '2, 1000')
+    refute(LongDecimalQuot(0, 0).one?, '0, 0')
   end
 
   #
@@ -7883,12 +7883,12 @@ class TestLongDecimal_class < UnitTest
     x = LongDecimalQuot(Rational(224, 225), 226)
     y = LongDecimalQuot(Rational(224, 225), 227)
     assert((x <=> y).zero?, 'diff is zero')
-    assert(x == y, 'but not equal')
+    assert_equal(x, y, 'but not equal')
     assert(x === y, 'but not equal')
     assert_equal(x, x, 'x equals x')
     assert_equal(y, y, 'y equals y')
-    assert(!(x.eql? y), "! #{x.inspect} eql? #{y.inspect}")
-    assert(!(y.eql? x), "! #{y.inspect} eql? #{x.inspect}")
+    refute((x.eql? y), "! #{x.inspect} eql? #{y.inspect}")
+    refute((y.eql? x), "! #{y.inspect} eql? #{x.inspect}")
   end
 
   def test_means_one_param
@@ -8257,18 +8257,18 @@ class TestLongDecimal_class < UnitTest
     z = LongDecimal(4, 8)
     assert(x.scale_equal(y), 'xy')
     assert(y.scale_equal(x), 'yx')
-    assert(!x.scale_equal(z), 'xz')
-    assert(!y.scale_equal(z), 'yz')
+    refute(x.scale_equal(z), 'xz')
+    refute(y.scale_equal(z), 'yz')
 
     x = LongDecimalQuot(Rational(3, 4), 9)
     y = LongDecimalQuot(Rational(4, 3), 9)
     z = LongDecimalQuot(Rational(4, 3), 8)
     assert(x.scale_equal(y), 'xy')
     assert(y.scale_equal(x), 'yx')
-    assert(!x.scale_equal(z), 'xz')
-    assert(!y.scale_equal(z), 'yz')
-    assert(!z.scale_equal(x), 'zx')
-    assert(!z.scale_equal(y), 'zy')
+    refute(x.scale_equal(z), 'xz')
+    refute(y.scale_equal(z), 'yz')
+    refute(z.scale_equal(x), 'zx')
+    refute(z.scale_equal(y), 'zy')
   end
 
   def test_scale_ufo
@@ -8278,20 +8278,20 @@ class TestLongDecimal_class < UnitTest
     z = LongDecimal(4, 7)
     assert(x.scale_ufo(y).zero?, 'xy')
     assert(y.scale_ufo(x).zero?, 'yx')
-    assert(x.scale_ufo(z) == 1, 'xz')
-    assert(y.scale_ufo(z) == 1, 'yz')
-    assert(z.scale_ufo(x) == -1, 'zx')
-    assert(z.scale_ufo(y) == -1, 'zy')
+    assert_equal(1, x.scale_ufo(z), 'xz')
+    assert_equal(1, y.scale_ufo(z), 'yz')
+    assert_equal(-1, z.scale_ufo(x), 'zx')
+    assert_equal(-1, z.scale_ufo(y), 'zy')
 
     x = LongDecimalQuot(Rational(3, 4), 9)
     y = LongDecimalQuot(Rational(4, 3), 9)
     z = LongDecimalQuot(Rational(4, 3), 7)
     assert(x.scale_ufo(y).zero?, 'xy')
     assert(y.scale_ufo(x).zero?, 'yx')
-    assert(x.scale_ufo(z) == 1, 'xz')
-    assert(y.scale_ufo(z) == 1, 'yz')
-    assert(z.scale_ufo(x) == -1, 'zx')
-    assert(z.scale_ufo(y) == -1, 'zy')
+    assert_equal(1, x.scale_ufo(z), 'xz')
+    assert_equal(1, y.scale_ufo(z), 'yz')
+    assert_equal(-1, z.scale_ufo(x), 'zx')
+    assert_equal(-1, z.scale_ufo(y), 'zy')
   end
 end
 

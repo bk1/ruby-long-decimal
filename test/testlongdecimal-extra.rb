@@ -98,15 +98,15 @@ class TestLongDecimalExtra_class < UnitTest
     print "\ntest_r_to_f_small [#{Time.now}]: "
     # trivial: 0, 1, -1,...
     r = Rational(0, 1)
-    assert_equal(0.0, r.to_f)
+    assert_in_delta(0.0, r.to_f)
     r = Rational(1, 1)
-    assert_equal(1.0, r.to_f)
+    assert_in_delta(1.0, r.to_f)
     r = Rational(-1, 1)
-    assert_equal(-1.0, r.to_f)
+    assert_in_delta(-1.0, r.to_f)
     r = Rational(3, 2)
-    assert_equal(1.5, r.to_f)
+    assert_in_delta(1.5, r.to_f)
     r = Rational(-3, 2)
-    assert_equal(-1.5, r.to_f)
+    assert_in_delta(-1.5, r.to_f)
   end
 
   #
@@ -116,17 +116,17 @@ class TestLongDecimalExtra_class < UnitTest
     print "\ntest_r_to_f_max_float [#{Time.now}]: "
     # still numerator and denominator expressable as Float
     r = Rational(LongMath::MAX_FLOATABLE, LongMath::MAX_FLOATABLE - 1)
-    assert_equal(1.0, r.to_f)
-    assert_equal(1.0, r.to_f_orig)
+    assert_in_delta(1.0, r.to_f)
+    assert_in_delta(1.0, r.to_f_orig)
     r = Rational(-LongMath::MAX_FLOATABLE, LongMath::MAX_FLOATABLE - 1)
-    assert_equal(-1.0, r.to_f)
-    assert_equal(-1.0, r.to_f_orig)
+    assert_in_delta(-1.0, r.to_f)
+    assert_in_delta(-1.0, r.to_f_orig)
     r = Rational(LongMath::MAX_FLOATABLE - 1, LongMath::MAX_FLOATABLE)
-    assert_equal(1.0, r.to_f)
-    assert_equal(1.0, r.to_f_orig)
+    assert_in_delta(1.0, r.to_f)
+    assert_in_delta(1.0, r.to_f_orig)
     r = Rational(-(LongMath::MAX_FLOATABLE + 1), LongMath::MAX_FLOATABLE)
-    assert_equal(-1.0, r.to_f)
-    assert_equal(-1.0, r.to_f_orig)
+    assert_in_delta(-1.0, r.to_f)
+    assert_in_delta(-1.0, r.to_f_orig)
     r = Rational(LongMath::MAX_FLOATABLE, 1)
     assert_equal(Float::MAX, r.to_f)
     assert_equal(Float::MAX, r.to_f_orig)
@@ -151,17 +151,17 @@ class TestLongDecimalExtra_class < UnitTest
     print "\ntest_r_to_f_big_numerator [#{Time.now}]: "
     # numerator beyond Float::MAX
     r = Rational(LongMath::MAX_FLOATABLE + 1, LongMath::MAX_FLOATABLE - 1)
-    assert_equal(1.0, r.to_f)
+    assert_in_delta(1.0, r.to_f)
     r = Rational(-LongMath::MAX_FLOATABLE - 1, LongMath::MAX_FLOATABLE - 1)
-    assert_equal(-1.0, r.to_f)
+    assert_in_delta(-1.0, r.to_f)
     r = Rational(LongMath::MAX_FLOATABLE + 1, 1)
     assert_equal(Float::MAX, r.to_f)
     r = Rational(-LongMath::MAX_FLOATABLE - 1, 1)
     assert_equal(-Float::MAX, r.to_f)
     r = Rational(2 * LongMath::MAX_FLOATABLE, LongMath::MAX_FLOATABLE)
-    assert_equal(2.0, r.to_f)
+    assert_in_delta(2.0, r.to_f)
     r = Rational(-2 * LongMath::MAX_FLOATABLE, LongMath::MAX_FLOATABLE)
-    assert_equal(-2.0, r.to_f)
+    assert_in_delta(-2.0, r.to_f)
     r = Rational(LongMath::MAX_FLOATABLE**2, LongMath::MAX_FLOATABLE)
     assert_equal(Float::MAX, r.to_f)
     r = Rational(-LongMath::MAX_FLOATABLE**2, LongMath::MAX_FLOATABLE)
@@ -176,17 +176,17 @@ class TestLongDecimalExtra_class < UnitTest
 
     # denominator beyond Float::MAX
     r = Rational(LongMath::MAX_FLOATABLE - 1, LongMath::MAX_FLOATABLE + 1)
-    assert_equal(1.0, r.to_f)
+    assert_in_delta(1.0, r.to_f)
     r = Rational(-LongMath::MAX_FLOATABLE + 1, LongMath::MAX_FLOATABLE + 1)
-    assert_equal(-1.0, r.to_f)
+    assert_in_delta(-1.0, r.to_f)
     r = Rational(1, LongMath::MAX_FLOATABLE + 1)
     assert_equal_float(1 / Float::MAX, r.to_f, Float::MIN)
     r = Rational(-1, LongMath::MAX_FLOATABLE - 1)
     assert_equal(-1 / Float::MAX, r.to_f, Float::MIN)
     r = Rational(LongMath::MAX_FLOATABLE, 2 * LongMath::MAX_FLOATABLE)
-    assert_equal(0.5, r.to_f)
+    assert_in_delta(0.5, r.to_f)
     r = Rational(-LongMath::MAX_FLOATABLE, 2 * LongMath::MAX_FLOATABLE)
-    assert_equal(-0.5, r.to_f)
+    assert_in_delta(-0.5, r.to_f)
     r = Rational(LongMath::MAX_FLOATABLE, LongMath::MAX_FLOATABLE**2)
     assert_equal_float(1 / Float::MAX, r.to_f, Float::MIN)
     r = Rational(-LongMath::MAX_FLOATABLE, LongMath::MAX_FLOATABLE**2)
@@ -201,9 +201,9 @@ class TestLongDecimalExtra_class < UnitTest
     # both beyond Float::MAX
     delta = 1 / Float::MAX
     r = Rational(LongMath::MAX_FLOATABLE + 2, LongMath::MAX_FLOATABLE + 1)
-    assert_equal(1.0, r.to_f)
+    assert_in_delta(1.0, r.to_f)
     r = Rational(-LongMath::MAX_FLOATABLE - 2, LongMath::MAX_FLOATABLE + 1)
-    assert_equal(-1.0, r.to_f)
+    assert_in_delta(-1.0, r.to_f)
     unless RUBY_PLATFORM == 'java'
       # skip this test in JRuby due to bugs in JRuby's Float
       r = Rational(LongMath::MAX_FLOATABLE**2, LongMath::MAX_FLOATABLE**3)
@@ -216,9 +216,9 @@ class TestLongDecimalExtra_class < UnitTest
     r = Rational(-LongMath::MAX_FLOATABLE**3, LongMath::MAX_FLOATABLE**2)
     assert_equal(-Float::MAX, r.to_f)
     r = Rational(LongMath::MAX_FLOATABLE + 1, 2 * LongMath::MAX_FLOATABLE)
-    assert_equal(0.5, r.to_f)
+    assert_in_delta(0.5, r.to_f)
     r = Rational(-(LongMath::MAX_FLOATABLE + 1), 2 * LongMath::MAX_FLOATABLE)
-    assert_equal(-0.5, r.to_f)
+    assert_in_delta(-0.5, r.to_f)
     unless RUBY_PLATFORM == 'java'
       # skip this test in JRuby due to bugs in JRuby's Float
       r = Rational(LongMath::MAX_FLOATABLE + 1, LongMath::MAX_FLOATABLE**2)
@@ -304,15 +304,15 @@ class TestLongDecimalExtra_class < UnitTest
     print "\ntest_ld_to_f_small [#{Time.now}]: "
     # trivial: 0, 1, -1,...
     r = LongDecimal(0, 0)
-    assert_equal(0.0, r.to_f)  # t1
+    assert_in_delta(0.0, r.to_f)  # t1
     r = LongDecimal(1, 0)
-    assert_equal(1.0, r.to_f)
+    assert_in_delta(1.0, r.to_f)
     r = LongDecimal(-1, 0)
-    assert_equal(-1.0, r.to_f)
+    assert_in_delta(-1.0, r.to_f)
     r = LongDecimal(15, 1)
-    assert_equal(1.5, r.to_f)
+    assert_in_delta(1.5, r.to_f)
     r = LongDecimal(-15, 1)
-    assert_equal(-1.5, r.to_f) # t3
+    assert_in_delta(-1.5, r.to_f) # t3
   end
 
   #
@@ -385,9 +385,9 @@ class TestLongDecimalExtra_class < UnitTest
     r = LongDecimal(-1, Float::MAX_10_EXP + 1)
     assert_equal(-z, r.to_f, Float::MIN)
     r = LongDecimal(LongMath::MAX_FLOATABLE, 2 * Float::MAX_10_EXP)
-    assert_equal(0.0, r.to_f)
+    assert_in_delta(0.0, r.to_f)
     r = LongDecimal(-LongMath::MAX_FLOATABLE, 2 * Float::MAX_10_EXP)
-    assert_equal(-0.0, r.to_f)
+    assert_in_delta(-0.0, r.to_f)
   end
 
   #
@@ -429,17 +429,17 @@ class TestLongDecimalExtra_class < UnitTest
     r = LongDecimal(-w**2 + 1, 3 * Float::MAX_10_EXP)
     assert_equal_float(-x, r.to_f, Float::MIN)
     r = LongDecimal((w**2) - 1, (3 * Float::MAX_10_EXP) + 1)
-    assert_equal(0.0, r.to_f)
+    assert_in_delta(0.0, r.to_f)
     r = LongDecimal(-w**2 - 1, (3 * Float::MAX_10_EXP) + 1)
-    assert_equal(-0.0, r.to_f)
+    assert_in_delta(-0.0, r.to_f)
     r = LongDecimal(w**2, (3 * Float::MAX_10_EXP) + 1)
-    assert_equal(0.0, r.to_f)
+    assert_in_delta(0.0, r.to_f)
     r = LongDecimal(-w**2, (3 * Float::MAX_10_EXP) + 1)
-    assert_equal(-0.0, r.to_f)
+    assert_in_delta(-0.0, r.to_f)
     r = LongDecimal((w**2) + 1, (3 * Float::MAX_10_EXP) + 1)
-    assert_equal(0.0, r.to_f)
+    assert_in_delta(0.0, r.to_f)
     r = LongDecimal(-w**2 + 1, (3 * Float::MAX_10_EXP) + 1)
-    assert_equal(-0.0, r.to_f)
+    assert_in_delta(-0.0, r.to_f)
     r = LongDecimal((w**3) + 1, 2 * Float::MAX_10_EXP)
     assert_equal(w.to_f, r.to_f)
     r = LongDecimal(-w**3 + 1, 2 * Float::MAX_10_EXP)
@@ -525,35 +525,35 @@ class TestLongDecimalExtra_class < UnitTest
     print "\ntest_ld_to_f_infinity [#{Time.now}]: "
     f1 = LongDecimal(1_000_000_000_000_001, 15)
     r = LongDecimal(LongMath::MAX_FLOATABLE + 1, 0)
-    assert(!r.to_f.finite?, "r=#{r}=#{r.to_f}") # t13
+    refute(r.to_f.finite?, "r=#{r}=#{r.to_f}") # t13
     # assert_equal(Float::MAX, r.to_f, "r=#{r}=#{r.to_f}")
     r = LongDecimal(-(LongMath::MAX_FLOATABLE + 1), 0)
-    assert(!r.to_f.finite?, "r=#{r}=#{r.to_f}")
+    refute(r.to_f.finite?, "r=#{r}=#{r.to_f}")
     # assert_equal(-Float::MAX, r.to_f, "r=#{r}=#{r.to_f}")
     r = LongDecimal(LongMath::MAX_FLOATABLE * f1, 0)
-    assert(!r.to_f.finite?, "r=#{r}=#{r.to_f}")
+    refute(r.to_f.finite?, "r=#{r}=#{r.to_f}")
     r = LongDecimal(-LongMath::MAX_FLOATABLE * f1, 0)
-    assert(!r.to_f.finite?, "r=#{r}=#{r.to_f}")
+    refute(r.to_f.finite?, "r=#{r}=#{r.to_f}")
     r = LongDecimal(LongMath::MAX_FLOATABLE * 2, 0)
-    assert(!r.to_f.finite?, "r=#{r}=#{r.to_f}")
+    refute(r.to_f.finite?, "r=#{r}=#{r.to_f}")
     r = LongDecimal(-LongMath::MAX_FLOATABLE * 2, 0)
-    assert(!r.to_f.finite?, "r=#{r}=#{r.to_f}")
+    refute(r.to_f.finite?, "r=#{r}=#{r.to_f}")
     r = LongDecimal(LongMath::MAX_FLOATABLE**2, 0)
-    assert(!r.to_f.finite?, "r=#{r}=#{r.to_f}")
+    refute(r.to_f.finite?, "r=#{r}=#{r.to_f}")
     r = LongDecimal(-LongMath::MAX_FLOATABLE**2, 0)
-    assert(!r.to_f.finite?, "r=#{r}=#{r.to_f}")
+    refute(r.to_f.finite?, "r=#{r}=#{r.to_f}")
     r = LongDecimal((LongMath::MAX_FLOATABLE * 10) + 1, 1)
-    assert(!r.to_f.finite?, "r=#{r}=#{r.to_f}")
+    refute(r.to_f.finite?, "r=#{r}=#{r.to_f}")
     r = LongDecimal((-LongMath::MAX_FLOATABLE * 10) - 1, 1)
-    assert(!r.to_f.finite?, "r=#{r}=#{r.to_f}")
+    refute(r.to_f.finite?, "r=#{r}=#{r.to_f}")
     r = LongDecimal(LongMath::MAX_FLOATABLE**2, Float::MAX_10_EXP)
-    assert(!r.to_f.finite?, "r=#{r}=#{r.to_f}")
+    refute(r.to_f.finite?, "r=#{r}=#{r.to_f}")
     r = LongDecimal(-LongMath::MAX_FLOATABLE**2, Float::MAX_10_EXP)
-    assert(!r.to_f.finite?, "r=#{r}=#{r.to_f}")
+    refute(r.to_f.finite?, "r=#{r}=#{r.to_f}")
     r = LongDecimal(LongMath::MAX_FLOATABLE**3, 2 * Float::MAX_10_EXP)
-    assert(!r.to_f.finite?, "r=#{r}=#{r.to_f}")
+    refute(r.to_f.finite?, "r=#{r}=#{r.to_f}")
     r = LongDecimal(-LongMath::MAX_FLOATABLE**3, 2 * Float::MAX_10_EXP)
-    assert(!r.to_f.finite?, "r=#{r}=#{r.to_f}")
+    refute(r.to_f.finite?, "r=#{r}=#{r.to_f}")
   end
 
   # test t7
@@ -563,13 +563,13 @@ class TestLongDecimalExtra_class < UnitTest
     divisor = 10**scale
     val = divisor / (LongMath::INV_MIN_FLOATABLE * 20)
     r = LongDecimal(val - 1, scale)
-    assert_equal(0.0, r.to_f)
+    assert_in_delta(0.0, r.to_f)
     r = LongDecimal(-val + 1, scale)
-    assert_equal(0.0, r.to_f)
+    assert_in_delta(0.0, r.to_f)
     r = LongDecimal(val, scale)
-    assert_equal(0.0, r.to_f)
+    assert_in_delta(0.0, r.to_f)
     r = LongDecimal(-val, scale)
-    assert_equal(0.0, r.to_f)
+    assert_in_delta(0.0, r.to_f)
     r = LongDecimal(val + 1, scale)
     assert_equal_float(0.0, r.to_f, Float::MIN) # t7 (JRuby-only)
     r = LongDecimal(-val - 1, scale)
@@ -587,15 +587,15 @@ class TestLongDecimalExtra_class < UnitTest
     print "\ntest_ldq_to_f_small [#{Time.now}]: "
     # trivial: 0, 1, -1,...
     r = LongDecimalQuot(Rational(0, 1), 7)
-    assert_equal(0.0, r.to_f)
+    assert_in_delta(0.0, r.to_f)
     r = LongDecimalQuot(Rational(1, 1), 7)
-    assert_equal(1.0, r.to_f)
+    assert_in_delta(1.0, r.to_f)
     r = LongDecimalQuot(Rational(-1, 1), 7)
-    assert_equal(-1.0, r.to_f)
+    assert_in_delta(-1.0, r.to_f)
     r = LongDecimalQuot(Rational(3, 2), 7)
-    assert_equal(1.5, r.to_f)
+    assert_in_delta(1.5, r.to_f)
     r = LongDecimalQuot(Rational(-3, 2), 7)
-    assert_equal(-1.5, r.to_f)
+    assert_in_delta(-1.5, r.to_f)
   end
 
   #
@@ -605,13 +605,13 @@ class TestLongDecimalExtra_class < UnitTest
     print "\ntest_ldq_to_f_max_float [#{Time.now}]: "
     # still numerator and denominator expressable as Float
     r = LongDecimalQuot(Rational(LongMath::MAX_FLOATABLE, LongMath::MAX_FLOATABLE - 1), 7)
-    assert_equal(1.0, r.to_f)
+    assert_in_delta(1.0, r.to_f)
     r = LongDecimalQuot(Rational(-LongMath::MAX_FLOATABLE, LongMath::MAX_FLOATABLE - 1), 7)
-    assert_equal(-1.0, r.to_f)
+    assert_in_delta(-1.0, r.to_f)
     r = LongDecimalQuot(Rational(LongMath::MAX_FLOATABLE - 1, LongMath::MAX_FLOATABLE), 7)
-    assert_equal(1.0, r.to_f)
+    assert_in_delta(1.0, r.to_f)
     r = LongDecimalQuot(Rational(-(LongMath::MAX_FLOATABLE + 1), LongMath::MAX_FLOATABLE), 7)
-    assert_equal(-1.0, r.to_f)
+    assert_in_delta(-1.0, r.to_f)
     r = LongDecimalQuot(Rational(LongMath::MAX_FLOATABLE, 1), 7)
     assert_equal(Float::MAX, r.to_f)
     r = LongDecimalQuot(Rational(-LongMath::MAX_FLOATABLE, 1), 7)
@@ -632,17 +632,17 @@ class TestLongDecimalExtra_class < UnitTest
     print "\ntest_ldq_to_f_big_numerator [#{Time.now}]: "
     # numerator beyond Float::MAX
     r = LongDecimalQuot(Rational(LongMath::MAX_FLOATABLE + 1, LongMath::MAX_FLOATABLE - 1), 7)
-    assert_equal(1.0, r.to_f)
+    assert_in_delta(1.0, r.to_f)
     r = LongDecimalQuot(Rational(-LongMath::MAX_FLOATABLE - 1, LongMath::MAX_FLOATABLE - 1), 7)
-    assert_equal(-1.0, r.to_f)
+    assert_in_delta(-1.0, r.to_f)
     r = LongDecimalQuot(Rational(LongMath::MAX_FLOATABLE + 1, 1), 7)
     assert_equal(Float::MAX, r.to_f)
     r = LongDecimalQuot(Rational(-LongMath::MAX_FLOATABLE - 1, 1), 7)
     assert_equal(-Float::MAX, r.to_f)
     r = LongDecimalQuot(Rational(2 * LongMath::MAX_FLOATABLE, LongMath::MAX_FLOATABLE), 7)
-    assert_equal(2.0, r.to_f)
+    assert_in_delta(2.0, r.to_f)
     r = LongDecimalQuot(Rational(-2 * LongMath::MAX_FLOATABLE, LongMath::MAX_FLOATABLE), 7)
-    assert_equal(-2.0, r.to_f)
+    assert_in_delta(-2.0, r.to_f)
     r = LongDecimalQuot(Rational(LongMath::MAX_FLOATABLE**2, LongMath::MAX_FLOATABLE), 7)
     assert_equal(Float::MAX, r.to_f)
     r = LongDecimalQuot(Rational(-LongMath::MAX_FLOATABLE**2, LongMath::MAX_FLOATABLE), 7)
@@ -657,17 +657,17 @@ class TestLongDecimalExtra_class < UnitTest
 
     # denominator beyond Float::MAX
     r = LongDecimalQuot(Rational(LongMath::MAX_FLOATABLE - 1, LongMath::MAX_FLOATABLE + 1), 7)
-    assert_equal(1.0, r.to_f)
+    assert_in_delta(1.0, r.to_f)
     r = LongDecimalQuot(Rational(-LongMath::MAX_FLOATABLE + 1, LongMath::MAX_FLOATABLE + 1), 7)
-    assert_equal(-1.0, r.to_f)
+    assert_in_delta(-1.0, r.to_f)
     r = LongDecimalQuot(Rational(1, LongMath::MAX_FLOATABLE + 1), 7)
     assert_equal_float(1 / Float::MAX, r.to_f, Float::MIN)
     r = LongDecimalQuot(Rational(-1, LongMath::MAX_FLOATABLE - 1), 7)
     assert_equal(-1 / Float::MAX, r.to_f, Float::MIN)
     r = LongDecimalQuot(Rational(LongMath::MAX_FLOATABLE, 2 * LongMath::MAX_FLOATABLE), 7)
-    assert_equal(0.5, r.to_f)
+    assert_in_delta(0.5, r.to_f)
     r = LongDecimalQuot(Rational(-LongMath::MAX_FLOATABLE, 2 * LongMath::MAX_FLOATABLE), 7)
-    assert_equal(-0.5, r.to_f)
+    assert_in_delta(-0.5, r.to_f)
     r = LongDecimalQuot(Rational(LongMath::MAX_FLOATABLE, LongMath::MAX_FLOATABLE**2), 7)
     assert_equal_float(1 / Float::MAX, r.to_f, Float::MIN)
     r = LongDecimalQuot(Rational(-LongMath::MAX_FLOATABLE, LongMath::MAX_FLOATABLE**2), 7)
@@ -682,9 +682,9 @@ class TestLongDecimalExtra_class < UnitTest
     # both beyond Float::MAX
     delta = 1 / Float::MAX
     r = LongDecimalQuot(Rational(LongMath::MAX_FLOATABLE + 2, LongMath::MAX_FLOATABLE + 1), 7)
-    assert_equal(1.0, r.to_f)
+    assert_in_delta(1.0, r.to_f)
     r = LongDecimalQuot(Rational(-LongMath::MAX_FLOATABLE - 2, LongMath::MAX_FLOATABLE + 1), 7)
-    assert_equal(-1.0, r.to_f)
+    assert_in_delta(-1.0, r.to_f)
     unless RUBY_PLATFORM == 'java'
       # skip this test in JRuby due to bugs in JRuby's Float
       r = LongDecimalQuot(Rational(LongMath::MAX_FLOATABLE**2, LongMath::MAX_FLOATABLE**3), 7)
@@ -697,9 +697,9 @@ class TestLongDecimalExtra_class < UnitTest
     r = LongDecimalQuot(Rational(-LongMath::MAX_FLOATABLE**3, LongMath::MAX_FLOATABLE**2), 7)
     assert_equal(-Float::MAX, r.to_f)
     r = LongDecimalQuot(Rational(LongMath::MAX_FLOATABLE + 1, 2 * LongMath::MAX_FLOATABLE), 7)
-    assert_equal(0.5, r.to_f)
+    assert_in_delta(0.5, r.to_f)
     r = LongDecimalQuot(Rational(-(LongMath::MAX_FLOATABLE + 1), 2 * LongMath::MAX_FLOATABLE), 7)
-    assert_equal(-0.5, r.to_f)
+    assert_in_delta(-0.5, r.to_f)
     unless RUBY_PLATFORM == 'java'
       # skip this test in JRuby due to bugs in JRuby's Float
       r = LongDecimalQuot(Rational(LongMath::MAX_FLOATABLE + 1, LongMath::MAX_FLOATABLE**2), 7)

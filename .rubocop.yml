@@ -1,3 +1,8 @@
+require:
+- rubocop-rake
+- rubocop-minitest
+# TODO: add rubocop-performance
+
 # These are temporarily disabled or weakened.
 # TODO: Fix and reenable.
 Layout/LineLength:
@@ -101,6 +106,8 @@ Style/DocumentDynamicEvalDefinition:
   Enabled: false
 Naming/FileName:
   Enabled: false
+Minitest/AssertWithExpectedArgument: # new in 0.11
+  Enabled: false
 
 
 Gemspec/DateAssignment: # new in 1.10
@@ -192,4 +199,32 @@ Gemspec/RequireMFA: # new in 1.23
 Lint/UselessRuby2Keywords: # new in 1.23
   Enabled: true
 Style/OpenStructUse: # new in 1.23
+  Enabled: true
+Minitest/AssertInDelta: # new in 0.10
+  Enabled: true
+Minitest/AssertionInLifecycleHook: # new in 0.10
+  Enabled: true
+Minitest/AssertKindOf: # new in 0.10
+  Enabled: true
+Minitest/AssertOutput: # new in 0.10
+  Enabled: true
+Minitest/AssertPathExists: # new in 0.10
+  Enabled: true
+Minitest/AssertSilent: # new in 0.10
+  Enabled: true
+Minitest/LiteralAsActualArgument: # new in 0.10
+  Enabled: true
+Minitest/MultipleAssertions: # new in 0.10
+  Enabled: true
+Minitest/RefuteInDelta: # new in 0.10
+  Enabled: true
+Minitest/RefuteKindOf: # new in 0.10
+  Enabled: true
+Minitest/RefutePathExists: # new in 0.10
+  Enabled: true
+Minitest/TestMethodName: # new in 0.10
+  Enabled: true
+Minitest/UnreachableAssertion: # new in 0.14
+  Enabled: true
+Minitest/UnspecifiedException: # new in 0.10
   Enabled: true
