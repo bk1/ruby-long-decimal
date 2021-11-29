@@ -62,8 +62,6 @@ Style/ClassVars:
   Enabled: false
 Style/FormatStringToken:
   Enabled: false
-Lint/UselessAssignment:
-  Enabled: false
 Naming/MethodParameterName:
   Enabled: false
 Style/MixinUsage:

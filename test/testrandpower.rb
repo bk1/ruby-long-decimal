@@ -48,8 +48,8 @@ class TestRandomPower_class < MiniTest::Test
       d  = t1 - t0
       break if d >= @@duration
 
-      xarr, eprec1, lprec1, sprec1, pprec1, xs = random_arr
-      yarr, eprec2, lprec2, sprec2, pprec2, ys = random_arr
+      xarr, _eprec1, _lprec1, _sprec1, _pprec1, _xs = random_arr
+      yarr, _eprec2, _lprec2, _sprec2, _pprec2, _ys = random_arr
 
       prec = (pprec1 + pprec2) >> 1
       xarr.each do |x|

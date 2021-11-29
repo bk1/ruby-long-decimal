@@ -166,7 +166,7 @@ module TestLongDecHelper
     yd, yu = yu, yd if yu < yd
     full_message = build_message(message,
                                  'Expected interval [<?>, <?>] to be one unit at most and to contain <?>', yd, yu, y)
-    prec = y.scale
+    _prec = y.scale
     assert(yd <= y && y <= yu && yu - yd <= y.unit, full_message)
     #     _wrap_assertion {
     #       if (yu < yd) then
@@ -264,7 +264,7 @@ module TestLongDecHelper
     $stdout.flush
 
     # make sure x is LongDecimal
-    x0 = x
+    _x0 = x
     x = x.to_ld
     # calculate y = exp(x)
     # eprec = prec+1
@@ -335,7 +335,7 @@ module TestLongDecHelper
     $stdout.flush
 
     # make sure x is LongDecimal
-    x0 = x
+    _x0 = x
     x = x.to_ld
     # calculate y = exp(x)
     # eprec = prec+1
@@ -381,7 +381,7 @@ module TestLongDecHelper
     $stdout.flush
 
     # make sure x is LongDecimal
-    x0 = x
+    _x0 = x
     x = x.to_ld
     # calculate y = exp(x)
     # eprec = prec+1
@@ -536,12 +536,12 @@ module TestLongDecHelper
     if y <= LongMath::MAX_EXP_ABLE
       eprec = prec - 1
       if y > 1
-        ly = 0
+        _ly = 0
         if y > LongMath::MAX_FLOATABLE
           puts("unusual y=#{y} y=#{y}\n")
-          ly = LongMath::MAX_EXP_ABLE
+          _ly = LongMath::MAX_EXP_ABLE
         else
-          ly = Math.log(y.to_f)
+          _ly = Math.log(y.to_f)
         end
         # l10 = (ly * (1.2+2/(prec+1.0)) / Math.log(10)).ceil
         l10 = (y.to_f * (1.2 + (2 / (prec + 1.0))) / Math.log(10)).ceil
@@ -583,9 +583,9 @@ module TestLongDecHelper
     $stdout.flush
 
     # make sure x and y are LongDecimal
-    x0 = x
+    _x0 = x
     x = x.to_ld
-    y0 = y
+    _y0 = y
     y = y.to_ld
     # calculate z = x**y
     z = LongMath.power(x, y, prec)
@@ -665,7 +665,7 @@ module TestLongDecHelper
     $stdout.flush
 
     # make sure x is LongDecimal
-    x0 = x
+    _x0 = x
     x = x.to_ld
     # calculate y = log10(x)
     y = LongMath.log10(x, prec)
@@ -677,10 +677,10 @@ module TestLongDecHelper
     if x <= LongMath::MAX_FLOATABLE
       xf = x.to_f
       if xf.positive?
-        xf = x.to_f
+        _xf = x.to_f
         z = Math.log(x.to_f) / Math.log(10)
         yf = y.to_f
-        zl = z.to_ld(y.scale)
+        _zl = z.to_ld(y.scale)
         df = [1e-13, z.abs / 1e10].max
         dl = y.unit
         delta = [df, dl].max
@@ -726,7 +726,7 @@ module TestLongDecHelper
   #
   def check_log10_exact(x, log10x, prec)
     # make sure x is LongDecimal
-    x0 = x
+    _x0 = x
     x = x.to_ld
     log10x = log10x.to_ld(prec)
     # calculate y = log10(x)
@@ -743,7 +743,7 @@ module TestLongDecHelper
     $stdout.flush
 
     # make sure x is LongDecimal
-    x0 = x
+    _x0 = x
     x = x.to_ld
     # calculate y = log2(x)
     y = LongMath.log2(x, prec)
@@ -759,7 +759,7 @@ module TestLongDecHelper
         xf = x.to_f
         z = Math.log(xf) / Math.log(2)
         yf = y.to_f
-        zl = z.to_ld(y.scale)
+        _zl = z.to_ld(y.scale)
         df = [1e-13, z.abs / 1e10].max
         dl = y.unit.abs
         delta = [df, dl].max
@@ -804,7 +804,7 @@ module TestLongDecHelper
   #
   def check_log2_exact(x, log2x, prec)
     # make sure x is LongDecimal
-    x0 = x
+    _x0 = x
     x = x.to_ld
     log2x = log2x.to_ld(prec)
     # calculate y = log2(x)

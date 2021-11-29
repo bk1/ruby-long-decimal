@@ -254,7 +254,7 @@ class LongDecimal
       fmax = LongMath.npower10(imax)
       puts "fmax: #{fmax.size}"
       imin = 0
-      fmin = 1
+      _fmin = 1
       while n > fmax
         n /= fmax
         s += imax
@@ -266,10 +266,10 @@ class LongDecimal
         fmed = LongMath.npower10(imed)
         if n < fmed
           imax = imed
-          fmax = fmed
+          _fmax = fmed
         else
           imin = imed
-          fmin = fmed
+          _fmin = fmed
         end
       end
       LongMath.prec_limit = prec_limit
@@ -361,8 +361,8 @@ module LongMath
       # y > 0
       cnt = 0
       z = x
-      y0 = y
-      x0 = x
+      _y0 = y
+      _x0 = x
       loop do
         cnt + +
         y -= 1

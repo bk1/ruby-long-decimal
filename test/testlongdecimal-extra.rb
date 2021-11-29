@@ -178,7 +178,7 @@ class TestLongDecimalExtra_class < MiniTest::Test
   def _test_r_to_f_big_numerator
     print "\ntest_r_to_f_big_numerator [#{Time.now}]: "
     # both beyond Float::MAX
-    delta = 1 / Float::MAX
+    _delta = 1 / Float::MAX
     r = Rational(LongMath::MAX_FLOATABLE + 2, LongMath::MAX_FLOATABLE + 1)
     assert_in_delta(1.0, r.to_f)
     r = Rational(-LongMath::MAX_FLOATABLE - 2, LongMath::MAX_FLOATABLE + 1)
@@ -375,14 +375,14 @@ class TestLongDecimalExtra_class < MiniTest::Test
   def _test_ld_to_f_big_numerator
     print "\ntest_ld_to_f_big_numerator [#{Time.now}]: "
     y = 1.7976931348623158
-    z = (0.1**Float::MAX_10_EXP) + 1
-    u = 1.3407807929942596e308
+    _z = (0.1**Float::MAX_10_EXP) + 1
+    _u = 1.3407807929942596e308
     v = (y**2) * (0.1**Float::MAX_10_EXP)
     w = 10**Float::MAX_10_EXP
     x = 0.1**Float::MAX_10_EXP
 
     # both beyond Float::MAX
-    delta = 1 / Float::MAX
+    _delta = 1 / Float::MAX
     r = LongDecimal(LongMath::MAX_FLOATABLE + 2, Float::MAX_10_EXP + 1)
     assert_equal_float(y * 0.1, r.to_f, 1e-15) # t12
     r = LongDecimal(-LongMath::MAX_FLOATABLE - 2, Float::MAX_10_EXP + 1)
@@ -446,8 +446,8 @@ class TestLongDecimalExtra_class < MiniTest::Test
     d = 10**ds
     us = 300
     u = 10**us
-    n2 = n**2
-    d2 = d**2
+    _n2 = n**2
+    _d2 = d**2
     u2 = u**2
     delta = 10**135
     fi = 1 / f
@@ -472,14 +472,14 @@ class TestLongDecimalExtra_class < MiniTest::Test
     n = 134_078_079_299_426 * (10**154)
     ds = 14
     d = 10**ds
-    n2 = n**2
-    d2 = d**2
+    _n2 = n**2
+    _d2 = d**2
     delta = 1e139
     fi = 1 / f
     deltai = 1 / delta
     ni = 745_834_073_120_020_496_384
     dis = 175
-    di = 10**dis
+    _di = 10**dis
 
     r = LongDecimal(n, ds)
     assert_equal_float(f, r.to_f, delta, "d=#{f - r.to_f}")
@@ -659,7 +659,7 @@ class TestLongDecimalExtra_class < MiniTest::Test
   def _test_ldq_to_f_big_numerator
     print "\ntest_ldq_to_f_big_numerator [#{Time.now}]: "
     # both beyond Float::MAX
-    delta = 1 / Float::MAX
+    _delta = 1 / Float::MAX
     r = LongDecimalQuot(Rational(LongMath::MAX_FLOATABLE + 2, LongMath::MAX_FLOATABLE + 1), 7)
     assert_in_delta(1.0, r.to_f)
     r = LongDecimalQuot(Rational(-LongMath::MAX_FLOATABLE - 2, LongMath::MAX_FLOATABLE + 1), 7)

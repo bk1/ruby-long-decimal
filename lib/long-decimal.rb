@@ -618,7 +618,7 @@ class Integer
 
     remainders = remainders_param.clone
     r_self     = self % modulus
-    r_self_00  = r_self
+    _r_self_00 = r_self
     remainders = remainders.collect do |r|
       raise TypeError, 'remainders must be integral numbers' unless r.is_a? Integer
 
@@ -626,7 +626,7 @@ class Integer
     end
     remainders.sort!.uniq!
     r_first = remainders[0]
-    r_last  = remainders[-1]
+    _r_last = remainders[-1]
     r_first_again = r_first + modulus
     remainders.push r_first_again
     r_self += modulus if r_self < r_first
@@ -960,11 +960,11 @@ class LongDecimalBase < Numeric
     lower = quot
     upper = quot + 1
     even_or_odd = if mode.minor == MINOR_EVEN || mode.minor == MINOR_ODD
-                    even_or_odd = if lower[0] == 1
-                                    upper
-                                  else
-                                    lower
-                                  end
+                    if lower[0] == 1
+                      upper
+                    else
+                      lower
+                    end
                   end
     value = mode.pick_value(Rational(dividend, divisor), sign_quot, lower, upper, even_or_odd)
     LongDecimal(value, new_scale)
@@ -1541,9 +1541,9 @@ class LongDecimal < LongDecimalBase
     if int_val * LongMath::INV_MIN_FLOATABLE * 20 < divisor
       # t6
       # puts "t6 #{self.to_s}=#{self.inspect} -> 0.0"
-      p = int_val * LongMath::INV_MIN_FLOATABLE * 20
-      d = divisor
-      n = int_val
+      _p = int_val * LongMath::INV_MIN_FLOATABLE * 20
+      _d = divisor
+      _n = int_val
       return 0.0
     end
 
@@ -2020,7 +2020,7 @@ class LongDecimal < LongDecimalBase
   # remainder of integer division by other
   #
   def %(other)
-    q, r = divmod other
+    _q, r = divmod other
     r
   end
 
@@ -2675,7 +2675,7 @@ class LongDecimalQuot < LongDecimalBase
   # only return the remainder
   #
   def %(other)
-    q, r = divmod other
+    _q, r = divmod other
     r
   end
 
@@ -2926,8 +2926,6 @@ class Complex
       when Complex
         p = self * other.conjugate
         d = other.abs2
-        r = nil
-        i = nil
         r = if (d.is_a? Integer) && (p.real.is_a? Integer)
               Rational(p.real, d)
             else
@@ -2940,8 +2938,6 @@ class Complex
             end
         Complex(r, i)
       when Integer
-        r = nil
-        i = nil
         r = if (other.is_a? Integer) && (real.is_a? Integer)
               Rational(real, other)
             else
@@ -3006,8 +3002,6 @@ class Rational
         num = -num
       end
 
-      num_big = nil
-      den_big = nil
       while num >= FLOAT_SIGNIFICANT_I && den >= FLOAT_SIGNIFICANT_I && (num >= FLOAT_MAX_I || den >= FLOAT_MAX_I)
         num += 0x80
         num >>= 8
@@ -3113,7 +3107,7 @@ module LongMath
     # introduce some ordering for cache keys
     #
     def <=>(other)
-      r = 0
+      _r = 0
       r = fname <=> if other.respond_to? :fname
                       other.fname
                     else
@@ -3196,7 +3190,6 @@ module LongMath
   # get a cached value, if available in the required precision
   #
   def self.get_cached(key, _arg, iprec)
-    val = nil
     return nil if key.nil?
 
     val = @@cache[key]
@@ -3256,7 +3249,6 @@ module LongMath
     logx1_f = LongMath.log_f(x1).abs if x1.positive?
     prec = ((prec * Math.log(logx1_f)) + 5) if logx1_f > 5
 
-    y_f = nil
     y_f = if y.abs <= LongMath::MAX_FLOATABLE
             y.to_f
           else
@@ -4313,7 +4305,7 @@ module LongMath
     z   = 1 - x
     i   = 1
     p   = 1.to_ld
-    d   = 1.to_ld
+    _d  = 1.to_ld
     until p.abs.round_to_scale(dprec, LongDecimal::ROUND_DOWN).zero?
       p = (p * z).round_to_scale(iprec, mode2)
       d = (p / i).round_to_scale(iprec, mode2)
@@ -4764,7 +4756,7 @@ module LongMath
       # if necessary to LongDecimalBase
       y = -y
       x = (1 / x).round_to_scale(iprec_x * 2, mode)
-      iprec, iprec_x, iprec_y, logx_y_f = calc_iprec_for_power(x, y, prec)
+      iprec, _iprec_x, _iprec_y, logx_y_f = calc_iprec_for_power(x, y, prec)
       # puts "x=#{x} y=#{y} prec=#{prec} iprec=#{iprec} iprec_x=#{iprec_x} iprec_y=#{iprec_y} logx_y_f=#{logx_y_f}: checking x < 1 && y > 0 || x > 1 && y < 0=#{x < 1 && y > 0 || x > 1 && y < 0}"
       $stdout.flush
       if ((x < 1 && y.positive?) || (x > 1 && y.negative?)) && (logx_y_f <= (- prec * LOG10) - LOG2)
@@ -4808,7 +4800,7 @@ module LongMath
   # final rounding is left to the caller
   #
   def self.ipower(x, y, prec, mode)
-    t0 = Time.now
+    _t0 = Time.now
     raise TypeError, "base x=#{x} must be numeric" unless x.is_a? Numeric
     raise TypeError, "exponent y=#{y} must be integer" unless y.is_a? Integer
     raise TypeError, "base x=#{x.inspect} must not be greater MAX_FLOATABLE=#{MAX_FLOATABLE}" unless x.abs <= MAX_FLOATABLE
@@ -4836,8 +4828,8 @@ module LongMath
       # puts "x=#{x} y=#{y} regular"
       cnt = 0
       z = x
-      y0 = y
-      x0 = x
+      _y0 = y
+      _x0 = x
       loop do
         cnt + +
         y -= 1
@@ -4986,14 +4978,13 @@ module LongMath
 
   # geometric mean
   def self.geometric_mean(new_scale, rounding_mode, *args)
-    result_sign, all_same, has_neg, has_zero, has_pos = sign_check_for_mean(true, *args)
+    _result_sign, all_same, has_neg, has_zero, _has_pos = sign_check_for_mean(true, *args)
     return args[0].to_ld(new_scale, rounding_mode) if all_same
     return LongDecimal.zero!(new_scale) if has_zero
 
     prod = args.inject(LongDecimal.one!(new_scale + 20)) do |pprod, x|
       pprod * x.abs
     end
-    result = nil
     n = args.size
     result = if [0, 1].include?(n)
                prod.to_ld(new_scale, rounding_mode)
@@ -5010,7 +5001,7 @@ module LongMath
 
   # harmonic mean
   def self.harmonic_mean(new_scale, rounding_mode, *args)
-    result_sign, all_same, has_neg, has_zero, has_pos = sign_check_for_mean(true, *args)
+    _result_sign, all_same, _has_neg, has_zero, _has_pos = sign_check_for_mean(true, *args)
     return args[0].to_ld(new_scale, rounding_mode) if all_same
 
     if has_zero
@@ -5033,7 +5024,7 @@ module LongMath
   # parameters arguments for which arithmetic mean is calculated
   # result is exact if parameters are Integer, LongDecimal, LongDecimalQuot or Rational
   def self.harmonic_mean_ldq(*args)
-    result_sign, all_same, has_neg, has_zero, has_pos = sign_check_for_mean(true, *args)
+    _result_sign, all_same, _has_neg, has_zero, _has_pos = sign_check_for_mean(true, *args)
     return LongDecimalQuot(args) if all_same
 
     if has_zero
@@ -5053,7 +5044,7 @@ module LongMath
 
   # arithmetic-geometric mean (AGM)
   def self.arithmetic_geometric_mean(new_scale, rounding_mode, *args)
-    result_sign, all_same, has_neg, has_zero, has_pos = sign_check_for_mean(true, *args)
+    _result_sign, all_same, _has_neg, _has_zero, _has_pos = sign_check_for_mean(true, *args)
     return args[0].to_ld(new_scale, rounding_mode) if all_same
 
     prec = ((new_scale * 1.1) + 20).to_i
@@ -5071,7 +5062,7 @@ module LongMath
 
   # harmonic-geometric mean (HGM)
   def self.harmonic_geometric_mean(new_scale, rounding_mode, *args)
-    result_sign, all_same, has_neg, has_zero, has_pos = sign_check_for_mean(true, *args)
+    _result_sign, all_same, _has_neg, _has_zero, _has_pos = sign_check_for_mean(true, *args)
     return args[0].to_ld(new_scale, rounding_mode) if all_same
 
     prec = ((new_scale * 1.1) + 20).to_i
@@ -5089,7 +5080,7 @@ module LongMath
 
   # quadratic mean
   def self.quadratic_mean(new_scale, rounding_mode, *args)
-    result_sign, all_same, has_neg, has_zero, has_pos = sign_check_for_mean(true, *args)
+    _result_sign, all_same, has_neg, _has_zero, _has_pos = sign_check_for_mean(true, *args)
     return args[0].to_ld(new_scale, rounding_mode) if all_same
 
     sum = args.inject(LongDecimal.zero!) do |psum, x|
@@ -5108,7 +5099,7 @@ module LongMath
 
   # cubic mean
   def self.cubic_mean(new_scale, rounding_mode, *args)
-    result_sign, all_same, has_neg, has_zero, has_pos = sign_check_for_mean(false, *args)
+    _result_sign, all_same, _has_neg, _has_zero, _has_pos = sign_check_for_mean(false, *args)
     return args[0].to_ld(new_scale, rounding_mode) if all_same
 
     sum = args.inject(LongDecimal.zero!) do |psum, x|
@@ -5170,7 +5161,7 @@ module LongMath
     n.times do |i|
       raw_elements_sorted[i].add(epsilon)
     end
-    result = raw_elements.map(&:rounded)
+    raw_elements.map(&:rounded)
   end
 
   # round elements in such a way that round(new_scale, rounding_mode, sum(elements)) = sum(elements_rounded)
@@ -5200,7 +5191,7 @@ module LongMath
         RawElement.new(element.element * factor, new_scale, rounding_mode_set)
       end
     end
-    result = raw_elements.map(&:rounded)
+    raw_elements.map(&:rounded)
   end
 
   @@standard_mode = ROUND_HALF_UP
