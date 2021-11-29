@@ -36,7 +36,7 @@ Metrics/PerceivedComplexity:
   Exclude:
   - test/testlongdecimal.rb
 Lint/Void:
-  Enabled: false
+  Enabled: true
 Metrics/MethodLength:
   Max: 159
   Exclude:

@@ -4831,13 +4831,13 @@ module LongMath
       _y0 = y
       _x0 = x
       loop do
-        cnt + +
+        cnt += 1
         y -= 1
         break if y.zero?
 
         while (y & 0x01).zero?
 
-          cnt + +
+          cnt += 1
           y = y >> 1
           x = (x * x)
           x = x.round_to_scale(prec + 4, mode) if x.is_a? LongDecimalBase
