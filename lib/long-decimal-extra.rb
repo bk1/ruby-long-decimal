@@ -61,9 +61,7 @@ class LongDecimal
   def round_to_scale2(new_scale, mode = ROUND_UNNECESSARY)
     raise TypeError, "new_scale #{new_scale.inspect} must be integer" unless new_scale.is_a? Integer
     raise TypeError, "new_scale #{new_scale.inspect} must be >= 0" unless new_scale >= 0
-    unless mode.is_a? RoundingModeClass
-      raise TypeError, "mode #{mode.inspect} must be legal rounding mode"
-    end
+    raise TypeError, "mode #{mode.inspect} must be legal rounding mode" unless mode.is_a? RoundingModeClass
 
     if @scale == new_scale
       self
@@ -95,9 +93,7 @@ class LongDecimal
             quot += 1
           end
           sign_rem = rem <=> 0
-          if sign_rem >= 0 && sign_self.negative?
-            raise Error, "signs do not match self=#{self} f=#{factor} divisor=#{divisor} rem=#{rem}"
-          end
+          raise Error, "signs do not match self=#{self} f=#{factor} divisor=#{divisor} rem=#{rem}" if sign_rem >= 0 && sign_self.negative?
 
           case mode
           when ROUND_CEILING
@@ -297,9 +293,7 @@ class LongDecimal
     return -(-self).to_f if negative?
 
     # handle overflow: raise exception
-    if self > LongMath::MAX_FLOATABLE
-      raise ArgumentError, "self=#{inspect} cannot be expressed as Float"
-    end
+    raise ArgumentError, "self=#{inspect} cannot be expressed as Float" if self > LongMath::MAX_FLOATABLE
 
     # handle underflow: return 0.0
     return 0.0 if self < LongMath::MIN_FLOATABLE
@@ -353,12 +347,8 @@ module LongMath
   def self.ipower_with_measurement(x, y, prec, mode)
     raise TypeError, "base x=#{x} must be numeric" unless x.is_a? Numeric
     raise TypeError, "exponent y=#{y} must be integer" unless y.is_a? Integer
-    unless x.abs <= MAX_FLOATABLE
-      raise TypeError, "base x=#{x.inspect} must not be greater MAX_FLOATABLE=#{MAX_FLOATABLE}"
-    end
-    unless y.abs <= MAX_FLOATABLE
-      raise TypeError, "exponent y=#{y.inspect} must not be greater MAX_FLOATABLE=#{MAX_FLOATABLE}"
-    end
+    raise TypeError, "base x=#{x.inspect} must not be greater MAX_FLOATABLE=#{MAX_FLOATABLE}" unless x.abs <= MAX_FLOATABLE
+    raise TypeError, "exponent y=#{y.inspect} must not be greater MAX_FLOATABLE=#{MAX_FLOATABLE}" unless y.abs <= MAX_FLOATABLE
 
     prec = check_is_prec(prec, 'prec')
     check_is_mode(mode, 'mode')
@@ -439,9 +429,7 @@ class Integer
     else
       r = Rational.new!(self, 1)
       raise TypeError, "other=#{other} must be integer" unless other.is_a? Integer
-      unless other.abs < LongMath::MAX_FLOATABLE
-        raise ArgumentError, "other=#{other} must not be too big"
-      end
+      raise ArgumentError, "other=#{other} must not be too big" unless other.abs < LongMath::MAX_FLOATABLE
 
       r**other
     end

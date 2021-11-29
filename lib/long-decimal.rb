@@ -605,15 +605,9 @@ class Integer
     raise TypeError, 'remainders must be non-empty Array' if remainders_param.empty?
     raise TypeError, "modulus #{modulus.inspect} must be integer" unless modulus.is_a? Integer
     raise TypeError, "modulus #{modulus.inspect} must be >= 2" unless modulus >= 2
-    unless rounding_mode.is_a? LongDecimalRoundingMode::RoundingModeClass
-      raise TypeError, "rounding_mode #{rounding_mode.inspect} must be legal rounding rounding_mode"
-    end
-    if rounding_mode.minor == LongDecimalRoundingMode::MINOR_EVEN
-      raise TypeError, "#{rounding_mode} is not applicable here"
-    end
-    if rounding_mode.minor == LongDecimalRoundingMode::MINOR_ODD
-      raise TypeError, "#{rounding_mode} is not applicable here"
-    end
+    raise TypeError, "rounding_mode #{rounding_mode.inspect} must be legal rounding rounding_mode" unless rounding_mode.is_a? LongDecimalRoundingMode::RoundingModeClass
+    raise TypeError, "#{rounding_mode} is not applicable here" if rounding_mode.minor == LongDecimalRoundingMode::MINOR_EVEN
+    raise TypeError, "#{rounding_mode} is not applicable here" if rounding_mode.minor == LongDecimalRoundingMode::MINOR_ODD
 
     unless zero_rounding_mode.is_a? LongDecimalRoundingMode::ZeroRoundingModeClass
       raise TypeError,
@@ -647,12 +641,8 @@ class Integer
         break
       end
     end
-    if r_lower.negative?
-      raise ArgumentError, "self=#{self} r_self=#{r_self} r_lower=#{r_lower} r_upper=#{r_upper}"
-    end
-    if r_upper.negative?
-      raise ArgumentError, "self=#{self} r_self=#{r_self} r_lower=#{r_lower} r_upper=#{r_upper}"
-    end
+    raise ArgumentError, "self=#{self} r_self=#{r_self} r_lower=#{r_lower} r_upper=#{r_upper}" if r_lower.negative?
+    raise ArgumentError, "self=#{self} r_self=#{r_self} r_lower=#{r_lower} r_upper=#{r_upper}" if r_upper.negative?
 
     lower = self - (r_self - r_lower)
     upper = self + (r_upper - r_self)
@@ -919,9 +909,7 @@ class LongDecimalBase < Numeric
   # <=>-comparison for the scales
   #
   def scale_ufo(other)
-    unless other.is_a? LongDecimalBase
-      raise TypeError, 'only works for LongDecimal or LongDecimalQuot'
-    end
+    raise TypeError, 'only works for LongDecimal or LongDecimalQuot' unless other.is_a? LongDecimalBase
 
     scale <=> other.scale
   end
@@ -1200,9 +1188,7 @@ class LongDecimal < LongDecimalBase
   #
   def initialize(x, s)
     # handle some obvious errors with x first
-    if !(x.is_a? Numeric) && !(x.is_a? String)
-      raise TypeError, "non numeric 1st arg \"#{x.inspect}\""
-    end
+    raise TypeError, "non numeric 1st arg \"#{x.inspect}\"" if !(x.is_a? Numeric) && !(x.is_a? String)
     # we could maybe even work with complex number, if their imaginary part is zero.
     # but this is not so important to deal with, so we raise an error anyway.
     raise TypeError, "complex numbers not supported \"#{x.inspect}\"" if x.is_a? Complex
@@ -1260,9 +1246,7 @@ class LongDecimal < LongDecimalBase
 
       # split in parts before and after decimal point
       num_arr = num_str.split(/\./)
-      if num_arr.length > 2
-        raise TypeError, "1st arg contains more than one . \"#{num_str.inspect}\""
-      end
+      raise TypeError, "1st arg contains more than one . \"#{num_str.inspect}\"" if num_arr.length > 2
 
       num_int = num_arr[0]
       num_rem = num_arr[1]
@@ -1351,9 +1335,7 @@ class LongDecimal < LongDecimalBase
   #
   def round_to_scale(new_scale, mode = ROUND_UNNECESSARY)
     new_scale = LongMath.check_is_prec(new_scale)
-    unless mode.is_a? RoundingModeClass
-      raise TypeError, "mode #{mode.inspect} must be legal rounding mode"
-    end
+    raise TypeError, "mode #{mode.inspect} must be legal rounding mode" unless mode.is_a? RoundingModeClass
 
     if @scale == new_scale
       self
@@ -1402,15 +1384,9 @@ class LongDecimal < LongDecimalBase
     raise TypeError, 'remainders must be non-empty Array' if remainders.empty?
     raise TypeError, "modulus #{modulus.inspect} must be integer" unless modulus.is_a? Integer
     raise TypeError, "modulus #{modulus.inspect} must be >= 2" unless modulus >= 2
-    unless rounding_mode.is_a? RoundingModeClass
-      raise TypeError, "rounding_mode #{rounding_mode.inspect} must be legal rounding rounding_mode"
-    end
-    if rounding_mode == LongDecimalRoundingMode::ROUND_HALF_EVEN
-      raise TypeError, 'ROUND_HALF_EVEN is not applicable here'
-    end
-    if rounding_mode == LongDecimalRoundingMode::ROUND_HALF_ODD
-      raise TypeError, 'ROUND_HALF_ODD is not applicable here'
-    end
+    raise TypeError, "rounding_mode #{rounding_mode.inspect} must be legal rounding rounding_mode" unless rounding_mode.is_a? RoundingModeClass
+    raise TypeError, 'ROUND_HALF_EVEN is not applicable here' if rounding_mode == LongDecimalRoundingMode::ROUND_HALF_EVEN
+    raise TypeError, 'ROUND_HALF_ODD is not applicable here' if rounding_mode == LongDecimalRoundingMode::ROUND_HALF_ODD
 
     unless zero_rounding_mode.is_a? ZeroRoundingModeClass
       raise TypeError,
@@ -1458,9 +1434,7 @@ class LongDecimal < LongDecimalBase
       end
     else
       # base is not 10
-      unless (base.is_a? Integer) && base >= 2 && base <= 36
-        raise TypeError, 'base must be integer between 2 and 36'
-      end
+      raise TypeError, 'base must be integer between 2 and 36' unless (base.is_a? Integer) && base >= 2 && base <= 36
 
       quot    = (move_point_right(scale) * (base**shown_scale)) / LongMath.npower10(scale)
       rounded = quot.round_to_scale(0, mode)
@@ -2093,9 +2067,7 @@ class LongDecimal < LongDecimalBase
   # performs bitwise left shift of self by other
   #
   def <<(other)
-    unless (other.is_a? Integer) && other >= 0 && other <= MAX_32BIT_FIXNUM
-      raise TypeError, 'cannot shift by something other than Fixnum >= 0'
-    end
+    raise TypeError, 'cannot shift by something other than Fixnum >= 0' unless (other.is_a? Integer) && other >= 0 && other <= MAX_32BIT_FIXNUM
 
     LongDecimal(int_val << other, scale)
   end
@@ -2104,9 +2076,7 @@ class LongDecimal < LongDecimalBase
   # performs bitwise right shift of self by other
   #
   def >>(other)
-    unless (other.is_a? Integer) && other >= 0 && other <= MAX_32BIT_FIXNUM
-      raise TypeError, 'cannot shift by something other than Fixnum >= 0'
-    end
+    raise TypeError, 'cannot shift by something other than Fixnum >= 0' unless (other.is_a? Integer) && other >= 0 && other <= MAX_32BIT_FIXNUM
 
     LongDecimal(int_val >> other, scale)
   end
@@ -2129,9 +2099,7 @@ class LongDecimal < LongDecimalBase
   # divide by 10**n
   #
   def move_point_left(n)
-    unless (n.is_a? Integer) && -MAX_32BIT_FIXNUM <= n && n <= MAX_32BIT_FIXNUM
-      raise TypeError, 'only implemented for Fixnum'
-    end
+    raise TypeError, 'only implemented for Fixnum' unless (n.is_a? Integer) && -MAX_32BIT_FIXNUM <= n && n <= MAX_32BIT_FIXNUM
 
     if n >= 0
       move_point_left_int(n)
@@ -2144,9 +2112,7 @@ class LongDecimal < LongDecimalBase
   # multiply by 10**n
   #
   def move_point_right(n)
-    unless (n.is_a? Integer) && -MAX_32BIT_FIXNUM <= n && n <= MAX_32BIT_FIXNUM
-      raise TypeError, 'only implemented for Fixnum'
-    end
+    raise TypeError, 'only implemented for Fixnum' unless (n.is_a? Integer) && -MAX_32BIT_FIXNUM <= n && n <= MAX_32BIT_FIXNUM
 
     if n.negative?
       move_point_left_int(-n)
@@ -2729,19 +2695,13 @@ class LongDecimalQuot < LongDecimalBase
   def round_to_scale(new_scale = @scale, mode = ROUND_UNNECESSARY)
     raise TypeError, "new_scale #{new_scale.inspect} must be integer" unless new_scale.is_a? Integer
     raise TypeError, "new_scale #{new_scale.inspect} must be >= 0" unless new_scale >= 0
-    unless mode.is_a? RoundingModeClass
-      raise TypeError, "mode #{mode.inspect} must be legal rounding mode"
-    end
+    raise TypeError, "mode #{mode.inspect} must be legal rounding mode" unless mode.is_a? RoundingModeClass
 
     factor    = LongMath.npower10(new_scale)
     prod      = numerator * factor
     raise TypeError, "numerator=#{numerator} must be integer" unless numerator.is_a? Integer
-    unless denominator.is_a? Integer
-      raise TypeError, "denominator=#{denominator}=#{denominator.inspect} must be integer"
-    end
-    unless factor.is_a? Integer
-      raise TypeError, "factor=#{factor} (new_scale=#{new_scale}) must be integer"
-    end
+    raise TypeError, "denominator=#{denominator}=#{denominator.inspect} must be integer" unless denominator.is_a? Integer
+    raise TypeError, "factor=#{factor} (new_scale=#{new_scale}) must be integer" unless factor.is_a? Integer
     raise TypeError, "prod=#{prod} must be integer" unless prod.is_a? Integer
 
     round_to_scale_helper(prod, denominator, new_scale, mode)
@@ -3194,9 +3154,7 @@ module LongMath
   # :warn_use_max : print a warning and reduce scale to the max allowed
   #
   def self.prec_overflow_handling=(poh)
-    unless %i[raise_error use_max warn_use_max].include?(poh)
-      raise ArgumentError, "poh=#{poh} no accepted value"
-    end
+    raise ArgumentError, "poh=#{poh} no accepted value" unless %i[raise_error use_max warn_use_max].include?(poh)
 
     @@prec_overflow_handling = poh
   end
@@ -3247,9 +3205,7 @@ module LongMath
   # helper method for the check of type
   #
   def self.check_cacheable(x, s = 'x')
-    unless (x.is_a? LongDecimal) || ((x.is_a? Array) && (x[0].is_a? LongDecimal))
-      raise TypeError, "#{s}=#{x} must be LongDecimal or Array of LongDecimal"
-    end
+    raise TypeError, "#{s}=#{x} must be LongDecimal or Array of LongDecimal" unless (x.is_a? LongDecimal) || ((x.is_a? Array) && (x[0].is_a? LongDecimal))
   end
 
   #
@@ -3305,9 +3261,7 @@ module LongMath
 
     logx_y_f = logx_f * y_f
 
-    if logx_y_f.abs > LongMath::MAX_FLOATABLE
-      raise ArgumentError, "power would be way too big: y*log(x)=#{logx_y_f}"
-    end
+    raise ArgumentError, "power would be way too big: y*log(x)=#{logx_y_f}" if logx_y_f.abs > LongMath::MAX_FLOATABLE
 
     logx_y_f = logx_y_f.to_f unless logx_y_f.is_a? Float
 
@@ -3395,9 +3349,7 @@ module LongMath
   # size for splitting a number into parts
   #
   def self.check_word_len(word_len, name = 'word_len')
-    unless (word_len.is_a? Integer) && word_len.positive? && word_len <= 1024
-      raise TypeError, "#{name} must be a positive number <= 1024"
-    end
+    raise TypeError, "#{name} must be a positive number <= 1024" unless (word_len.is_a? Integer) && word_len.positive? && word_len <= 1024
 
     word_len
   end
@@ -3446,9 +3398,7 @@ module LongMath
   # rounding mode (instance of RoundingModeClass)
   #
   def self.check_is_mode(mode, name = 'mode')
-    unless mode.is_a? RoundingModeClass
-      raise TypeError, "#{name}=#{mode.inspect} must be legal rounding mode"
-    end
+    raise TypeError, "#{name}=#{mode.inspect} must be legal rounding mode" unless mode.is_a? RoundingModeClass
   end
 
   #
@@ -3664,14 +3614,10 @@ module LongMath
   #
   def self.gcd_with_high_power(x, b)
     check_is_int(x, 'x')
-    if x.zero?
-      raise ZeroDivisionError, "gcd_with_high_power of zero with \"#{b.inspect}\" would be infinity"
-    end
+    raise ZeroDivisionError, "gcd_with_high_power of zero with \"#{b.inspect}\" would be infinity" if x.zero?
 
     check_is_int(b, 'b')
-    if b < 2
-      raise ZeroDivisionError, "gcd_with_high_power with b < 2 is not defined. b=\"#{b.inspect}\""
-    end
+    raise ZeroDivisionError, "gcd_with_high_power with b < 2 is not defined. b=\"#{b.inspect}\"" if b < 2
 
     s = x.abs
     exponent = 1
@@ -4141,9 +4087,7 @@ module LongMath
         end
       end
 
-      if (mode.minor == MINOR_EVEN || mode.minor == MINOR_ODD || mode.minor == MINOR_DOWN || mode.minor == MINOR_FLOOR) && r.positive?
-        mode = MODE_LOOKUP[[mode.major, MINOR_UP]]
-      end
+      mode = MODE_LOOKUP[[mode.major, MINOR_UP]] if (mode.minor == MINOR_EVEN || mode.minor == MINOR_ODD || mode.minor == MINOR_DOWN || mode.minor == MINOR_FLOOR) && r.positive?
       y.round_to_scale(prec, mode)
 
     end
@@ -4238,9 +4182,7 @@ module LongMath
         end
       end
 
-      if (mode.minor == MINOR_EVEN || mode.minor == MINOR_ODD || mode.minor == MINOR_DOWN || mode.minor == MINOR_FLOOR) && r.positive?
-        mode = MODE_LOOKUP[[mode.major, MINOR_UP]]
-      end
+      mode = MODE_LOOKUP[[mode.major, MINOR_UP]] if (mode.minor == MINOR_EVEN || mode.minor == MINOR_ODD || mode.minor == MINOR_DOWN || mode.minor == MINOR_FLOOR) && r.positive?
       y.round_to_scale(prec, mode)
 
     end
@@ -4316,9 +4258,7 @@ module LongMath
   #
   def self.log_raw(x, _prec, iprec, mode)
     # we have to rely on iprec being at least 10
-    unless (iprec.is_a? Integer) && iprec >= 10 && iprec <= MAX_32BIT_FIXNUM
-      raise TypeError, "iprec=#{iprec} out of range"
-    end
+    raise TypeError, "iprec=#{iprec} out of range" unless (iprec.is_a? Integer) && iprec >= 10 && iprec <= MAX_32BIT_FIXNUM
 
     dprec = iprec - 1
 
@@ -4754,12 +4694,8 @@ module LongMath
   def self.power(x, y, prec, mode = LongMath.standard_mode)
     raise TypeError, "x=#{x} must be numeric" unless x.is_a? Numeric
     raise TypeError, "y=#{y} must be numeric" unless y.is_a? Numeric
-    unless x.abs <= MAX_FLOATABLE
-      raise TypeError, "x=#{x.inspect} must not be greater #{MAX_FLOATABLE}"
-    end
-    unless y.abs <= MAX_FLOATABLE
-      raise TypeError, "y=#{y.inspect} must not be greater #{MAX_FLOATABLE}"
-    end
+    raise TypeError, "x=#{x.inspect} must not be greater #{MAX_FLOATABLE}" unless x.abs <= MAX_FLOATABLE
+    raise TypeError, "y=#{y.inspect} must not be greater #{MAX_FLOATABLE}" unless y.abs <= MAX_FLOATABLE
 
     if y.negative? && x.zero?
       raise TypeError,
@@ -4871,12 +4807,8 @@ module LongMath
     t0 = Time.now
     raise TypeError, "base x=#{x} must be numeric" unless x.is_a? Numeric
     raise TypeError, "exponent y=#{y} must be integer" unless y.is_a? Integer
-    unless x.abs <= MAX_FLOATABLE
-      raise TypeError, "base x=#{x.inspect} must not be greater MAX_FLOATABLE=#{MAX_FLOATABLE}"
-    end
-    unless y.abs <= MAX_FLOATABLE
-      raise TypeError, "exponent y=#{y.inspect} must not be greater MAX_FLOATABLE=#{MAX_FLOATABLE}"
-    end
+    raise TypeError, "base x=#{x.inspect} must not be greater MAX_FLOATABLE=#{MAX_FLOATABLE}" unless x.abs <= MAX_FLOATABLE
+    raise TypeError, "exponent y=#{y.inspect} must not be greater MAX_FLOATABLE=#{MAX_FLOATABLE}" unless y.abs <= MAX_FLOATABLE
 
     prec = check_is_prec(prec, 'prec')
     check_is_mode(mode, 'mode')
@@ -4994,12 +4926,8 @@ module LongMath
     all_same = true
     result_sign = 0
     args.each do |x|
-      unless x.is_a? Numeric
-        raise ArgumentError, "cannot calculate mean of a non-numeric array #{args.inspect}"
-      end
-      if x.is_a? Complex
-        raise ArgumentError, "mean not supported for complex numbers args=#{args.inspect}"
-      end
+      raise ArgumentError, "cannot calculate mean of a non-numeric array #{args.inspect}" unless x.is_a? Numeric
+      raise ArgumentError, "mean not supported for complex numbers args=#{args.inspect}" if x.is_a? Complex
 
       all_same = false if all_same && x != first
       sign = x.sgn
@@ -5180,9 +5108,7 @@ module LongMath
     return args[0].to_ld(new_scale, rounding_mode) if all_same
 
     sum = args.inject(LongDecimal.zero!) do |psum, x|
-      if x.is_a? Complex
-        raise ArgumentError, "cubic mean not supported for complex numbers args=#{args.inspect}"
-      end
+      raise ArgumentError, "cubic mean not supported for complex numbers args=#{args.inspect}" if x.is_a? Complex
 
       x = x.to_ld((2 * new_scale) + 20) if !(x.is_a? LongDecimalBase) && !(x.is_a? Rational)
       psum + (x**3)

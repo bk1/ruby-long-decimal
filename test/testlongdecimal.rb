@@ -2917,17 +2917,13 @@ class TestLongDecimal_class < UnitTest
           i_rounded = check_round_to_one_remainder(i, r, modulus, ROUND_HALF_UP, ZERO_ROUND_TO_PLUS)
           dd = 2 * (i_rounded - i).abs
           assert(dd <= modulus, "i_r=#{i_rounded} " + text)
-          if i_rounded.abs < i.abs || i_rounded.sgn == - i.sgn
-            assert(dd < modulus, "i_r=#{i_rounded} " + text)
-          end
+          assert(dd < modulus, "i_r=#{i_rounded} " + text) if i_rounded.abs < i.abs || i_rounded.sgn == - i.sgn
 
           i_rounded = check_round_to_one_remainder(i, r, modulus, ROUND_HALF_DOWN,
                                                    ZERO_ROUND_TO_PLUS)
           dd = 2 * (i_rounded - i).abs
           assert(dd <= modulus, "i_r=#{i_rounded} " + text)
-          if i_rounded.abs > i.abs && i_rounded.sgn == i.sgn
-            assert(dd < modulus, "i_r=#{i_rounded} " + text)
-          end
+          assert(dd < modulus, "i_r=#{i_rounded} " + text) if i_rounded.abs > i.abs && i_rounded.sgn == i.sgn
 
           i_rounded = check_round_to_one_remainder(i, r, modulus, ROUND_HALF_CEILING,
                                                    ZERO_ROUND_TO_PLUS)
@@ -3193,9 +3189,7 @@ class TestLongDecimal_class < UnitTest
           assert(below.empty?)
           dd = 2 * (i_rounded - i).abs
           assert(dd <= modulus, "i_r=#{i_rounded} " + text)
-          if i_rounded.abs < i.abs || i_rounded.sgn == - i.sgn
-            assert(dd < modulus, "i_r=#{i_rounded} " + text)
-          end
+          assert(dd < modulus, "i_r=#{i_rounded} " + text) if i_rounded.abs < i.abs || i_rounded.sgn == - i.sgn
 
           i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus,
                                                                    ROUND_HALF_DOWN, ZERO_ROUND_TO_PLUS)
@@ -3203,9 +3197,7 @@ class TestLongDecimal_class < UnitTest
           assert(below.empty?)
           dd = 2 * (i_rounded - i).abs
           assert(dd <= modulus, "i_r=#{i_rounded} " + text)
-          if i_rounded.abs > i.abs && i_rounded.sgn == i.sgn
-            assert(dd < modulus, "i_r=#{i_rounded} " + text)
-          end
+          assert(dd < modulus, "i_r=#{i_rounded} " + text) if i_rounded.abs > i.abs && i_rounded.sgn == i.sgn
 
           i_rounded, set, above, below = check_round_to_remainders(i, remainders, modulus,
                                                                    ROUND_HALF_CEILING, ZERO_ROUND_TO_PLUS)
