@@ -448,7 +448,7 @@ end
 
 def LongMath.continued_fraction_to_r(arr)
   result = nil
-  arr.reverse.each do |x|
+  arr.reverse_each do |x|
     result = if result.nil?
                Rational(x)
              else

@@ -25,6 +25,8 @@ class TestLongDecimal_class < MiniTest::Test
   include TestLongDecHelper
   include LongDecimalRoundingMode
 
+  SIGNS = [-1, 1].freeze
+
   #
   # test split_to_words and merge_from_words
   #
@@ -3752,7 +3754,7 @@ class TestLongDecimal_class < MiniTest::Test
   # test remainder rounding geometric
   #
   def check_int_round_major_to_two_allowed_remainders(remainder_sets, boundary_exact_integral, major_mode, &block)
-    if RUBY_VERSION.match(/^1\.8/)
+    if RUBY_VERSION.match?(/^1\.8/)
       puts "Warning: this test is not supported for Ruby #{RUBY_VERSION}"
       return
     end
@@ -6973,7 +6975,7 @@ class TestLongDecimal_class < MiniTest::Test
       arr.each do |rat|
         rat_up = rat + delta
         rat_down = rat - delta
-        [-1, 1].each do |sign|
+        SIGNS.each do |sign|
           l_up = LongDecimalQuot(sign * rat_up, 0)
           r_up = l_up.round_to_scale(0, rounding_mode)
           r_up_expected = l_up.round_to_scale(0, ROUND_UP)
@@ -6997,7 +6999,7 @@ class TestLongDecimal_class < MiniTest::Test
     arr = [Rational(0, 1), Rational(112, 15), Rational(12, 5), Rational(144, 17),
            Rational(180, 19), Rational(24, 7), Rational(4, 3), Rational(40, 9), Rational(60, 11), Rational(84, 13)]
     arr.each do |rat|
-      [-1, 1].each do |sign|
+      SIGNS.each do |sign|
         l = LongDecimalQuot(sign * rat, 0)
         r = l.round_to_scale(0, ROUND_HARMONIC_UP)
         re = l.round_to_scale(0, ROUND_UP)
@@ -7015,7 +7017,7 @@ class TestLongDecimal_class < MiniTest::Test
     arr = [Rational(0, 1), Rational(112, 15), Rational(12, 5), Rational(144, 17),
            Rational(180, 19), Rational(24, 7), Rational(4, 3), Rational(40, 9), Rational(60, 11), Rational(84, 13)]
     arr.each do |rat|
-      [-1, 1].each do |sign|
+      SIGNS.each do |sign|
         l = LongDecimalQuot(sign * rat, 0)
         r = l.round_to_scale(0, ROUND_HARMONIC_DOWN)
         re = l.round_to_scale(0, ROUND_DOWN)
@@ -7033,7 +7035,7 @@ class TestLongDecimal_class < MiniTest::Test
     arr = [Rational(0, 1), Rational(112, 15), Rational(12, 5), Rational(144, 17),
            Rational(180, 19), Rational(24, 7), Rational(4, 3), Rational(40, 9), Rational(60, 11), Rational(84, 13)]
     arr.each do |rat|
-      [-1, 1].each do |sign|
+      SIGNS.each do |sign|
         l = LongDecimalQuot(sign * rat, 0)
         r = l.round_to_scale(0, ROUND_HARMONIC_CEILING)
         re = l.round_to_scale(0, ROUND_CEILING)
@@ -7051,7 +7053,7 @@ class TestLongDecimal_class < MiniTest::Test
     arr = [Rational(0, 1), Rational(112, 15), Rational(12, 5), Rational(144, 17),
            Rational(180, 19), Rational(24, 7), Rational(4, 3), Rational(40, 9), Rational(60, 11), Rational(84, 13)]
     arr.each do |rat|
-      [-1, 1].each do |sign|
+      SIGNS.each do |sign|
         l = LongDecimalQuot(sign * rat, 0)
         r = l.round_to_scale(0, ROUND_HARMONIC_FLOOR)
         re = l.round_to_scale(0, ROUND_FLOOR)
@@ -7069,7 +7071,7 @@ class TestLongDecimal_class < MiniTest::Test
     sorted_arr = [Rational(0, 1), Rational(112, 15), Rational(12, 5), Rational(144, 17),
                   Rational(180, 19), Rational(24, 7), Rational(4, 3), Rational(40, 9), Rational(60, 11), Rational(84, 13)].sort
     sorted_arr.each_with_index do |rat, idx|
-      [-1, 1].each do |sign|
+      SIGNS.each do |sign|
         l = LongDecimalQuot(sign * rat, 0)
         r_even = l.round_to_scale(0, ROUND_HARMONIC_EVEN)
         r_odd  = l.round_to_scale(0, ROUND_HARMONIC_ODD)
@@ -7963,13 +7965,14 @@ class TestLongDecimal_class < MiniTest::Test
     # arr = [ 0, 1, 2, 0.0, 1.0, Math::PI, Rational(40, 9), Rational(0, 1), Rational(1,1), LongDecimal(3333333333333333, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ]
     arr = [1, 2, 1.0, Math::PI, Rational(40, 9), Rational(1, 1),
            LongDecimal(3_333_333_333_333_333, 10), LongMath.pi(100)]
+    precs = [0, 1, 2, 5, 10, 11, 12]
     arr.each do |x|
       arr.each do |y|
         print ':'
         arr.each do |z|
           print '.'
           # 12.times do |prec|
-          [0, 1, 2, 5, 10, 11, 12].each do |prec|
+          precs.each do |prec|
             ALL_ROUNDING_MODES.each do |rm|
               next if rm == ROUND_UNNECESSARY
 
@@ -8015,6 +8018,7 @@ class TestLongDecimal_class < MiniTest::Test
     # arr = [ 0, 1, 2, 0.0, 1.0, Math::PI, Rational(40, 9), Rational(0, 1), Rational(1,1), LongDecimal(3333333333333333, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ]
     arr = [1, 2, 1.0, Math::PI, Rational(40, 9), Rational(1, 1),
            LongDecimal(3_333_333_333_333_333, 10), LongDecimal(10_000_000_000, 10), LongMath.pi(100)]
+    precs = [0, 31]
     arr.each do |x|
       x.freeze
       arr.each do |y|
@@ -8025,7 +8029,7 @@ class TestLongDecimal_class < MiniTest::Test
           print '.'
           # prec = 0
           # 3.times do |i|
-          [0, 31].each_with_index do |prec, i|
+          precs.each_with_index do |prec, i|
             ALL_ROUNDING_MODES.each do |rm|
               next if rm == ROUND_UNNECESSARY
 

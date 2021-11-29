@@ -1239,7 +1239,7 @@ class LongDecimal < LongDecimalBase
 
       # remove spaces and underscores
       num_str = num_str.gsub(/\s/, '')
-      num_str.gsub!(/_/, '')
+      num_str.delete!('_')
 
       # handle sign
       num_str.gsub!(/^\+/, '')
@@ -1247,7 +1247,7 @@ class LongDecimal < LongDecimalBase
       negative = true if num_str.gsub!(/^-/, '')
 
       # split in parts before and after decimal point
-      num_arr = num_str.split(/\./)
+      num_arr = num_str.split('.')
       raise TypeError, "1st arg contains more than one . \"#{num_str.inspect}\"" if num_arr.length > 2
 
       num_int = num_arr[0]
@@ -2982,7 +2982,7 @@ class Rational
   FLOAT_MAX_I         = Float::MAX.to_i
   FLOAT_SIGNIFICANT_I = 2**56
 
-  unless RUBY_VERSION.match(/^1\.9/)
+  unless RUBY_VERSION.match?(/^1\.9/)
 
     # fix eql? for Ruby 1.8
     def eql?(other)
@@ -4948,9 +4948,7 @@ module LongMath
   def self.arithmetic_mean(new_scale, rounding_mode, *args)
     raise ArgumentError, 'cannot calculate average of empty array' if args.empty?
 
-    sum = args.inject(LongDecimal.zero!(((1.5 * new_scale) + 25).to_i)) do |psum, x|
-      psum + x
-    end
+    sum = args.sum(LongDecimal.zero!(((1.5 * new_scale) + 25).to_i))
     raw_result = if sum.is_a? Integer
                    Rational(sum, args.size)
                  else
@@ -4966,9 +4964,7 @@ module LongMath
   def self.arithmetic_mean_ldq(*args)
     raise ArgumentError, 'cannot calculate average of empty array' if args.empty?
 
-    sum = args.inject(LongDecimalQuot(0, 0)) do |psum, x|
-      psum + x
-    end
+    sum = args.sum(LongDecimalQuot(0, 0))
     sum / args.size
   end
 
@@ -5143,9 +5139,7 @@ module LongMath
   def self.round_sum_hm(new_scale, rounding_mode_sum, *elements)
     return elements if elements.empty?
 
-    raw_sum = elements.inject(0) do |psum, x|
-      psum + x
-    end
+    raw_sum = elements.sum
     sum = raw_sum.to_ld(new_scale, rounding_mode_sum)
     raw_elements = elements.map do |element|
       RawElement.new(element, new_scale)
@@ -5171,9 +5165,7 @@ module LongMath
     return elements if elements.empty?
 
     delta = -1
-    raw_sum = elements.inject(0) do |psum, x|
-      psum + x
-    end
+    raw_sum = elements.sum
     sum = raw_sum.to_ld(new_scale, rounding_mode_sum)
     raw_elements = elements.map do |element|
       RawElement.new(element, new_scale, rounding_mode_set)
