@@ -1,5 +1,108 @@
+# These are temporarily disabled or weakened.
+# TODO: Fix and reenable.
 Layout/LineLength:
-  Max: 100
+  Max: 279
+  Exclude:
+  - test/*.rb
+  - long-decimal.gemspec
+Metrics/ClassLength:
+  Max: 646
+  Exclude:
+  - test/testlongdecimal.rb
+  - test/testlongdecimal-extra.rb
+  - test/testlongdecimal-experimental.rb
+  - test/testlongdecimal-performance.rb
+Metrics/BlockLength:
+  Max: 26
+  Exclude:
+  - test/testlongdecimal.rb
+  - test/testlongdecimal-experimental.rb
+Metrics/BlockNesting:
+  Max: 8
+Metrics/CyclomaticComplexity:
+  Max: 58
+  Exclude:
+  - test/testlongdecimal.rb
+Metrics/PerceivedComplexity:
+  Max: 61
+  Exclude:
+  - test/testlongdecimal.rb
+Lint/Void:
+  Enabled: false
+Metrics/MethodLength:
+  Max: 159
+  Exclude:
+  - test/*.rb
+Metrics/ModuleLength:
+  Enabled: false
+Metrics/ParameterLists:
+  Max: 8
+  MaxOptionalParameters: 7
+  Exclude:
+  - test/*.rb
+Metrics/AbcSize:
+  Max: 126
+  Exclude:
+  - test/*.rb
+Lint/DuplicateMethods:
+  Enabled: false
+Style/GlobalVars:
+  Exclude:
+  - make_doc.rb
+  - test/*.rb
+Gemspec/RequiredRubyVersion:
+  Enabled: false
+Style/ClassVars:
+  Enabled: false
+Style/FormatStringToken:
+  Enabled: false
+Lint/UselessAssignment:
+  Enabled: false
+Naming/MethodParameterName:
+  Enabled: false
+Style/MixinUsage:
+  Enabled: false
+Naming/ClassAndModuleCamelCase:
+  Exclude:
+  - test/*.rb
+Naming/VariableName:
+  Exclude:
+  - test/*.rb
+Naming/BlockParameterName:
+  Exclude:
+  - test/testlongdecimal.rb
+Style/CaseEquality:
+  Exclude:
+  - test/testlongdecimal.rb
+Style/GuardClause:
+  Enabled: false
+Lint/BinaryOperatorWithIdenticalOperands:
+  Exclude:
+  - test/testlongdecimal.rb
+Naming/VariableNumber:
+  Enabled: false
+Lint/DuplicateBranch:
+  Enabled: false
+Style/OptionalBooleanParameter:
+  Enabled: false
+Style/Documentation:
+  Enabled: false
+Naming/MethodName:
+  Enabled: false
+Lint/MissingSuper:
+  Enabled: false
+Naming/PredicateName:
+  Enabled: false
+Style/EmptyElse:
+  Enabled: false
+Lint/FloatComparison:
+  Enabled: false
+Style/DocumentDynamicEvalDefinition:
+  Enabled: false
+Naming/FileName:
+  Enabled: false
+
+
 Gemspec/DateAssignment: # new in 1.10
   Enabled: true
 Layout/LineEndStringConcatenationIndentation: # new in 1.18
@@ -13,8 +116,6 @@ Lint/AmbiguousOperatorPrecedence: # new in 1.21
 Lint/AmbiguousRange: # new in 1.19
   Enabled: true
 Lint/DeprecatedConstants: # new in 1.8
-  Enabled: true
-Lint/DuplicateBranch: # new in 1.3
   Enabled: true
 Lint/DuplicateRegexpCharacterClassElement: # new in 1.1
   Enabled: true
@@ -53,8 +154,6 @@ Security/IoMethods: # new in 1.22
 Style/ArgumentsForwarding: # new in 1.1
   Enabled: true
 Style/CollectionCompact: # new in 1.2
-  Enabled: true
-Style/DocumentDynamicEvalDefinition: # new in 1.1
   Enabled: true
 Style/EndlessMethod: # new in 1.8
   Enabled: true
