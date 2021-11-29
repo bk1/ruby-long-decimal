@@ -396,9 +396,11 @@ module LongDecimalRoundingMode
   # filled using reflection
   ALL_ROUNDING_MODE_NAMES = [] # rubocop:disable Style/MutableConstant
 
-  MUL_INVERSE_MODE = {}.freeze
+  # filled below
+  MUL_INVERSE_MODE = {} # rubocop:disable Style/MutableConstant
 
-  ADD_INVERSE_MODE = {}.freeze
+  # filled below
+  ADD_INVERSE_MODE = {} # rubocop:disable Style/MutableConstant
 
   ALL_MAJOR_MODES.each do |majm|
     majm_str = majm.part.to_s
