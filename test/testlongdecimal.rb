@@ -7965,7 +7965,7 @@ class TestLongDecimal_class < MiniTest::Test
     # arr = [ 0, 1, 2, 0.0, 1.0, Math::PI, Rational(40, 9), Rational(0, 1), Rational(1,1), LongDecimal(3333333333333333, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ]
     arr = [1, 2, 1.0, Math::PI, Rational(40, 9), Rational(1, 1),
            LongDecimal(3_333_333_333_333_333, 10), LongMath.pi(100)]
-    precs = [0, 1, 2, 5, 10, 11, 12]
+    precs = [0, 1, 2, 5, 10, 11, 12].freeze
     arr.each do |x|
       arr.each do |y|
         print ':'
@@ -8018,7 +8018,7 @@ class TestLongDecimal_class < MiniTest::Test
     # arr = [ 0, 1, 2, 0.0, 1.0, Math::PI, Rational(40, 9), Rational(0, 1), Rational(1,1), LongDecimal(3333333333333333, 10), LongDecimal(0, 10), LongDecimal(10000000000, 10), LongMath.pi(100) ]
     arr = [1, 2, 1.0, Math::PI, Rational(40, 9), Rational(1, 1),
            LongDecimal(3_333_333_333_333_333, 10), LongDecimal(10_000_000_000, 10), LongMath.pi(100)]
-    precs = [0, 31]
+    precs = [0, 31].freeze
     arr.each do |x|
       x.freeze
       arr.each do |y|

@@ -4948,7 +4948,12 @@ module LongMath
   def self.arithmetic_mean(new_scale, rounding_mode, *args)
     raise ArgumentError, 'cannot calculate average of empty array' if args.empty?
 
-    sum = args.sum(LongDecimal.zero!(((1.5 * new_scale) + 25).to_i))
+    # Using sum doesn't work here.
+    # rubocop:disable Performance/Sum
+    sum = args.inject(LongDecimal.zero!(((1.5 * new_scale) + 25).to_i)) do |psum, x|
+      psum + x
+    end
+    # rubocop:enable Performance/Sum
     raw_result = if sum.is_a? Integer
                    Rational(sum, args.size)
                  else
